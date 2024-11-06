@@ -76,4 +76,15 @@ class ExternalLink(Base):
     iconImageUrl = Column(String)
     show = Column(Boolean)
 
+class User(Base):
+    __tablename__ = "users"
+    uid = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String, unique=True, nullable=False)
+    username = Column(String, nullable=False)
+    password = Column(String, nullable=False)
+    sex = Column(String, nullable=True)
+    star = Column(Integer, default=0)
+    identity = Column(String, nullable=True)
+    note = Column(String, nullable=True)
+
 Base.metadata.create_all(bind=engine)
