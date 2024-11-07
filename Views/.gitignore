@@ -1,25 +1,24 @@
-venv
-.env
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# frontend
-/Views/node_modules
+# dependencies
+/node_modules
+/.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-/Views/.pnp
 
 # testing
-/Views/coverage
+/coverage
 
 # next.js
-/Views/.next/
-/Views/out/
+/.next/
+/out/
 
 # production
-/Views/build
+/build
 
 # misc
 .DS_Store
