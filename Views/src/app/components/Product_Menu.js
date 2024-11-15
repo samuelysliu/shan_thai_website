@@ -2,26 +2,26 @@
 
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
+import { useRouter } from 'next/navigation';
 
 export default function Product_Menu() {
-    return (
-      <Container fluid>
-        <Row className="product_menu">
-          <Col xs="auto"><a href="/category/1">Category 1</a></Col>
-          <Col xs="auto"><a href="/category/2">Category 2</a></Col>
-          <Col xs="auto"><a href="/category/3">Category 3</a></Col>
-          <Col xs="auto"><a href="/category/4">Category 4</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          <Col xs="auto"><a href="/category/5">Category 5</a></Col>
-          
-        </Row>
-      </Container>
-    );
-  }
+  const router = useRouter();
+
+  const handleNavLink = (path) => {
+    router.push(path);
+  };
+
+  return (
+    <Container fluid className="product-menu-container">
+      <Row className="product_menu">
+        <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 1</a></Col>
+        <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 2</a></Col>
+        <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 3</a></Col>
+        <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 4</a></Col>
+        <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 5</a></Col>
+        <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 6</a></Col>
+        <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 7</a></Col>
+      </Row>
+    </Container>
+  );
+}

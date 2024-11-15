@@ -45,7 +45,7 @@ a {
 /* 自定義內容開始 */
 
 /* 橫向移動的 menu */
-.product_menu{
+.product_menu {
   overflow-x: auto;
   white-space: nowrap;
   flex-wrap: nowrap;
@@ -53,9 +53,58 @@ a {
 
 .product_menu a {
   display: inline-block;
-  padding: 10px;
-  margin-right: 10px;
-  color: #000;
+  padding: 0.5rem 1rem;
+  color: #6c757d;
   text-decoration: none;
   font-weight: bold;
+}
+
+.product-menu a:hover {
+  color: #007bff;
+}
+
+.product-card {
+  border: 1px solid #dee2e6;
+}
+
+.product-card img {
+  width: 100%;
+  height: auto;
+}
+
+.footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.footer a {
+  color: #6c757d;
+}
+
+.footer a:hover {
+  color: #007bff;
+}
+
+.footer i {
+  color: #6c757d;
+}
+
+.footer i:hover {
+  color: #007bff;
+}
+
+/* navbar 區塊 */
+.navbar{
+  background-color: #393D46 !important;
+  color: #ffffff;
+}
+
+.navbar .navbar-brand,
+.navbar .nav-link {
+  color: #ffffff !important;  /* 文字顏色 */
+}
+
+.navbar .nav-link:hover,
+.navbar .navbar-brand:hover {
+  color: #d1d1d1 !important; /* 滑鼠懸停時的顏色 */
 }

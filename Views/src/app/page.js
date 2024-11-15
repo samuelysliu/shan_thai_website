@@ -3,7 +3,9 @@ import React from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import Product_Grid from './components/Product_Grid';
 import Product_Menu from './components/Product_Menu';
-
+import Pagination_Component from './components/Pagination_Component';
+import Footer from './components/Footer';
+import LoginModal from './components/Login_Modal';
 
 
 const HomePage = () => {
@@ -17,6 +19,9 @@ const HomePage = () => {
       <Product_Menu />
       {/* product */}
       <Product_Grid />
+      <Pagination_Component />
+      <Footer />
+
     </Container>
   );
 };

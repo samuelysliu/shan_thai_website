@@ -16,12 +16,12 @@ const products = [
 
 export default function Product_Grid() {
   return (
-    <Container>
+    <Container className="my-4">
       <Row xs={2} md={3} xl={4} xxl={5}>
         {products.map(product => (
-          <Col xs={6} md={3} key={product.id}>
-            <Card>
-              <Card.Img variant="top" src={product.img} />
+          <Col xs={6} md={3} key={product.id} className="mb-4">
+            <Card className="text-center product-card">
+              <Card.Img variant="top" src={product.img} alt="產品圖片" />
               <Card.Body>
                 <Card.Title>{product.name}</Card.Title>
                 <Card.Text>{product.price}</Card.Text>
