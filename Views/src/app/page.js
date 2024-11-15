@@ -5,24 +5,27 @@ import Product_Grid from './components/Product_Grid';
 import Product_Menu from './components/Product_Menu';
 import Pagination_Component from './components/Pagination_Component';
 import Footer from './components/Footer';
-import LoginModal from './components/Login_Modal';
+import Navbar from './components/Navbar';
 
 
 const HomePage = () => {
   return (
-    <Container>
-      {/* Banner */}
-      <Row>
-        <Col>1 of 2</Col>
-      </Row>
-      {/* Menu */}
-      <Product_Menu />
-      {/* product */}
-      <Product_Grid />
-      <Pagination_Component />
-      <Footer />
+    <>
+      <Navbar />
+      <Container>
+        {/* Banner */}
+        <Row>
+          <Col>1 of 2</Col>
+        </Row>
+        {/* Menu */}
+        <Product_Menu />
+        {/* product */}
+        <Product_Grid />
+        <Pagination_Component />
+        <Footer />
 
-    </Container>
+      </Container>
+    </>
   );
 };
 

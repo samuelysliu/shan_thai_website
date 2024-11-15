@@ -13,7 +13,7 @@ export default function Product_Menu() {
 
   return (
     <Container fluid className="product-menu-container">
-      <Row className="product_menu">
+      <Row className="product-menu">
         <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 1</a></Col>
         <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 2</a></Col>
         <Col xs="auto"><a onClick={() => handleNavLink('/')}>Category 3</a></Col>

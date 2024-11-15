@@ -1,6 +1,14 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  --primary-color: #393D46;       /* 主要顏色 */
+  --secondary-color: #666666;     /* 次要顏色 */
+  --accent-color: #007bff;        /* 強調顏色 */
+  --text-color: #171717;          /* 主要文字顏色 */
+  --light-text-color: #ededed;    /* 淡文字顏色 */
+  --light-hover-color: #d1d1d1;     /* 淡文字的hover顏色*/
+  --border-color: #e0e0e0;        /* 邊框顏色 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,27 +52,49 @@ a {
 
 /* 自定義內容開始 */
 
+/* component 型 */
+.button-primary {
+  background-color: var(--primary-color);
+  margin-bottom: 10px;
+}
+
+.button-primary:hover{
+  background-color: var(--secondary-color);
+}
+
+.button-secondary {
+  background-color: var(--background);
+  margin-bottom: 10px;
+  color: var(--text-color);
+  border-color: var(--primary-color);
+}
+
+.button-secondary:hover{
+  background-color: var(--secondary-color);
+}
+
+
 /* 橫向移動的 menu */
-.product_menu {
+.product-menu {
   overflow-x: auto;
   white-space: nowrap;
   flex-wrap: nowrap;
 }
 
-.product_menu a {
+.product-menu a {
   display: inline-block;
   padding: 0.5rem 1rem;
-  color: #6c757d;
+  color: var(--text-color) !important;
   text-decoration: none;
   font-weight: bold;
 }
 
 .product-menu a:hover {
-  color: #007bff;
+  color: var(--accent-color);
 }
 
 .product-card {
-  border: 1px solid #dee2e6;
+  border: 1px solid var(--border-color);
 }
 
 .product-card img {
@@ -73,38 +103,77 @@ a {
 }
 
 .footer {
-  background-color: #f8f9fa;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid var(--primary-color);
 }
 
 .footer a {
-  color: #6c757d;
+  color: var(--text-color) !important;
 }
 
 .footer a:hover {
-  color: #007bff;
+  color: var(--accent-color);
 }
 
 .footer i {
-  color: #6c757d;
+  color: var(--primary-color);
 }
 
 .footer i:hover {
-  color: #007bff;
+  color: var(--accent-color);
 }
 
 /* navbar 區塊 */
 .navbar{
-  background-color: #393D46 !important;
-  color: #ffffff;
+  background-color: var(--primary-color) !important;
 }
 
 .navbar .navbar-brand,
 .navbar .nav-link {
-  color: #ffffff !important;  /* 文字顏色 */
+  color: var(--light-text-color) !important;  /* 文字顏色 */
 }
 
 .navbar .nav-link:hover,
 .navbar .navbar-brand:hover {
-  color: #d1d1d1 !important; /* 滑鼠懸停時的顏色 */
+  color: var(--light-hover-color) !important; /* 滑鼠懸停時的顏色 */
+}
+
+/* login modal */
+.login-modal{
+  color: var(--text-color);
+}
+
+.login-modal-footer{
+  text-align: right;
+  text-decoration: underline;
+  color: var(--accent-color);
+}
+
+/* 以下是後臺管理系統的樣式 */
+
+/* 側邊欄樣式 */
+.sidebar {
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+}
+
+.sidebar ul li button {
+  color: var(--light-text-color);
+}
+
+.sidebar ul li button:hover {
+  color: var(--light-hover-color);
+}
+
+/* 表格樣式 */
+.table thead {
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+}
+
+.table tbody tr:hover {
+  background-color: var(--light-hover-color);
+}
+
+.table td, .table th {
+  border-color: var(--border-color);
 }

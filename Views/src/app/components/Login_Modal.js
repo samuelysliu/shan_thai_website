@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Modal, Button, Form } from 'react-bootstrap';
+import { Modal, Button, Form, Col } from 'react-bootstrap';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import { useRouter } from 'next/navigation';
 
@@ -28,14 +28,14 @@ export default function LoginModal({ show, handleClose }) {
     e.preventDefault();
     // 此處執行一般登入/註冊邏輯
     console.log("Email:", form.email, "Password:", form.password);
-    router.push("/dashboard"); 
+    router.push("/dashboard");
   };
 
   return (
     <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
-      <Modal show={show} onHide={handleClose}>
+      <Modal className="login-modal" show={show} onHide={handleClose}>
         <Modal.Header closeButton>
-          <Modal.Title>會員登入 / 註冊</Modal.Title>
+          <Modal.Title>會員登入</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {/* Google 第三方登入按鈕 */}
@@ -69,11 +69,19 @@ export default function LoginModal({ show, handleClose }) {
                 required
               />
             </Form.Group>
-            <Button variant="primary" type="submit" className="w-100">
-              登入 / 註冊
+
+            <Button type="submit" className="button-primary w-100">
+              登入
             </Button>
+            <Button className="button-secondary w-100" onClick={() => changeModal()}>
+              註冊
+            </Button>
+
           </Form>
         </Modal.Body>
+        <Modal.Footer className="login-modal-footer">
+          <Col><a>忘記密碼了嗎？</a></Col>
+        </Modal.Footer>
       </Modal>
     </GoogleOAuthProvider>
   );
