@@ -1,7 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from dbInit import Banner as BannerModel
+from Modules.dbInit import Banner as BannerModel
 
 
 

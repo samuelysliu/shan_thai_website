@@ -1,0 +1,131 @@
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+import Modules.product_crud as product_db
+import Modules.dbConnect as db_connect
+
+import cloudinary
+import cloudinary.uploader
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+router = APIRouter()
+get_db = db_connect.get_db
+
+
+class Product(BaseModel):
+    id: int
+    title_cn: str
+    content_cn: str
+    price: int
+    remain: int
+    productImageUrl: str
+
+
+def handleImageUpload(file: UploadFile = File(...)):
+    cloudinary.config(
+        cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+        api_key=os.getenv("CLOUDINARY_API_KEY"),
+        api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+        secure=True,
+    )
+
+    try:
+        upload_result = cloudinary.uploader.upload(
+            file.file,
+            folder="products",
+            public_id=file.filename.split(".")[0],
+            resource_type="image",
+            overwrite=True,
+        )
+
+        # Build the URL for the image and save it in the variable 'srcURL'
+        srcURL = upload_result.get("secure_url")  # 獲取圖片的公開 URL
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Image upload failed: {str(e)}")
+
+    return srcURL
+
+
+@router.get("/product")
+async def get_product(db: Session = Depends(get_db)):
+    product = product_db.get_product(db)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+
+@router.patch("/product/{product_id}")
+async def update_partial_product(
+    product_id: int,
+    title_cn: str = Form(None),
+    content_cn: str = Form(None),
+    price: int = Form(None),
+    remain: int = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(db_connect.get_db),
+):
+
+    # 構建要更新的資料
+    update_data = {}
+    if title_cn is not None:
+        update_data["title_cn"] = title_cn
+    if content_cn is not None:
+        update_data["content_cn"] = content_cn
+    if price is not None:
+        update_data["price"] = price
+    if remain is not None:
+        update_data["remain"] = remain
+        
+    if file is not None:
+        update_data["productImageUrl"] = handleImageUpload(file)
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    updated_product = product_db.update_partial_product(db, product_id, update_data)
+    if not updated_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return updated_product
+
+
+@router.post("/product")
+async def create_product(
+    title_cn: str = Form(...),
+    content_cn: str = Form(...),
+    price: int = Form(...),
+    remain: int = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+
+    # 先將圖片上傳到cloudinary
+    productImageUrl = handleImageUpload(file)
+
+    # 儲存產品資訊到DB
+    created_product = product_db.create_product(
+        db,
+        title_cn,
+        content_cn,
+        price,
+        remain,
+        productImageUrl,
+    )
+    if not created_product:
+        raise HTTPException(status_code=404, detail="Product create failed")
+    return created_product
+
+
+@router.delete("/product/{product_id}")
+async def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+):
+    success = product_db.delete_product(db, product_id=product_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return {"detail": "success"}

@@ -5,12 +5,11 @@ import Modules.banner_crud as banner_db
 import Modules.about_crud as about_db
 import Modules.contact_crud as contact_db
 import Modules.external_link_crud as external_link_db
-import Modules.product_crud as product_db
 import Modules.team_crud as team_db
 import Modules.dbConnect as db_connect
 
 router = APIRouter()
-get_db = db_connect.db_connect()
+get_db = db_connect.get_db
 
 class Banner(BaseModel):
     title_cn: str
@@ -24,11 +23,6 @@ class About(BaseModel):
     content_cn: str
     aboutImageUrl: str
     
-class Product(BaseModel):
-    No: int
-    title_cn: str
-    content_cn: str
-    productImageUrl: str
     
 class CustomerSay(BaseModel):
     No: int
@@ -93,7 +87,8 @@ async def create_banner(banner: Banner, db: Session = Depends(get_db)):
     return created_banner
 
 @router.delete("/banner")
-async def delete_banner(banner_id: 1, db: Session = Depends(get_db)):
+async def delete_banner(db: Session = Depends(get_db)):
+    banner_id = 1
     success = banner_db.delete_banner(banner_id, db)
     if not success:
         raise HTTPException(status_code=404, detail="Banner not found")
@@ -120,7 +115,8 @@ async def create_about(about: About, db: Session = Depends(get_db)):
     return created_about
 
 @router.put("/about")
-async def update_about(about_id: 1, about: About, db: Session = Depends(get_db)):
+async def update_about(about: About, db: Session = Depends(get_db)):
+    about_id = 1
     updated_about = about_db.update_about(
         db,
         about_id,
@@ -133,7 +129,8 @@ async def update_about(about_id: 1, about: About, db: Session = Depends(get_db))
     return updated_about
 
 @router.delete("/about")
-async def delete_about(about_id: 1, db: Session = Depends(get_db)):
+async def delete_about(db: Session = Depends(get_db)):
+    about_id = 1
     success = about_db.delete_about(about_id, db)
     if not success:
         raise HTTPException(status_code=404, detail="About not found")

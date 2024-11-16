@@ -1,85 +1,163 @@
-// src/app/components/ProductManagement.js
 "use client";
 
-import React, { useState } from 'react';
-import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from 'react-bootstrap';
-import Sidebar from './Sidebar';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "react-bootstrap";
+import Sidebar from "./Sidebar";
+import config from "../config";
 
 export default function ProductManagement() {
+    let endpoint = config.apiBaseUrl;
+
     const [searchTerm, setSearchTerm] = useState("");
     const [filter, setFilter] = useState("all");
-    const [products, setProducts] = useState([
-        { id: 1, name: "產品A", price: 500, category: "分類一", description: "描述A", stock: 10, images: [] },
-        { id: 2, name: "產品B", price: 1000, category: "分類二", description: "描述B", stock: 5, images: [] },
-        { id: 3, name: "產品C", price: 750, category: "分類一", description: "描述C", stock: 8, images: [] },
-    ]);
+    const [products, setProducts] = useState([]); // 初始化為空陣列
+    const [loading, setLoading] = useState(true);
 
     // 控制彈出視窗顯示
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentProduct, setCurrentProduct] = useState({
-        id: null,
-        images: [],
-        title: "",
-        description: "",
+        pid: null,
+        title_cn: "",
+        content_cn: "",
         price: "",
-        stock: "",
+        remain: "",
+        productImageUrl: "",
     });
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
+
+    // 從後端拉取產品列表
+    const fetchProducts = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(endpoint + "/backstage/v1/product");
+            setProducts(response.data); // 更新產品列表
+        } catch (error) {
+            console.error("無法拉取產品列表：", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 刪除指定產品
+    const deleteProducts = async (pid) => {
+        setLoading(true);
+        try {
+            const response = await axios.delete(endpoint + "/backstage/v1/product/" + pid);
+            setProducts(products.filter(product => product.pid !== pid)); // 更新產品列表
+        } catch (error) {
+            console.error("無法刪除該產品：", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // 新增產品
+    const createProducts = async () => {
+        setLoading(true);
+        try {
+            const formData = new FormData();
+            formData.append("title_cn", currentProduct.title_cn);
+            formData.append("content_cn", currentProduct.content_cn);
+            formData.append("price", currentProduct.price);
+            formData.append("remain", currentProduct.remain)
+            if (currentProduct.productImageFile) {
+                formData.append("file", currentProduct.productImageFile); // 圖片檔案
+            }
+
+            const response = await axios.post(endpoint + "/backstage/v1/product",
+                formData,
+                {
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                });
+            const newProduct = response.data;
+            setProducts((prevProducts) => [...prevProducts, newProduct]);
+            handleCloseModal();
+        } catch (error) {
+            console.error("無法新增產品：", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    // 修改產品內容
+    const updateProducts = async () => {
+        const formData = new FormData();
+        if (currentProduct.title_cn) formData.append("title_cn", currentProduct.title_cn);
+        if (currentProduct.content_cn) formData.append("content_cn", currentProduct.content_cn);
+        if (currentProduct.price) formData.append("price", currentProduct.price);
+        if (currentProduct.remain) formData.append("remain", currentProduct.remain);
+        
+        // 判斷是否需要上傳圖片
+        if (currentProduct.productImageFile) {
+            // 若使用者上傳新圖片
+            formData.append("file", currentProduct.productImageFile);
+        } else if (currentProduct.productImageUrl) {
+            // 若圖片未變更，傳遞圖片 URL
+            formData.append("productImageUrl", currentProduct.productImageUrl);
+        }
+        try {
+            const response = await axios.patch(endpoint + "/backstage/v1/product/" + currentProduct.pid,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                }
+            );
+
+            const updatedProduct = response.data;
+
+            // 更新本地產品列表
+            setProducts((prevProducts) =>
+                prevProducts.map((product) =>
+                    product.pid === updatedProduct.pid ? updatedProduct : product
+                )
+            );
+            handleCloseModal(); // 關閉彈窗
+        } catch (error) {
+            console.error("Failed to update product:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     const handleSearch = (e) => setSearchTerm(e.target.value);
     const handleFilterChange = (e) => setFilter(e.target.value);
+
+    const filteredProducts = products.filter((product) => {
+        const title = product.title_cn || ""; // 預設為空字串
+        return (
+            (filter === "all" || product.category === filter) &&
+            title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    });
 
     // 彈出視窗相關操作
     const handleShowModal = () => setShowModal(true);
     const handleCloseModal = () => {
         setShowModal(false);
         setIsEditing(false);
-        setCurrentProduct({ id: null, images: [], title: "", description: "", price: "", stock: "" });
+        setCurrentProduct({
+            pid: null,
+            title_cn: "",
+            content_cn: "",
+            price: "",
+            remain: "",
+            productImageUrl: "",
+        });
     };
 
-    const handleProductChange = (e) => {
-        const { name, value } = e.target;
-        setCurrentProduct((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
-        setCurrentProduct((prev) => ({ ...prev, images: [...prev.images, ...files] }));
-    };
-
-    const handleAddProduct = () => {
-        const newId = products.length + 1;
-        const newProduct = { ...currentProduct, id: newId };
-        setProducts([...products, newProduct]);
-        handleCloseModal();
-    };
-
+    // 點擊編輯按鈕時的處理
     const handleEditProduct = (product) => {
         setIsEditing(true);
-        setCurrentProduct({
-            id: product.id,
-            images: product.images,
-            title: product.name,
-            description: product.description,
-            price: product.price,
-            stock: product.stock,
-        });
-        handleShowModal();
+        setCurrentProduct(product); // 設置為當前產品
+        setShowModal(true);
     };
-
-    const handleSaveChanges = () => {
-        setProducts(products.map((product) =>
-            product.id === currentProduct.id ? { ...product, ...currentProduct, name: currentProduct.title } : product
-        ));
-        handleCloseModal();
-    };
-
-    const filteredProducts = products.filter(product => {
-        return (
-            (filter === "all" || product.category === filter) &&
-            product.name.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    });
 
     return (
         <Container fluid>
@@ -108,38 +186,59 @@ export default function ProductManagement() {
                             </Form.Select>
                         </Col>
                         <Col md={2}>
-                            <Button variant="primary" style={{ backgroundColor: "var(--accent-color)", borderColor: "var(--accent-color)" }} onClick={handleShowModal}>
+                            <Button
+                                variant="primary"
+                                style={{ backgroundColor: "var(--accent-color)", borderColor: "var(--accent-color)" }}
+                                onClick={handleShowModal}
+                            >
                                 新增產品
                             </Button>
                         </Col>
                     </Row>
 
-                    {/* 產品表格 */}
-                    <Table striped bordered hover>
-                        <thead style={{ backgroundColor: "var(--primary-color)", color: "var(--light-text-color)" }}>
-                            <tr>
-                                <th>產品編號</th>
-                                <th>產品名稱</th>
-                                <th>價格</th>
-                                <th>分類</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredProducts.map(product => (
-                                <tr key={product.id}>
-                                    <td>{product.id}</td>
-                                    <td>{product.name}</td>
-                                    <td>NT. {product.price}</td>
-                                    <td>{product.category}</td>
-                                    <td>
-                                        <Button variant="link" style={{ color: "var(--accent-color)" }} onClick={() => handleEditProduct(product)}>編輯</Button> |
-                                        <Button variant="link" style={{ color: "var(--secondary-color)" }}>刪除</Button>
-                                    </td>
+                    {/* Loading 狀態 */}
+                    {loading ? (
+                        <p>Loading...</p>
+                    ) : (
+                        <Table striped bordered hover>
+                            <thead style={{ backgroundColor: "var(--primary-color)", color: "var(--light-text-color)" }}>
+                                <tr>
+                                    <th>產品編號</th>
+                                    <th>產品名稱</th>
+                                    <th>價格</th>
+                                    <th>剩餘數量</th>
+                                    <th>操作</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </Table>
+                            </thead>
+                            <tbody>
+                                {filteredProducts.map((product) => (
+                                    <tr key={product.pid}>
+                                        <td>{product.pid}</td>
+                                        <td>{product.title_cn}</td>
+                                        <td>NT. {product.price}</td>
+                                        <td>{product.remain}</td>
+                                        <td>
+                                            <Button
+                                                variant="link"
+                                                style={{ color: "var(--accent-color)" }}
+                                                onClick={() => handleEditProduct(product)}
+                                            >
+                                                編輯
+                                            </Button>
+                                            |
+                                            <Button
+                                                variant="link"
+                                                style={{ color: "var(--secondary-color)" }}
+                                                onClick={() => deleteProducts(product.pid)}
+                                            >
+                                                刪除
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    )}
                 </Col>
             </Row>
 
@@ -151,17 +250,14 @@ export default function ProductManagement() {
                 <Modal.Body>
                     <Form>
                         <Form.Group className="mb-3">
-                            <Form.Label>圖片上傳</Form.Label>
-                            <Form.Control type="file" multiple onChange={handleImageUpload} />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>標題</Form.Label>
+                            <Form.Label>產品名稱</Form.Label>
                             <Form.Control
                                 type="text"
-                                name="title"
-                                value={currentProduct.title}
-                                onChange={handleProductChange}
-                                placeholder="輸入產品標題"
+                                value={currentProduct.title_cn}
+                                name="title_cn"
+                                onChange={(e) =>
+                                    setCurrentProduct({ ...currentProduct, title_cn: e.target.value })
+                                }
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
@@ -169,32 +265,56 @@ export default function ProductManagement() {
                             <Form.Control
                                 as="textarea"
                                 rows={3}
-                                name="description"
-                                value={currentProduct.description}
-                                onChange={handleProductChange}
-                                placeholder="輸入產品說明"
+                                value={currentProduct.content_cn}
+                                name="content_cn"
+                                onChange={(e) =>
+                                    setCurrentProduct({ ...currentProduct, content_cn: e.target.value })
+                                }
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>價格</Form.Label>
                             <Form.Control
                                 type="number"
-                                name="price"
                                 value={currentProduct.price}
-                                onChange={handleProductChange}
-                                placeholder="輸入價格"
+                                name="price"
+                                onChange={(e) =>
+                                    setCurrentProduct({ ...currentProduct, price: e.target.value })
+                                }
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>剩餘數量</Form.Label>
                             <Form.Control
                                 type="number"
-                                name="stock"
-                                value={currentProduct.stock}
-                                onChange={handleProductChange}
-                                placeholder="輸入剩餘數量"
+                                value={currentProduct.remain}
+                                name="remain"
+                                onChange={(e) =>
+                                    setCurrentProduct({ ...currentProduct, remain: e.target.value })
+                                }
                             />
                         </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>圖片上傳</Form.Label>
+                            <Form.Control
+                                type="file"
+                                onChange={(e) =>
+                                    setCurrentProduct({
+                                        ...currentProduct,
+                                        productImageFile: e.target.files[0], // 圖片檔案
+                                    })
+                                }
+                            />
+                            {currentProduct.productImageUrl && (
+                                <img
+                                    src={currentProduct.productImageUrl}
+                                    alt="product"
+                                    width="100%"
+                                    className="mt-2"
+                                />
+                            )}
+                        </Form.Group>
+
                     </Form>
                 </Modal.Body>
                 <Modal.Footer>
@@ -204,7 +324,7 @@ export default function ProductManagement() {
                     <Button
                         variant="primary"
                         style={{ backgroundColor: "var(--accent-color)", borderColor: "var(--accent-color)" }}
-                        onClick={isEditing ? handleSaveChanges : handleAddProduct}
+                        onClick={isEditing ? updateProducts : createProducts}
                     >
                         {isEditing ? "儲存修改" : "新增"}
                     </Button>

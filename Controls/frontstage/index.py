@@ -10,7 +10,7 @@ import Modules.team_crud as team_db
 import Modules.dbConnect as db_connect
 
 router = APIRouter()
-get_db = db_connect.db_connect()
+get_db = db_connect.get_db
 
 # 取得所有 Banner 資料
 @router.get("/banners")
