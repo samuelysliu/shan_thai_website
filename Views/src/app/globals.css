@@ -18,6 +18,13 @@
   }
 }
 
+@font-face {
+  font-family: "chinese-cust"; /* 自定義字體名稱 */
+  src: url("/fonts/方正舒體.ttf") format("truetype"); /* 指向你的字體檔案路徑 */
+  font-weight: normal; /* 定義字體權重（normal、bold等） */
+  font-style: normal; /* 定義字體樣式（normal、italic等） */
+}
+
 html,
 body {
   max-width: 100vw;
@@ -31,6 +38,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-family: "chinese-cust", sans-serif !important; /* 自定義字體作為主要字體 */
 }
 
 * {
@@ -147,6 +155,22 @@ a {
   text-decoration: underline;
   color: var(--accent-color);
 }
+
+/* 客戶訂單管理 */
+.order-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.order-card .card-title {
+  font-size: 1.25rem;
+}
+
+.order-card .card-text {
+  font-size: 0.9rem;
+}
+
 
 /* 以下是後臺管理系統的樣式 */
 

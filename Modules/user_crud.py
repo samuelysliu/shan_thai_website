@@ -2,7 +2,35 @@ from sqlalchemy.orm import Session
 from Modules.dbInit import User
 from sqlalchemy.exc import SQLAlchemyError
 
-# 根據 email 獲取用戶
+
+# 檢查用戶是否存在
+def user_exists(db: Session, email: str) -> bool:
+    try:
+        return db.query(User).filter(User.email == email).first() is not None
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return False
+
+
+# 獲取所有用戶
+def get_all_users(db: Session):
+    try:
+        return db.query(User).all()
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return None
+
+
+# 根據 UID 獲取用戶
+def get_user_by_uid(db: Session, uid: int):
+    try:
+        return db.query(User).filter(User.uid == uid).first()
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return None
+
+
+# 根據 Email 獲取用戶
 def get_user_by_email(db: Session, email: str):
     try:
         return db.query(User).filter(User.email == email).first()
@@ -10,14 +38,12 @@ def get_user_by_email(db: Session, email: str):
         print(f"Error: {e}")
         return None
 
+
 # 創建新用戶
 def create_user(db: Session, email: str, username: str, password: str, identity: str):
     try:
         new_user = User(
-            email=email,
-            username=username,
-            password=password,
-            identity=identity
+            email=email, username=username, password=password, identity=identity
         )
         db.add(new_user)
         db.commit()
@@ -27,13 +53,23 @@ def create_user(db: Session, email: str, username: str, password: str, identity:
         print(f"Error: {e}")
         return None
 
-# 根據 uid 獲取用戶
-def get_user_by_uid(db: Session, uid: int):
+
+# 更新用戶資料，避免修改敏感字段
+def update_user(db: Session, user_id: int, updates: dict):
     try:
-        return db.query(User).filter(User.uid == uid).first()
+        user = db.query(User).filter(User.uid == user_id).first()
+        if user:
+            for key, value in updates.items():
+                if key in {"username", "sex", "star", "note"}:
+                    setattr(user, key, value)
+            db.commit()
+            db.refresh(user)
+            return user
+        return None
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return None
+
 
 # 更新用戶密碼
 def update_user_password(db: Session, uid: int, new_password: str):
@@ -49,6 +85,7 @@ def update_user_password(db: Session, uid: int, new_password: str):
         print(f"Error: {e}")
         return None
 
+
 # 刪除用戶
 def delete_user(db: Session, uid: int):
     try:
@@ -56,6 +93,21 @@ def delete_user(db: Session, uid: int):
         if user:
             db.delete(user)
             db.commit()
+            return True
+        return False
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return False
+
+
+# 軟刪除用戶
+def soft_delete_user(db: Session, uid: int):
+    try:
+        user = db.query(User).filter(User.uid == uid).first()
+        if user:
+            user.is_active = False  # 標記為已刪除
+            db.commit()
+            db.refresh(user)
             return True
         return False
     except SQLAlchemyError as e:

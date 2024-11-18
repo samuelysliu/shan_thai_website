@@ -8,14 +8,21 @@ from requests_oauthlib import OAuth2Session
 import os
 
 router = APIRouter()
-get_db = db_connect.db_connect()
+get_db = db_connect.get_db
 
 # 註冊用模型
-class UserRegistration(BaseModel):
+class UserBase(BaseModel):
     email: EmailStr
     username: str
+    sex: str | None = None
+    star: int | None = 0
+    note: str | None = None
+
+    class Config:
+        orm_mode = True
+
+class UserRegistration(UserBase):
     password: str
-    identity: str
 
 # 登入用模型
 class UserLogin(BaseModel):
@@ -28,12 +35,12 @@ class PasswordResetRequest(BaseModel):
 
 # 修改密碼用模型
 class PasswordChangeRequest(BaseModel):
-    email: EmailStr
     old_password: str
     new_password: str
 
+
 # 註冊 API
-@router.post("/register")
+@router.post("/register", response_model=UserBase)
 async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     # 檢查用戶是否已存在
     existing_user = user_db.get_user_by_email(db, user.email)
@@ -49,13 +56,62 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
         email=user.email,
         username=user.username,
         password=hashed_password,
-        identity=user.identity
+        identity="user",
     )
 
     if not new_user:
         raise HTTPException(status_code=500, detail="Failed to create user")
     
     return {"detail": "User registered successfully"}
+
+# 查看用戶資料
+@router.get("/profile", response_model=UserBase)
+async def get_user_profile(db: Session = Depends(get_db), uid: int = None):
+    if uid is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
+    user = user_db.get_user_by_uid(db, uid)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+# 修改會員資料
+@router.put("/profile", response_model=UserBase)
+async def update_user_profile(
+    updates: UserBase, db: Session = Depends(get_db), uid: int = None
+):
+    if uid is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
+    existing_user = user_db.get_user_by_uid(db, uid)
+    if not existing_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    update_data = updates.dict(exclude_unset=True)  # 僅更新提供的字段
+    updated_user = user_db.update_user(db, user_id=uid, updates=update_data)
+    if not updated_user:
+        raise HTTPException(status_code=500, detail="Failed to update user")
+    return updated_user
+
+# 修改密碼
+@router.put("/change-password")
+async def change_password(
+    request: PasswordChangeRequest, db: Session = Depends(get_db), uid: int = None
+):
+    if uid is None:
+        raise HTTPException(status_code=400, detail="User ID is required")
+    user = user_db.get_user_by_uid(db, uid)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not checkpw(request.old_password.encode("utf-8"), user.password.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Old password is incorrect")
+
+    hashed_new_password = hashpw(request.new_password.encode("utf-8"), gensalt()).decode(
+        "utf-8"
+    )
+    updated_user = user_db.update_user_password(db, uid=uid, new_password=hashed_new_password)
+    if not updated_user:
+        raise HTTPException(status_code=500, detail="Failed to update password")
+    return {"detail": "Password updated successfully"}
 
 # 登入 API
 @router.post("/login")
@@ -84,27 +140,6 @@ async def forgot_password(request: PasswordResetRequest, db: Session = Depends(g
 
     return {"detail": "Password reset link sent to your email"}
 
-# 修改密碼 API
-@router.put("/change-password")
-async def change_password(request: PasswordChangeRequest, db: Session = Depends(get_db)):
-    # 檢查用戶是否存在
-    user = user_db.get_user_by_email(db, request.email)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    # 檢查舊密碼是否正確
-    if not checkpw(request.old_password.encode('utf-8'), user.password.encode('utf-8')):
-        raise HTTPException(status_code=401, detail="Old password is incorrect")
-
-    # 雜湊新密碼
-    hashed_new_password = hashpw(request.new_password.encode('utf-8'), gensalt()).decode('utf-8')
-
-    # 更新密碼
-    updated_user = user_db.update_user_password(db, user.uid, hashed_new_password)
-    if not updated_user:
-        raise HTTPException(status_code=500, detail="Failed to update password")
-
-    return {"detail": "Password updated successfully"}
 
 # Google OAuth 2.0 設定
 CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")  # 從你的 .env 文件中讀取

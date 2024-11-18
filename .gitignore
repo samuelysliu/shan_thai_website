@@ -1,6 +1,8 @@
 venv
 .env
 
+/migrations/alembic.ini
+
 # frontend
 /Views/node_modules
 .pnp.*

@@ -67,7 +67,7 @@ const Product_Grid = () => {
                 <Card.Title>{product.title_cn}</Card.Title>
                 <Card.Text>NT. {product.price}</Card.Text>
                 <Button variant="outline-dark" size="sm">購買</Button>
-                <Button variant="outline-dark" size="sm">加入購物車</Button>
+                <Button variant="outline-dark" size="sm" onClick={() => dispatch(addToCart(product))}>加入購物車</Button>
               </Card.Body>
             </Card>
           </Col>
