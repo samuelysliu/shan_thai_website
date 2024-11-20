@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text
+from sqlalchemy.orm import relationship
 from Modules.dbConnect import engine, Base
 from sqlalchemy.sql import func
 
@@ -92,6 +93,8 @@ class User(Base):
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
+    carts = relationship("Cart", back_populates="product")
+    
 class Order(Base):
     __tablename__ = "orders"
     oid = Column(Integer, primary_key=True, autoincrement=True)
@@ -105,6 +108,10 @@ class Order(Base):
     # 2024/11/18 新增
     created_at = Column(DateTime, default=func.now(), onupdate=func.now()) 
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    # 關聯的用戶與產品
+    user = relationship("User", back_populates="carts")
+    product = relationship("Product", back_populates="carts")
 
 class Term(Base):
     __tablename__ = "terms"
@@ -114,5 +121,19 @@ class Term(Base):
     content = Column(Text, nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     version = Column(String(50), nullable=False)  # 版本名稱
+
+class Cart(Base):
+    __tablename__ = "carts"
+
+    cart_id = Column(Integer, primary_key=True, autoincrement=True)
+    uid = Column(Integer, ForeignKey("users.uid"), nullable=False)
+    pid = Column(Integer, ForeignKey("product.pid"), nullable=False)
+    quantity = Column(Integer, default=1, nullable=False)
+    added_at = Column(DateTime, default=func.now())
+    is_active = Column(Boolean, default=True)  # 是否有效
     
+    # 關聯的用戶與產品
+    user = relationship("User", back_populates="carts")
+    product = relationship("Product", back_populates="carts")
+
 Base.metadata.create_all(bind=engine)
