@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "react-bootstrap";
-import Sidebar from "./Sidebar";
-import config from "../config";
+import Sidebar from "../../components/Sidebar";
+import config from "../../config";
 
 export default function ProductManagement() {
     let endpoint = config.apiBaseUrl;
@@ -23,11 +23,14 @@ export default function ProductManagement() {
         content_cn: "",
         price: "",
         remain: "",
+        productTag: "",
         productImageUrl: "",
     });
+    const [productTags, setProductTags] = useState([]);
 
     useEffect(() => {
         fetchProducts();
+        fetchTags();
     }, []);
 
     // 從後端拉取產品列表
@@ -93,7 +96,7 @@ export default function ProductManagement() {
         if (currentProduct.content_cn) formData.append("content_cn", currentProduct.content_cn);
         if (currentProduct.price) formData.append("price", currentProduct.price);
         if (currentProduct.remain) formData.append("remain", currentProduct.remain);
-        
+
         // 判斷是否需要上傳圖片
         if (currentProduct.productImageFile) {
             // 若使用者上傳新圖片
@@ -126,8 +129,19 @@ export default function ProductManagement() {
         }
     }
 
+    // 從後端拉取產品標籤列表
+    const fetchTags = async () => {
+        try {
+            const response = await axios.get(endpoint + "/backstage/v1/product_tag");
+            setProductTags(response.data); // 更新產品列表
+        } catch (error) {
+            console.error("無法拉取產品列表：", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSearch = (e) => setSearchTerm(e.target.value);
-    const handleFilterChange = (e) => setFilter(e.target.value);
 
     const filteredProducts = products.filter((product) => {
         const title = product.title_cn || ""; // 預設為空字串
@@ -148,6 +162,7 @@ export default function ProductManagement() {
             content_cn: "",
             price: "",
             remain: "",
+            productTag: "",
             productImageUrl: "",
         });
     };
@@ -179,10 +194,21 @@ export default function ProductManagement() {
                             </InputGroup>
                         </Col>
                         <Col md={4}>
-                            <Form.Select onChange={handleFilterChange} value={filter}>
-                                <option value="all">所有分類</option>
-                                <option value="分類一">分類一</option>
-                                <option value="分類二">分類二</option>
+                            <Form.Select
+                                value={currentProduct.productTag || ""}
+                                onChange={(e) =>
+                                    setCurrentProduct({
+                                        ...currentProduct,
+                                        productTag: e.target.value,
+                                    })
+                                }
+                            >
+                                <option value="">請選擇標籤</option>
+                                {productTags.map((tag) => (
+                                    <option key={tag.ptid} value={tag.productTag}>
+                                        {tag.productTag}
+                                    </option>
+                                ))}
                             </Form.Select>
                         </Col>
                         <Col md={2}>
@@ -207,6 +233,7 @@ export default function ProductManagement() {
                                     <th>產品名稱</th>
                                     <th>價格</th>
                                     <th>剩餘數量</th>
+                                    <th>產品標籤</th>
                                     <th>操作</th>
                                 </tr>
                             </thead>
@@ -217,6 +244,7 @@ export default function ProductManagement() {
                                         <td>{product.title_cn}</td>
                                         <td>NT. {product.price}</td>
                                         <td>{product.remain}</td>
+                                        <td>{product.productTag}</td>
                                         <td>
                                             <Button
                                                 variant="link"
@@ -295,14 +323,41 @@ export default function ProductManagement() {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
+                            <Form.Label>產品標籤</Form.Label>
+                            <Form.Select
+                                value={currentProduct.productTag}
+                                onChange={(e) =>
+                                    setCurrentProduct({ ...currentProduct, productTag: e.target.value })
+                                }
+                            >
+                                <option value="">請選擇標籤</option>
+                                {productTags.map((tag) => (
+                                    <option key={tag.ptid} value={tag.productTag}>
+                                        {tag.productTag}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
                             <Form.Label>圖片上傳</Form.Label>
                             <Form.Control
                                 type="file"
-                                onChange={(e) =>
-                                    setCurrentProduct({
-                                        ...currentProduct,
-                                        productImageFile: e.target.files[0], // 圖片檔案
-                                    })
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                        const fileType = file.type;
+                                        // 確認檔案類型是否正確
+                                        if (fileType === "image/jpeg" || fileType === "image/png") {
+                                            setCurrentProduct({
+                                                ...currentProduct,
+                                                productImageFile: file, // 圖片檔案
+                                            });
+                                        } else {
+                                            alert("請上傳 JPG 或 PNG 格式的圖片");
+                                            e.target.value = ""; // 清空輸入
+                                        }
+                                    }
+                                }
                                 }
                             />
                             {currentProduct.productImageUrl && (

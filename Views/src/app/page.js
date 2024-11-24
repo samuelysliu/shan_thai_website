@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 import Product_Grid from './components/Product_Grid';
 import Product_Menu from './components/Product_Menu';
 import Pagination_Component from './components/Pagination_Component';
@@ -10,29 +10,29 @@ import Footer from './components/Footer';
 import Navbar from './components/Navbar';
 
 import { Provider } from "react-redux";
-import { store } from "./redux/store";
+import { store, persistor } from "./redux/store";
+import { PersistGate } from "redux-persist/integration/react";
 
 
 const HomePage = () => {
   return (
-    <>
-      <Navbar />
-      <Container>
-        {/* Banner */}
-        <Row>
-          <Col>1 of 2</Col>
-        </Row>
-        {/* Menu */}
-        <Product_Menu />
-        {/* product */}
-        <Provider store={store}>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <Navbar />
+        <Container>
+          {/* Banner */}
+          <Row>
+            <Col>1 of 2</Col>
+          </Row>
+          {/* Menu */}
+          <Product_Menu />
+          {/* product */}
           <Product_Grid />
-        </Provider>
-        <Pagination_Component />
-        <Footer />
-
-      </Container>
-    </>
+          <Pagination_Component />
+          <Footer />
+        </Container>
+      </PersistGate>
+    </Provider>
   );
 };
 

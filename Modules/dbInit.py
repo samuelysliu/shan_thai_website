@@ -15,6 +15,8 @@ class Banner(Base):
     buttonText_en = Column(String(255))
     buttonLink = Column(String)
     bannerImageUrl = Column(String)
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 class About(Base):
     __tablename__ = "about"
@@ -25,22 +27,6 @@ class About(Base):
     content_cn = Column(Text)
     content_en = Column(Text)
     aboutImageUrl = Column(String)
-    
-class Product(Base):
-    __tablename__ = "product"
-
-    pid = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    title_cn = Column(String(255), index=True)
-    title_en = Column(String(255))
-    content_cn = Column(Text)
-    content_en = Column(Text)
-    price = Column(Integer, default=0)
-    specialPrice = Column(Integer, default=None, nullable=True)
-    remain = Column(Integer, default=0)
-    sold = Column(Integer, default=0)
-    productImageUrl = Column(String)
-    # 2024/11/18 新增
-    productTag = Column(String(255))
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
@@ -53,6 +39,8 @@ class Team(Base):
     title_cn = Column(String(255))
     title_en = Column(String(255))
     teamImageUrl = Column(String)
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
 class Contact(Base):
     __tablename__ = "contact"
@@ -66,6 +54,8 @@ class Contact(Base):
     address_en = Column(String(255))
     phone = Column(String(20))
     email = Column(String(255))
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
 class ExternalLink(Base):
     __tablename__ = "external_link"
@@ -75,25 +65,49 @@ class ExternalLink(Base):
     name_en = Column(String(255))
     iconImageUrl = Column(String)
     show = Column(Boolean)
-    # 2024/11/18 新增
     externalLink = Column(String)
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
+class Product(Base):
+    __tablename__ = "product"
+
+    pid = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    title_cn = Column(String(255), index=True)
+    title_en = Column(String(255))
+    content_cn = Column(Text)
+    content_en = Column(Text)
+    price = Column(Integer, default=0)
+    specialPrice = Column(Integer, default=None, nullable=True)
+    remain = Column(Integer, default=0)
+    sold = Column(Integer, default=0)
+    productImageUrl = Column(String)
+    productTag = Column(Integer, ForeignKey("product_tag.ptid"))
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    # 關聯其他資料庫
+    orders = relationship("Order", back_populates="product")
+    carts = relationship("Cart", back_populates="product")
+    product_tag = relationship("ProductTag", back_populates="product")
+    
 class User(Base):
     __tablename__ = "users"
     uid = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String(255), unique=True, nullable=False)
+    email = Column(String(255), unique=True, nullable=False, index=True)
     username = Column(String(50), nullable=False)
-    password = Column(String(50), nullable=False)
+    password = Column(String(255), nullable=False)
     sex = Column(String(255), nullable=True)
     star = Column(Integer, default=0)
     identity = Column(String(255), nullable=True)
     note =Column(Text, nullable=True)
-    
-    # 2024/11/18 新增
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
-    carts = relationship("Cart", back_populates="product")
+    # 關聯其他資料庫
+    carts = relationship("Cart", back_populates="users")
+    orders = relationship("Order", back_populates="users")
+
     
 class Order(Base):
     __tablename__ = "orders"
@@ -104,14 +118,13 @@ class Order(Base):
     address = Column(String)
     transportationMethod = Column(String(50))
     status = Column(String(50))
-    
-    # 2024/11/18 新增
     created_at = Column(DateTime, default=func.now(), onupdate=func.now()) 
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
-    # 關聯的用戶與產品
-    user = relationship("User", back_populates="carts")
-    product = relationship("Product", back_populates="carts")
+    # 關聯其他資料庫
+    users = relationship("User", back_populates="orders")
+    product = relationship("Product", back_populates="orders")
+
 
 class Term(Base):
     __tablename__ = "terms"
@@ -121,6 +134,8 @@ class Term(Base):
     content = Column(Text, nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     version = Column(String(50), nullable=False)  # 版本名稱
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 class Cart(Base):
     __tablename__ = "carts"
@@ -131,9 +146,20 @@ class Cart(Base):
     quantity = Column(Integer, default=1, nullable=False)
     added_at = Column(DateTime, default=func.now())
     is_active = Column(Boolean, default=True)  # 是否有效
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
-    # 關聯的用戶與產品
-    user = relationship("User", back_populates="carts")
+    # 關聯其他資料庫
+    users = relationship("User", back_populates="carts")
     product = relationship("Product", back_populates="carts")
+
+class ProductTag(Base):
+    __tablename__ = "product_tag"
+
+    ptid = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    productTag = Column(String(255), nullable=False)
+    
+    # 關聯其他資料庫
+    product = relationship("Product", back_populates="product_tag")
 
 Base.metadata.create_all(bind=engine)

@@ -22,7 +22,7 @@ class OrderResponse(OrderBase):
     uid: int
 
     class Config:
-        orm_mode = True
+        from_attributes  = True
 
 
 # **檢視用戶自己的歷史訂單**

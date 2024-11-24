@@ -24,7 +24,7 @@ const Product_Grid = () => {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(endpoint + "/frontstage/v1/product"); // API 路徑
+      const response = await axios.get(endpoint + "/product/v1/product"); // API 路徑
       dispatch(setProducts(response.data)); // 儲存到 Redux Store
     } catch (err) {
       setError("無法加載產品清單，請稍後再試。");

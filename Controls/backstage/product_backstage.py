@@ -25,6 +25,25 @@ class Product(BaseModel):
     productImageUrl: str
 
 
+class ProductTagBase(BaseModel):
+    productTag: str
+
+
+class ProductTagCreate(ProductTagBase):
+    pass
+
+
+class ProductTagUpdate(ProductTagBase):
+    pass
+
+
+class ProductTag(ProductTagBase):
+    ptid: int
+
+    class Config:
+        orm_mode = True
+
+
 def handleImageUpload(file: UploadFile = File(...)):
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -66,8 +85,9 @@ async def update_partial_product(
     content_cn: str = Form(None),
     price: int = Form(None),
     remain: int = Form(None),
+    product_tag: int = Form(None),
     file: UploadFile = File(None),
-    db: Session = Depends(db_connect.get_db),
+    db: Session = Depends(get_db),
 ):
 
     # 構建要更新的資料
@@ -80,7 +100,9 @@ async def update_partial_product(
         update_data["price"] = price
     if remain is not None:
         update_data["remain"] = remain
-        
+    if product_tag is not None:
+        update_data["productTag"] = product_tag
+
     if file is not None:
         update_data["productImageUrl"] = handleImageUpload(file)
 
@@ -99,6 +121,7 @@ async def create_product(
     content_cn: str = Form(...),
     price: int = Form(...),
     remain: int = Form(...),
+    product_tag: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
@@ -113,6 +136,7 @@ async def create_product(
         content_cn,
         price,
         remain,
+        product_tag,
         productImageUrl,
     )
     if not created_product:
@@ -129,3 +153,30 @@ async def delete_product(
     if not success:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"detail": "success"}
+
+
+# 產品標籤的操作
+@router.get("/product_tag")
+async def get_product_tag(db: Session = Depends(get_db)):
+    product_tag = product_db.get_all_product_tags(db)
+    if not product_tag:
+        raise HTTPException(status_code=404, detail="Product tag not found")
+    return product_tag
+
+
+@router.post("/product_tag")
+def create_tag(tag: ProductTagCreate, db: Session = Depends(get_db)):
+    product_tag = product_db.create_product_tag(db, tag.productTag)
+    if not product_tag:
+        raise HTTPException(status_code=404, detail="Product tag create failed")
+
+    return {"detail": "Create failed"}
+
+
+@router.delete("/product_tag/{tag_id}")
+def delete_tag(tag_id: int, db: Session = Depends(get_db)):
+    product_tag = product_db.delete_product_tag(db, tag_id)
+    if not product_tag:
+        raise HTTPException(status_code=404, detail="Product tag delete failed")
+
+    return {"detail": "Delete failed"}
