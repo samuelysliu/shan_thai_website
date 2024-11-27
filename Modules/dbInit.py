@@ -73,6 +73,7 @@ class Product(Base):
     __tablename__ = "product"
 
     pid = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    ptid = Column(Integer, ForeignKey("product_tag.ptid"))
     title_cn = Column(String(255), index=True)
     title_en = Column(String(255))
     content_cn = Column(Text)
@@ -82,7 +83,6 @@ class Product(Base):
     remain = Column(Integer, default=0)
     sold = Column(Integer, default=0)
     productImageUrl = Column(String)
-    productTag = Column(Integer, ForeignKey("product_tag.ptid"))
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     

@@ -41,7 +41,7 @@ class ProductTag(ProductTagBase):
     ptid: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 def handleImageUpload(file: UploadFile = File(...)):
@@ -72,7 +72,7 @@ def handleImageUpload(file: UploadFile = File(...)):
 
 @router.get("/product")
 async def get_product(db: Session = Depends(get_db)):
-    product = product_db.get_product(db)
+    product = product_db.get_product_join_tag(db)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
@@ -85,11 +85,10 @@ async def update_partial_product(
     content_cn: str = Form(None),
     price: int = Form(None),
     remain: int = Form(None),
-    product_tag: int = Form(None),
+    ptid: int = Form(None),
     file: UploadFile = File(None),
     db: Session = Depends(get_db),
 ):
-
     # 構建要更新的資料
     update_data = {}
     if title_cn is not None:
@@ -100,9 +99,9 @@ async def update_partial_product(
         update_data["price"] = price
     if remain is not None:
         update_data["remain"] = remain
-    if product_tag is not None:
-        update_data["productTag"] = product_tag
-
+    if ptid is not None:
+        update_data["ptid"] = ptid
+        
     if file is not None:
         update_data["productImageUrl"] = handleImageUpload(file)
 
@@ -114,14 +113,13 @@ async def update_partial_product(
         raise HTTPException(status_code=404, detail="Product not found")
     return updated_product
 
-
 @router.post("/product")
 async def create_product(
     title_cn: str = Form(...),
     content_cn: str = Form(...),
     price: int = Form(...),
     remain: int = Form(...),
-    product_tag: int = Form(...),
+    ptid: int = Form(...),
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
 ):
@@ -136,7 +134,7 @@ async def create_product(
         content_cn,
         price,
         remain,
-        product_tag,
+        ptid,
         productImageUrl,
     )
     if not created_product:
@@ -170,7 +168,7 @@ def create_tag(tag: ProductTagCreate, db: Session = Depends(get_db)):
     if not product_tag:
         raise HTTPException(status_code=404, detail="Product tag create failed")
 
-    return {"detail": "Create failed"}
+    return product_tag
 
 
 @router.delete("/product_tag/{tag_id}")

@@ -14,7 +14,7 @@ class Term(BaseModel):
     version: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 @router.post("/terms", response_model=Term)
