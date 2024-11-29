@@ -101,7 +101,7 @@ async def update_partial_product(
         update_data["remain"] = remain
     if ptid is not None:
         update_data["ptid"] = ptid
-        
+
     if file is not None:
         update_data["productImageUrl"] = handleImageUpload(file)
 
@@ -112,6 +112,7 @@ async def update_partial_product(
     if not updated_product:
         raise HTTPException(status_code=404, detail="Product not found")
     return updated_product
+
 
 @router.post("/product")
 async def create_product(
@@ -151,6 +152,28 @@ async def delete_product(
     if not success:
         raise HTTPException(status_code=404, detail="Product not found")
     return {"detail": "success"}
+
+
+# 取得產品清單用的 API
+@router.get("/product_list")
+async def get_product_list(db: Session = Depends(get_db)):
+    products = product_db.get_product_join_tag(db)
+    if not products:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    data = [
+        {
+            "pid": product["pid"],
+            "productTag": product["productTag"],
+            "title_cn": product["title_cn"],
+            "title_en": product["title_en"],
+            "remain": product["remain"],
+            "price": product["price"],
+            "specialPrice": product["specialPrice"],
+        }
+        for product in products
+    ]
+    return data
 
 
 # 產品標籤的操作

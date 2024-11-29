@@ -21,6 +21,18 @@ def get_all_users(db: Session):
         return None
 
 
+# 取得用戶下拉清單用的SQL
+def get_user_list(db: Session):
+    try:
+        # 查詢指定欄位
+        result = db.query(User.uid, User.email, User.username).all()
+        # 將結果轉換為字典列表
+        return [{"uid": row[0], "email": row[1], "username": row[2]} for row in result]
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return None
+
+
 # 根據 UID 獲取用戶
 def get_user_by_uid(db: Session, uid: int):
     try:
@@ -40,10 +52,25 @@ def get_user_by_email(db: Session, email: str):
 
 
 # 創建新用戶
-def create_user(db: Session, email: str, username: str, password: str, identity: str):
+def create_user(
+    db: Session,
+    email: str,
+    username: str,
+    password: str,
+    identity: str,
+    sex: str = None,
+    star: int = 0,
+    note: str = None,
+):
     try:
         new_user = User(
-            email=email, username=username, password=password, identity=identity
+            email=email,
+            username=username,
+            password=password,
+            identity=identity,
+            sex=sex,
+            star=star,
+            note=note,
         )
         db.add(new_user)
         db.commit()

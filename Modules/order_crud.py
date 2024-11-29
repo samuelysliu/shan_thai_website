@@ -33,13 +33,14 @@ def get_order_by_oid(db: Session, oid: int) -> Order:
 
 # 新增訂單
 def create_order(
-    db: Session, uid: int, pid: int, productNumber: int, address: str, transportationMethod: str, status: str
+    db: Session, uid: int, pid: int, productNumber: int, totalAmount:int, address: str, transportationMethod: str, status: str
 ) -> Order:
     try:
         new_order = Order(
             uid=uid,
             pid=pid,
             productNumber=productNumber,
+            totalAmount=totalAmount,
             address=address,
             transportationMethod=transportationMethod,
             status=status,

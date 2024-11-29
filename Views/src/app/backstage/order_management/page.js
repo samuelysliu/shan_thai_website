@@ -1,6 +1,6 @@
 import React from 'react';
 import { Row } from 'react-bootstrap';
-import OrderManagement from '@/app/components/Order_Management';
+import OrderManagement from '../components/Order_Management';
 
 const OrderManagementPage = () => {
     return (

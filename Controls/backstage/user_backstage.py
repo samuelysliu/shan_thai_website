@@ -15,7 +15,7 @@ class UserCreate(BaseModel):
     password: str
     sex: str | None = None
     star: int | None = 0
-    identity: str | None = None
+    identity: str | None = "user"
     note: str | None = None
 
 
@@ -57,7 +57,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
         password=user.password,
         sex=user.sex,
         star=user.star,
-        identity=user.identity,
+        identity="user",
         note=user.note,
     )
     if not created_user:
@@ -79,9 +79,17 @@ async def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_
 
 
 # 刪除用戶
-@router.delete("/users/{user_id}")
-async def delete_user(user_id: int, db: Session = Depends(get_db)):
-    success = user_db.delete_user(db, user_id=user_id)
+@router.delete("/users/{uid}")
+async def delete_user(uid: int, db: Session = Depends(get_db)):
+    success = user_db.delete_user(db, uid=uid)
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"detail": "User deleted successfully"}
+
+# 取得用戶清單
+@router.get("/users_list")
+async def get_users(db: Session = Depends(get_db)):
+    users = user_db.get_user_list(db)
+    if not users:
+        raise HTTPException(status_code=404, detail="No users found")
+    return users

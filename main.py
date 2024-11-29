@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 from Controls.backstage.cms import router as backstage_router
 from Controls.backstage.product_backstage import router as backstage_product_router
+from Controls.backstage.user_backstage import router as backstage_user_router
 from Controls.frontstage.product_frontstage import router as frontstage_product_router
 from Controls.frontstage.order_fontstage import router as frontstage_order_router
 from Controls.frontstage.user_frontstage import router as frontstage_user_router
@@ -21,6 +22,7 @@ app.add_middleware(
 )
 
 app.include_router(backstage_product_router, prefix="/backstage/v1")
+app.include_router(backstage_user_router, prefix="/backstage/v1")
 app.include_router(frontstage_product_router, prefix="/product/v1")
 app.include_router(frontstage_order_router, prefix="/order/v1")
 app.include_router(frontstage_user_router, prefix="/user/v1")

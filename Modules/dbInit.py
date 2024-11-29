@@ -115,6 +115,7 @@ class Order(Base):
     uid = Column(Integer, ForeignKey("users.uid"), nullable=False)
     pid = Column(Integer, ForeignKey("product.pid"), nullable=False)
     productNumber = Column(Integer, default=1)
+    totalAmount = Column(Integer, default=0)  # 新增欄位：訂單金額
     address = Column(String)
     transportationMethod = Column(String(50))
     status = Column(String(50))

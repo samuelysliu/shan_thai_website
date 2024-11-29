@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "react-bootstrap";
-import Sidebar from "../../components/Sidebar";
+import Sidebar from "./Sidebar";
 import AddTagModal from "./Add_Tag_Modal";
 import config from "../../config";
 
@@ -39,7 +39,7 @@ export default function ProductManagement() {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(endpoint + "/backstage/v1/product");
+            const response = await axios.get(`${endpoint}/backstage/v1/product`);
             setProducts(response.data); // 更新產品列表
         } catch (error) {
             console.error("無法拉取產品列表：", error);
@@ -49,7 +49,7 @@ export default function ProductManagement() {
     };
 
 
-    // 新增產品
+    // 新增產品 API
     const createProducts = async () => {
         setLoading(true);
         try {
@@ -64,7 +64,7 @@ export default function ProductManagement() {
                 formData.append("file", currentProduct.productImageFile); // 圖片檔案
             }
 
-            const response = await axios.post(endpoint + "/backstage/v1/product",
+            const response = await axios.post(`${endpoint}/backstage/v1/product`,
                 formData,
                 {
                     headers: {
@@ -81,7 +81,7 @@ export default function ProductManagement() {
         }
     }
 
-    // 修改產品內容
+    // 修改產品內容 API
     const updateProducts = async () => {
         const formData = new FormData();
         if (currentProduct.title_cn) formData.append("title_cn", currentProduct.title_cn);
@@ -100,7 +100,7 @@ export default function ProductManagement() {
         }
         console.log(formData)
         try {
-            const response = await axios.patch(endpoint + "/backstage/v1/product/" + currentProduct.pid,
+            const response = await axios.patch(`${endpoint}/backstage/v1/product/${currentProduct.pid}`,
                 formData,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
@@ -182,7 +182,7 @@ export default function ProductManagement() {
     // 從後端拉取產品標籤列表
     const fetchTags = async () => {
         try {
-            const response = await axios.get(endpoint + "/backstage/v1/product_tag");
+            const response = await axios.get(`${endpoint}/backstage/v1/product_tag`);
             setProductTags(response.data); // 更新產品列表
         } catch (error) {
             console.error("無法拉取產品列表：", error);

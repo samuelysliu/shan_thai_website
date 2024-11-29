@@ -26,6 +26,11 @@ export default function Sidebar() {
             訂單管理
           </Button>
         </li>
+        <li>
+          <Button variant="link" style={{ color: "var(--light-text-color)" }} onClick={() => handleNavigation('/backstage/user_management')}>
+            客戶管理
+          </Button>
+        </li>
         {/* 可以根據需求擴展更多選項 */}
       </ul>
     </Col>

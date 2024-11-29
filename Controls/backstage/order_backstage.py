@@ -62,6 +62,7 @@ async def create_order(order: OrderCreate, db: Session = Depends(get_db)):
         uid=order.uid,
         pid=order.pid,
         productNumber=order.productNumber,
+        totalAmount=order.totalAmount,
         address=order.address,
         transportationMethod=order.transportationMethod,
         status=order.status,
