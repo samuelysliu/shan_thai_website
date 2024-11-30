@@ -3,6 +3,8 @@ from fastapi.security import OAuth2PasswordBearer
 from typing import Callable
 import jwt
 from functools import wraps
+from datetime import datetime
+import pytz
 
 # 提取 Bearer Token
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/v1/login")
@@ -31,3 +33,20 @@ def jwt_required(func: Callable):
             )
         return await func(*args, **kwargs)
     return wrapper
+
+def format_to_utc8(datetime_str):
+    """
+    將 ISO 格式的時間字串轉換為 UTC+8 並格式化為 YYYY-MM-DD HH:MM:SS
+    """
+    try:
+        # 將字串解析為 UTC 時間
+        utc_time = datetime.fromisoformat(datetime_str).replace(tzinfo=pytz.UTC)
+
+        # 轉換為 UTC+8 時間
+        utc8_time = utc_time.astimezone(pytz.timezone("Asia/Taipei"))
+
+        # 格式化為指定格式
+        return utc8_time.strftime("%Y-%m-%d %H:%M:%S")
+    except Exception as e:
+        print(f"Error formatting time: {e}")
+        return None

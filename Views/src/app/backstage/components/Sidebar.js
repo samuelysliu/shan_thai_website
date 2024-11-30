@@ -31,6 +31,11 @@ export default function Sidebar() {
             客戶管理
           </Button>
         </li>
+        <li>
+          <Button variant="link" style={{ color: "var(--light-text-color)" }} onClick={() => handleNavigation('/')}>
+            回前台
+          </Button>
+        </li>
         {/* 可以根據需求擴展更多選項 */}
       </ul>
     </Col>

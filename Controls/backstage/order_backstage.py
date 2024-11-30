@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import Modules.order_crud as order_db
 import Modules.dbConnect as db_connect
+from Controls.tools import format_to_utc8 as timeformat
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -10,10 +11,12 @@ get_db = db_connect.get_db
 
 # 新增訂單用的Model
 class OrderCreate(BaseModel):
-    oid: int
     uid: int
     pid: int
     productNumber: int
+    totalAmount: int
+    discountPrice: int
+    useDiscount: bool
     address: str
     transportationMethod: str
     status: str
@@ -22,15 +25,19 @@ class OrderCreate(BaseModel):
 # 更新訂單用的Model
 class OrderUpdate(BaseModel):
     productNumber: int | None = None
+    totalAmount: int | None = None
+    useDiscount: bool | None = None
     address: str | None = None
     transportationMethod: str | None = None
     status: str | None = None
 
 
-# 取得所有訂單
+# 取得所有join User Product 的訂單
 @router.get("/orders")
 async def get_all_orders(db: Session = Depends(get_db)):
-    orders = order_db.get_all_orders(db)
+    orders = order_db.get_order_join_user_product(db)
+    for order in orders:
+        order["created_at"] = timeformat(order["created_at"].isoformat())
     if not orders:
         raise HTTPException(status_code=404, detail="No orders found")
     return orders
@@ -57,12 +64,18 @@ async def get_orders_by_uid(user_id: int, db: Session = Depends(get_db)):
 # 新增訂單
 @router.post("/orders")
 async def create_order(order: OrderCreate, db: Session = Depends(get_db)):
+    print(order)
+    if order.useDiscount:
+        totalAmount = order.discountPrice
+    else:
+        totalAmount = order.totalAmount
+
     created_order = order_db.create_order(
         db,
         uid=order.uid,
         pid=order.pid,
         productNumber=order.productNumber,
-        totalAmount=order.totalAmount,
+        totalAmount=totalAmount,
         address=order.address,
         transportationMethod=order.transportationMethod,
         status=order.status,
