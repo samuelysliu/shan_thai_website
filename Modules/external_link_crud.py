@@ -1,23 +1,32 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import ExternalLink as ExternalLinkModel
+from Modules.dbInit import ExternalLink
+
 
 # 取得所有 ExternalLink 資料
 def get_external_link(db: Session):
     try:
-        return db.query(ExternalLinkModel).all()
+        return db.query(ExternalLink).all()
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return None
 
-# 新增 ExternalLink 資料
-def create_external_link(db: Session, No: int, name_cn: str, iconImageUrl: str, show: bool):
+# 取得所有狀態是顯示的 external_link
+def get_external_link_isShow(db: Session):
     try:
-        new_external_link = ExternalLinkModel(
-            No=No,
-            name_cn=name_cn,
-            iconImageUrl=iconImageUrl,
-            show=show
+        return db.query(ExternalLink).filter(ExternalLink.show == True).all()
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return None
+
+
+# 新增 ExternalLink 資料
+def create_external_link(
+    db: Session, No: int, name_cn: str, iconImageUrl: str, show: bool
+):
+    try:
+        new_external_link = ExternalLink(
+            No=No, name_cn=name_cn, iconImageUrl=iconImageUrl, show=show
         )
         db.add(new_external_link)
         db.commit()
@@ -27,10 +36,20 @@ def create_external_link(db: Session, No: int, name_cn: str, iconImageUrl: str, 
         print(f"Error: {e}")
         return None
 
+
 # 更新 ExternalLink 資料
-def update_external_link(db: Session, external_link_id: int, No: int, name_cn: str, iconImageUrl: str, show: bool):
+def update_external_link(
+    db: Session,
+    external_link_id: int,
+    No: int,
+    name_cn: str,
+    iconImageUrl: str,
+    show: bool,
+):
     try:
-        external_link = db.query(ExternalLinkModel).filter(ExternalLinkModel.id == external_link_id).first()
+        external_link = (
+            db.query(ExternalLink).filter(ExternalLink.id == external_link_id).first()
+        )
         if external_link:
             external_link.No = No
             external_link.name_cn = name_cn
@@ -44,10 +63,13 @@ def update_external_link(db: Session, external_link_id: int, No: int, name_cn: s
         print(f"Error: {e}")
         return None
 
+
 # 刪除 ExternalLink 資料
 def delete_external_link(db: Session, external_link_id: int):
     try:
-        external_link = db.query(ExternalLinkModel).filter(ExternalLinkModel.id == external_link_id).first()
+        external_link = (
+            db.query(ExternalLink).filter(ExternalLink.id == external_link_id).first()
+        )
         if external_link:
             db.delete(external_link)
             db.commit()

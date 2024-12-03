@@ -6,47 +6,28 @@ import { useRouter } from "next/navigation"; // 引入 useRouter
 import axios from "axios";
 import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
 import config from "../config";
+
 import { setProducts } from "../redux/slices/productSlice";
 
-const Product_Grid = () => {
+const Product_Grid = ({ initialProducts }) => {
   let endpoint = config.apiBaseUrl;
   const dispatch = useDispatch();
-  const products = useSelector((state) => state.product.products); // 從 Redux Store 獲取產品列表
-  const router = useRouter(); // 初始化 router
-
-  const [loading, setLoading] = useState(true); // 用於顯示加載狀態
-  const [error, setError] = useState(null); // 用於顯示錯誤訊息
+  const router = useRouter();
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(endpoint + "/product/v1/product"); // API 路徑
-      dispatch(setProducts(response.data)); // 儲存到 Redux Store
-    } catch (err) {
-      setError("無法加載產品清單，請稍後再試。");
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (initialProducts.length > 0) {
+      dispatch(setProducts(initialProducts));
     }
-  };
+  }, [initialProducts, dispatch]);
 
-  if (loading) {
+  const storedProducts = useSelector((state) => state.product.products); // 從 Redux Store 獲取產品列表
+  const products = storedProducts.length > 0 ? storedProducts : initialProducts
+
+  if (!products || products.length === 0) {
     return (
       <Container className="text-center my-4">
         <Spinner animation="border" variant="primary" />
         <p className="mt-2">正在加載產品...</p>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container className="text-center my-4">
-        <p className="text-danger">{error}</p>
       </Container>
     );
   }
