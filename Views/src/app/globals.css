@@ -2,13 +2,20 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  --primary-color: #393D46;       /* 主要顏色 */
-  --secondary-color: #666666;     /* 次要顏色 */
-  --accent-color: #007bff;        /* 強調顏色 */
-  --text-color: #171717;          /* 主要文字顏色 */
-  --light-text-color: #ededed;    /* 淡文字顏色 */
-  --light-hover-color: #d1d1d1;     /* 淡文字的hover顏色*/
-  --border-color: #e0e0e0;        /* 邊框顏色 */
+  --primary-color: #393D46;
+  /* 主要顏色 */
+  --secondary-color: #666666;
+  /* 次要顏色 */
+  --accent-color: #007bff;
+  /* 強調顏色 */
+  --text-color: #171717;
+  /* 主要文字顏色 */
+  --light-text-color: #ededed;
+  /* 淡文字顏色 */
+  --light-hover-color: #d1d1d1;
+  /* 淡文字的hover顏色*/
+  --border-color: #e0e0e0;
+  /* 邊框顏色 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,10 +26,14 @@
 }
 
 @font-face {
-  font-family: "chinese-cust"; /* 自定義字體名稱 */
-  src: url("/fonts/方正舒體.ttf") format("truetype"); /* 指向你的字體檔案路徑 */
-  font-weight: normal; /* 定義字體權重（normal、bold等） */
-  font-style: normal; /* 定義字體樣式（normal、italic等） */
+  font-family: "chinese-cust";
+  /* 自定義字體名稱 */
+  src: url("/fonts/方正舒體.ttf") format("truetype");
+  /* 指向你的字體檔案路徑 */
+  font-weight: normal;
+  /* 定義字體權重（normal、bold等） */
+  font-style: normal;
+  /* 定義字體樣式（normal、italic等） */
 }
 
 html,
@@ -37,7 +48,8 @@ body {
   background: var(--background);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: "chinese-cust", sans-serif !important; /* 自定義字體作為主要字體 */
+  font-family: "chinese-cust", sans-serif !important;
+  /* 自定義字體作為主要字體 */
 }
 
 * {
@@ -65,7 +77,7 @@ a {
   margin-bottom: 10px;
 }
 
-.button-primary:hover{
+.button-primary:hover {
   background-color: var(--secondary-color);
 }
 
@@ -76,28 +88,75 @@ a {
   border-color: var(--primary-color);
 }
 
-.button-secondary:hover{
+.button-secondary:hover {
   background-color: var(--secondary-color);
 }
 
 
 /* 橫向移動的 menu */
-.product-menu {
-  overflow-x: auto;
-  white-space: nowrap;
-  flex-wrap: nowrap;
+.product-menu-container {
+  overflow-x: hidden;
+  /* 隱藏溢出，控制可視範圍 */
+  padding: 1rem 0;
+  display: flex;
+  justify-content: center;
+  /* 將標籤集中在中間 */
 }
 
+.product-menu {
+  display: flex;
+  flex-wrap: nowrap !important;
+  gap: 1rem;
+  overflow-x: auto;
+  max-width: 90vw;
+  /* 限制最大寬度 */
+  padding-bottom: 0.5rem;
+  scrollbar-width: thin;
+}
+
+.tag-item {
+  flex: 0 0 auto;
+  /* 保持標籤的寬度固定，防止撐開 */
+  white-space: nowrap;
+}
+
+
+/* 標籤樣式 */
 .product-menu a {
   display: inline-block;
   padding: 0.5rem 1rem;
   color: var(--text-color) !important;
   text-decoration: none;
   font-weight: bold;
+  transition: color 0.3s, box-shadow 0.3s;
+  background-color: #fff;
+  /* 背景色為白色 */
+  border-radius: 50px;
+  /* 圓角，形成橢圓形 */
+  border: 1px solid var(--border-color);
+  /* 外框線顏色 */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  /* 添加陰影效果 */
+  cursor: pointer;
 }
 
 .product-menu a:hover {
   color: var(--accent-color);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 滑鼠懸停時加強陰影效果 */
+}
+
+/* 滾動條樣式（可選） */
+.product-menu-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.product-menu-container::-webkit-scrollbar-thumb {
+  background: var(--accent-color);
+  border-radius: 4px;
+}
+
+.product-menu-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
 }
 
 .product-card {
@@ -130,26 +189,28 @@ a {
 }
 
 /* navbar 區塊 */
-.navbar{
+.navbar {
   background-color: var(--primary-color) !important;
 }
 
 .navbar .navbar-brand,
 .navbar .nav-link {
-  color: var(--light-text-color) !important;  /* 文字顏色 */
+  color: var(--light-text-color) !important;
+  /* 文字顏色 */
 }
 
 .navbar .nav-link:hover,
 .navbar .navbar-brand:hover {
-  color: var(--light-hover-color) !important; /* 滑鼠懸停時的顏色 */
+  color: var(--light-hover-color) !important;
+  /* 滑鼠懸停時的顏色 */
 }
 
 /* login modal */
-.login-modal{
+.login-modal {
   color: var(--text-color);
 }
 
-.login-modal-footer{
+.login-modal-footer {
   text-align: right;
   text-decoration: underline;
   color: var(--accent-color);
@@ -197,6 +258,7 @@ a {
   background-color: var(--light-hover-color);
 }
 
-.table td, .table th {
+.table td,
+.table th {
   border-color: var(--border-color);
 }
