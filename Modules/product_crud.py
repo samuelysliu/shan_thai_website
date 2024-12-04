@@ -49,6 +49,44 @@ def get_product_join_tag(db: Session):
         print(f"Error: {e}")
         return None
 
+# 根據標籤 (ptid) 獲取單一產品資料
+def get_product_by_id(db: Session, pid: int):
+    try:
+        return db.query(ProductModel).filter(ProductModel.pid == pid).first()
+    except SQLAlchemyError as e:
+        print(f"Error while fetching product by PID {pid}: {e}")
+        return None
+
+# 根據標籤 (ptid) 查詢所有產品
+def get_products_by_tag(db: Session, ptid: int):
+    try:
+        # 查詢符合 `ptid` 的產品並格式化數據
+        products = db.query(ProductModel).filter(ProductModel.ptid == ptid).all()
+
+        # 格式化返回數據
+        formatted_products = [
+            {
+                "pid": product.pid,
+                "ptid": product.ptid,
+                "title_cn": product.title_cn,
+                "title_en": product.title_en,
+                "content_cn": product.content_cn,
+                "content_en": product.content_en,
+                "price": product.price,
+                "specialPrice": product.specialPrice,
+                "remain": product.remain,
+                "sold": product.sold,
+                "productImageUrl": product.productImageUrl,
+                "created_at": product.created_at,
+                "updated_at": product.updated_at,
+            }
+            for product in products
+        ]
+        return formatted_products
+    except SQLAlchemyError as e:
+        print(f"Error fetching products by tag: {e}")
+        return None
+
 
 # 新增 Product 資料
 def create_product(

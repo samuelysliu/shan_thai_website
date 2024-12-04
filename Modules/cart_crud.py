@@ -1,87 +1,85 @@
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import Cart
+from pydantic import BaseModel
 from typing import List
+import Modules.dbConnect as db_connect
+import Modules.cart_crud as cart_db
+import Modules.product_crud as product_db
 
+router = APIRouter()
+get_db = db_connect.get_db
 
-# 獲取某用戶的所有購物車項目
-def get_carts_by_user(db: Session, uid: int) -> List[Cart]:
-    try:
-        return db.query(Cart).filter(Cart.uid == uid, Cart.is_active == True).all()
-    except SQLAlchemyError as e:
-        print(f"Error fetching carts for user {uid}: {e}")
-        return []
+# 用於新增商品至購物車的請求模型
+class AddToCartRequest(BaseModel):
+    pid: int  # 商品的 ID
+    quantity: int  # 商品數量
 
+# 用於更新購物車商品數量的請求模型
+class UpdateCartRequest(BaseModel):
+    quantity: int  # 更新後的商品數量
 
-# 根據 cart_id 獲取購物車項目
-def get_cart_by_id(db: Session, cart_id: int) -> Cart:
-    try:
-        return db.query(Cart).filter(Cart.cart_id == cart_id, Cart.is_active == True).first()
-    except SQLAlchemyError as e:
-        print(f"Error fetching cart {cart_id}: {e}")
-        return None
+# 購物車項目的回應模型
+class CartItemResponse(BaseModel):
+    cart_id: int  # 購物車項目的 ID
+    pid: int  # 商品的 ID
+    quantity: int  # 商品數量
+    added_at: str  # 商品加入購物車的時間
+    is_active: bool  # 購物車項目是否有效
 
+# 獲取使用者的購物車所有項目
+@router.get("/cart", response_model=List[CartItemResponse])
+async def get_user_cart(uid: int, db: Session = Depends(get_db)):
+    cart_items = cart_db.get_carts_by_user(db, uid)
+    if not cart_items:
+        raise HTTPException(status_code=404, detail="找不到購物車項目")
+    return cart_items
 
-# 新增購物車項目
-def add_to_cart(db: Session, uid: int, pid: int, quantity: int) -> Cart:
-    try:
-        # 檢查是否已有此產品的購物車項目
-        existing_cart = db.query(Cart).filter(Cart.uid == uid, Cart.pid == pid, Cart.is_active == True).first()
-        if existing_cart:
-            # 更新數量
-            existing_cart.quantity += quantity
-            db.commit()
-            db.refresh(existing_cart)
-            return existing_cart
+# 新增商品至購物車
+@router.post("/cart", response_model=CartItemResponse)
+async def add_to_cart(request: AddToCartRequest, uid: int, db: Session = Depends(get_db)):
+    # 確認產品是否存在且有足夠的庫存
+    product = product_db.get_product_by_id(db, request.pid)
+    if not product:
+        raise HTTPException(status_code=404, detail="找不到此產品")
+    if product.remain < request.quantity:
+        raise HTTPException(status_code=400, detail="產品庫存不足")
 
-        # 如果沒有，新增新的購物車項目
-        new_cart = Cart(uid=uid, pid=pid, quantity=quantity)
-        db.add(new_cart)
-        db.commit()
-        db.refresh(new_cart)
-        return new_cart
-    except SQLAlchemyError as e:
-        print(f"Error adding to cart: {e}")
-        return None
+    # 新增或更新購物車項目
+    new_cart_item = cart_db.add_to_cart(db, uid=uid, pid=request.pid, quantity=request.quantity)
+    if not new_cart_item:
+        raise HTTPException(status_code=500, detail="新增購物車項目失敗")
+    return new_cart_item
 
+# 更新購物車商品數量
+@router.patch("/cart/{cart_id}", response_model=CartItemResponse)
+async def update_cart_item(cart_id: int, request: UpdateCartRequest, uid: int, db: Session = Depends(get_db)):
+    # 確保購物車項目屬於該使用者
+    cart_item = cart_db.get_cart_by_id(db, cart_id)
+    if not cart_item or cart_item.uid != uid:
+        raise HTTPException(status_code=403, detail="您無權修改此購物車項目")
 
-# 更新購物車項目
-def update_cart(db: Session, cart_id: int, quantity: int) -> Cart:
-    try:
-        cart = db.query(Cart).filter(Cart.cart_id == cart_id, Cart.is_active == True).first()
-        if cart:
-            cart.quantity = quantity
-            db.commit()
-            db.refresh(cart)
-            return cart
-        return None
-    except SQLAlchemyError as e:
-        print(f"Error updating cart {cart_id}: {e}")
-        return None
+    updated_cart_item = cart_db.update_cart(db, cart_id=cart_id, quantity=request.quantity)
+    if not updated_cart_item:
+        raise HTTPException(status_code=500, detail="更新購物車項目失敗")
+    return updated_cart_item
 
+# 移除購物車中的某一項商品
+@router.delete("/cart/{cart_id}")
+async def remove_cart_item(cart_id: int, uid: int, db: Session = Depends(get_db)):
+    # 確保購物車項目屬於該使用者
+    cart_item = cart_db.get_cart_by_id(db, cart_id)
+    if not cart_item or cart_item.uid != uid:
+        raise HTTPException(status_code=403, detail="您無權移除此購物車項目")
 
-# 刪除購物車項目 (邏輯刪除)
-def remove_cart_item(db: Session, cart_id: int) -> bool:
-    try:
-        cart = db.query(Cart).filter(Cart.cart_id == cart_id).first()
-        if cart:
-            cart.is_active = False
-            db.commit()
-            return True
-        return False
-    except SQLAlchemyError as e:
-        print(f"Error removing cart item {cart_id}: {e}")
-        return False
+    success = cart_db.remove_cart_item(db, cart_id=cart_id)
+    if not success:
+        raise HTTPException(status_code=500, detail="移除購物車項目失敗")
+    return {"detail": "購物車項目成功移除"}
 
-
-# 清空用戶購物車
-def clear_cart_by_user(db: Session, uid: int) -> bool:
-    try:
-        carts = db.query(Cart).filter(Cart.uid == uid, Cart.is_active == True).all()
-        for cart in carts:
-            cart.is_active = False
-        db.commit()
-        return True
-    except SQLAlchemyError as e:
-        print(f"Error clearing cart for user {uid}: {e}")
-        return False
+# 清空使用者的購物車
+@router.delete("/cart")
+async def clear_cart(uid: int, db: Session = Depends(get_db)):
+    success = cart_db.clear_cart_by_user(db, uid)
+    if not success:
+        raise HTTPException(status_code=500, detail="清空購物車失敗")
+    return {"detail": "購物車已成功清空"}
