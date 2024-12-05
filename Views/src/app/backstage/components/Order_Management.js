@@ -6,8 +6,13 @@ import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "rea
 import Sidebar from "./Sidebar";
 import config from "../../config";
 
+import { useSelector } from 'react-redux';
+
 export default function OrderManagement() {
   const endpoint = config.apiBaseUrl;
+
+  // 從 Redux 中取出會員資訊
+  const { token } = useSelector((state) => state.user);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
@@ -45,7 +50,11 @@ export default function OrderManagement() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`${endpoint}/backstage/v1/orders`);
+      const response = await axios.get(`${endpoint}/backstage/v1/orders`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
       setOrders(response.data);
     } catch (error) {
       console.error("無法拉取訂單資料：", error);
@@ -57,7 +66,11 @@ export default function OrderManagement() {
   // 拉取產品清單
   const fetchProducts = async () => {
     try {
-      const response = await axios.get(`${endpoint}/backstage/v1/product_list`);
+      const response = await axios.get(`${endpoint}/backstage/v1/product_list`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
       setProducts(response.data);
     } catch (error) {
       console.error("無法拉取產品資料：", error);
@@ -67,7 +80,11 @@ export default function OrderManagement() {
   // 拉取客戶清單
   const fetchCustomers = async () => {
     try {
-      const response = await axios.get(`${endpoint}/backstage/v1/users_list`);
+      const response = await axios.get(`${endpoint}/backstage/v1/users_list`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
       setCustomers(response.data);
     } catch (error) {
       console.error("無法拉取客戶資料：", error);
@@ -119,7 +136,11 @@ export default function OrderManagement() {
   const createOrder = async () => {
     setLoading(true);
     try {
-      const response = await axios.post(`${endpoint}/backstage/v1/orders`, newOrder);
+      const response = await axios.post(`${endpoint}/backstage/v1/orders`, newOrder, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
 
       const newOrderData = response.data;
       newOrderData.username = newOrder.customerName;
@@ -151,7 +172,11 @@ export default function OrderManagement() {
         status: newOrder.status,
       }
 
-      const response = await axios.patch(`${endpoint}/backstage/v1/orders/${newOrder.oid}`, requestData);
+      const response = await axios.patch(`${endpoint}/backstage/v1/orders/${newOrder.oid}`, requestData, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+        }
+    });
 
       const newOrderData = response.data;
 

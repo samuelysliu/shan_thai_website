@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 import modules.order_crud as order_db
 import modules.dbConnect as db_connect
 from controls.tools import format_to_utc8 as timeformat
+from controls.tools import admin_required
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -34,6 +35,7 @@ class OrderUpdate(BaseModel):
 
 # 取得所有join User Product 的訂單
 @router.get("/orders")
+@admin_required
 async def get_all_orders(db: Session = Depends(get_db)):
     orders = order_db.get_order_join_user_product(db)
     for order in orders:
@@ -45,6 +47,7 @@ async def get_all_orders(db: Session = Depends(get_db)):
 
 # 根據 OID 查詢訂單
 @router.get("/orders/{order_id}")
+@admin_required
 async def get_order_by_oid(order_id: int, db: Session = Depends(get_db)):
     order = order_db.get_order_by_oid(db, oid=order_id)
     if not order:
@@ -54,6 +57,7 @@ async def get_order_by_oid(order_id: int, db: Session = Depends(get_db)):
 
 # 根據 UID 查詢用戶的所有訂單
 @router.get("/orders/user/{user_id}")
+@admin_required
 async def get_orders_by_uid(user_id: int, db: Session = Depends(get_db)):
     orders = order_db.get_orders_by_uid(db, uid=user_id)
     if not orders:
@@ -63,6 +67,7 @@ async def get_orders_by_uid(user_id: int, db: Session = Depends(get_db)):
 
 # 新增訂單
 @router.post("/orders")
+@admin_required
 async def create_order(order: OrderCreate, db: Session = Depends(get_db)):
     print(order)
     if order.useDiscount:
@@ -87,6 +92,7 @@ async def create_order(order: OrderCreate, db: Session = Depends(get_db)):
 
 # 更新訂單
 @router.patch("/orders/{order_id}")
+@admin_required
 async def update_order(
     order_id: int, order: OrderUpdate, db: Session = Depends(get_db)
 ):
@@ -103,6 +109,7 @@ async def update_order(
 
 # 刪除訂單
 @router.delete("/orders/{order_id}")
+@admin_required
 async def delete_order(order_id: int, db: Session = Depends(get_db)):
     success = order_db.delete_order(db, oid=order_id)
     if not success:

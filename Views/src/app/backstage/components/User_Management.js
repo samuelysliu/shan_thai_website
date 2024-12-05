@@ -6,8 +6,13 @@ import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "rea
 import Sidebar from "./Sidebar";
 import config from "../../config";
 
+import { useSelector } from 'react-redux';
+
 export default function UserManagement() {
     const endpoint = config.apiBaseUrl;
+
+    // 從 Redux 中取出會員資訊
+    const { token } = useSelector((state) => state.user);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [users, setUsers] = useState([]);
@@ -35,7 +40,11 @@ export default function UserManagement() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`${endpoint}/backstage/v1/users`);
+            const response = await axios.get(`${endpoint}/backstage/v1/users`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setUsers(response.data); // 從後端獲取使用者資料
         } catch (error) {
             console.error("無法拉取使用者資料：", error);
@@ -48,7 +57,11 @@ export default function UserManagement() {
     const createUser = async () => {
         setLoading(true);
         try {
-            const response = await axios.post(`${endpoint}/backstage/v1/users`, currentUser);
+            const response = await axios.post(`${endpoint}/backstage/v1/users`, currentUser, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setUsers((prevUsers) => [...prevUsers, response.data]); // 新增成功後更新使用者列表
             handleCloseModal();
         } catch (error) {
@@ -62,7 +75,11 @@ export default function UserManagement() {
     const updateUser = async () => {
         setLoading(true);
         try {
-            const response = await axios.patch(`${endpoint}/backstage/v1/users/${currentUser.uid}`, currentUser);
+            const response = await axios.patch(`${endpoint}/backstage/v1/users/${currentUser.uid}`, currentUser, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setUsers((prevUsers) =>
                 prevUsers.map((user) => (user.uid === response.data.uid ? response.data : user))
             ); // 更新成功後更新列表
@@ -78,7 +95,11 @@ export default function UserManagement() {
     const deleteUser = async (uid) => {
         setLoading(true);
         try {
-            await axios.delete(`${endpoint}/backstage/v1/users/${uid}`);
+            await axios.delete(`${endpoint}/backstage/v1/users/${uid}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setUsers((prevUsers) => prevUsers.filter((user) => user.uid !== uid)); // 刪除成功後移除
         } catch (error) {
             console.error("無法刪除使用者：", error);

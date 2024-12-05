@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 import modules.user_crud as user_db
 import modules.dbConnect as db_connect
+from controls.tools import admin_required
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -31,6 +32,7 @@ class UserUpdate(BaseModel):
 
 # 獲取所有用戶
 @router.get("/users")
+@admin_required
 async def get_users(db: Session = Depends(get_db)):
     users = user_db.get_all_users(db)
     if not users:
@@ -49,6 +51,7 @@ async def get_user(user_id: int, db: Session = Depends(get_db)):
 
 # 新增用戶
 @router.post("/users")
+@admin_required
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     created_user = user_db.create_user(
         db,
@@ -67,6 +70,7 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 # 更新用戶
 @router.patch("/users/{user_id}")
+@admin_required
 async def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_db)):
     update_data = user.dict(exclude_unset=True)  # 排除未設置的字段
     if not update_data:
@@ -80,6 +84,7 @@ async def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_
 
 # 刪除用戶
 @router.delete("/users/{uid}")
+@admin_required
 async def delete_user(uid: int, db: Session = Depends(get_db)):
     success = user_db.delete_user(db, uid=uid)
     if not success:
@@ -88,6 +93,7 @@ async def delete_user(uid: int, db: Session = Depends(get_db)):
 
 # 取得用戶清單
 @router.get("/users_list")
+@admin_required
 async def get_users(db: Session = Depends(get_db)):
     users = user_db.get_user_list(db)
     if not users:

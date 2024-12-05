@@ -7,8 +7,13 @@ import Sidebar from "./Sidebar";
 import AddTagModal from "./Add_Tag_Modal";
 import config from "../../config";
 
+import { useSelector } from 'react-redux';
+
 export default function ProductManagement() {
     let endpoint = config.apiBaseUrl;
+
+    // 從 Redux 中取出會員資訊
+    const { token } = useSelector((state) => state.user);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [filter, setFilter] = useState("all");
@@ -39,7 +44,11 @@ export default function ProductManagement() {
     const fetchProducts = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`${endpoint}/backstage/v1/product`);
+            const response = await axios.get(`${endpoint}/backstage/v1/product`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setProducts(response.data); // 更新產品列表
         } catch (error) {
             console.error("無法拉取產品列表：", error);
@@ -69,6 +78,7 @@ export default function ProductManagement() {
                 {
                     headers: {
                         "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${token}`,
                     },
                 });
             const newProduct = response.data;
@@ -104,6 +114,7 @@ export default function ProductManagement() {
                 formData,
                 {
                     headers: { "Content-Type": "multipart/form-data" },
+                    Authorization: `Bearer ${token}`,
                 }
             );
 
@@ -127,7 +138,11 @@ export default function ProductManagement() {
     const deleteProducts = async (pid) => {
         setLoading(true);
         try {
-            const response = await axios.delete(endpoint + "/backstage/v1/product/" + pid);
+            const response = await axios.delete(`${endpoint}/backstage/v1/product/${pid}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setProducts((prevProducts) => prevProducts.filter(product => product.pid !== pid)); // 更新產品列表
         } catch (error) {
             console.error("無法刪除該產品：", error);
@@ -182,7 +197,11 @@ export default function ProductManagement() {
     // 從後端拉取產品標籤列表
     const fetchTags = async () => {
         try {
-            const response = await axios.get(`${endpoint}/backstage/v1/product_tag`);
+            const response = await axios.get(`${endpoint}/backstage/v1/product_tag`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             setProductTags(response.data); // 更新產品列表
         } catch (error) {
             console.error("無法拉取產品列表：", error);
@@ -211,7 +230,11 @@ export default function ProductManagement() {
     const handleSaveNewTag = async (newTag) => {
         try {
             // 呼叫後端 API 新增標籤
-            const response = await axios.post(endpoint + "/backstage/v1/product_tag", { productTag: newTag });
+            const response = await axios.post(endpoint + "/backstage/v1/product_tag", { productTag: newTag }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
             console.log("新增標籤成功:", response.data);
 
             // 更新標籤列表
