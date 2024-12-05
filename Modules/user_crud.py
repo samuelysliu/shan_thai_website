@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from Modules.dbInit import User
+from modules.dbInit import User
 from sqlalchemy.exc import SQLAlchemyError
 
 

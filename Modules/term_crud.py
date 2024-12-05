@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import Terms  # 確保正確導入 Terms 模型
+from modules.dbInit import Terms  # 確保正確導入 Terms 模型
 
 # 新增條款
 def create_term(db: Session, name: str, content: str, version: str):

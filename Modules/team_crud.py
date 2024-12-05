@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import Team as TeamModel
+from modules.dbInit import Team as TeamModel
 
 # 取得所有 Team 資料
 def get_team(db: Session):

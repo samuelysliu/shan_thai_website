@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
-from Modules.dbConnect import engine, Base
+from modules.dbConnect import engine, Base
 from sqlalchemy.sql import func
 
 class Banner(Base):

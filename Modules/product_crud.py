@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import Product as ProductModel
-from Modules.dbInit import ProductTag as ProductTagModel
+from modules.dbInit import Product as ProductModel
+from modules.dbInit import ProductTag as ProductTagModel
 
 
 # 取得所有 Product 資料
@@ -49,7 +49,7 @@ def get_product_join_tag(db: Session):
         print(f"Error: {e}")
         return None
 
-# 根據標籤 (ptid) 獲取單一產品資料
+# 根據產品id (pid) 獲取單一產品資料
 def get_product_by_id(db: Session, pid: int):
     try:
         return db.query(ProductModel).filter(ProductModel.pid == pid).first()

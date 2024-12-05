@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import Contact as ContactModel
+from modules.dbInit import Contact as ContactModel
 
 # 取得所有 Contact 資料
 def get_contact(db: Session):

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import About as AboutModel
+from modules.dbInit import About as AboutModel
 
 # 取得所有 About 資料
 def get_about(db: Session):

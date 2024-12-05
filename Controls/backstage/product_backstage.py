@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import Modules.product_crud as product_db
-import Modules.dbConnect as db_connect
+import modules.product_crud as product_db
+import modules.dbConnect as db_connect
 
 import cloudinary
 import cloudinary.uploader

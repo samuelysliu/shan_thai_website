@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import Modules.term_crud as term_db
-import Modules.dbConnect as db_connect
+import modules.term_crud as term_db
+import modules.dbConnect as db_connect
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -16,12 +16,9 @@ class Term(BaseModel):
     class Config:
         from_attributes = True
         
-@router.get("/terms", response_model=list[Term])
-async def get_all_terms(db: Session = Depends(get_db)):
-    """
-    獲取所有條款
-    """
-    terms = term_db.get_all_terms(db)
+@router.get("/term_by_id/{tid}", response_model=list[Term])
+async def get_term_by_id(tid:int, db: Session = Depends(get_db)):
+    terms = term_db.get_term_by_id(db, tid)
     if not terms:
         raise HTTPException(status_code=404, detail="No terms found")
     return terms

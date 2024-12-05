@@ -4,24 +4,24 @@ venv
 /migrations/alembic.ini
 
 # frontend
-/Views/node_modules
+/views/node_modules
 .pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
 !.yarn/versions
-/Views/.pnp
+/views/.pnp
 
 # testing
-/Views/coverage
+/views/coverage
 
 # next.js
-/Views/.next/
-/Views/out/
+/views/.next/
+/views/out/
 
 # production
-/Views/build
+/views/build
 
 # misc
 .DS_Store

@@ -3,8 +3,8 @@
 
 import React, { useState } from "react";
 import { Container, Row, Col } from 'react-bootstrap';
-import Product_Grid from './Product_Grid';
-import Product_Menu from './Product_Menu';
+import Product_Grid from './product_components/Product_Grid';
+import Product_Menu from './product_components/Product_Menu';
 import Pagination_Component from './Pagination_Component';
 import Footer from './Footer';
 import Navbar from './Navbar';

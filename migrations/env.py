@@ -1,5 +1,5 @@
 from logging.config import fileConfig
-from Modules.dbConnect import engine, Base
+from modules.dbConnect import engine, Base
 from alembic import context
 
 config = context.config

@@ -2,9 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
-import Modules.dbConnect as db_connect
-import Modules.cart_crud as cart_db
-import Modules.product_crud as product_db
+import modules.dbConnect as db_connect
+import modules.cart_crud as cart_db
+import modules.product_crud as product_db
 
 router = APIRouter()
 get_db = db_connect.get_db

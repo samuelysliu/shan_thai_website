@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import Modules.external_link_crud as external_link_db
-import Modules.dbConnect as db_connect
+import modules.external_link_crud as external_link_db
+import modules.dbConnect as db_connect
 
 router = APIRouter()
 get_db = db_connect.get_db

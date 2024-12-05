@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from Controls.backstage.cms import router as backstage_router
-from Controls.backstage.product_backstage import router as backstage_product_router
-from Controls.backstage.user_backstage import router as backstage_user_router
-from Controls.backstage.order_backstage import router as backstage_order_router
-from Controls.frontstage.product_frontstage import router as frontstage_product_router
-from Controls.frontstage.order_frontstage import router as frontstage_order_router
-from Controls.frontstage.user_frontstage import router as frontstage_user_router
+from controls.backstage.cms import router as backstage_router
+from controls.backstage.product_backstage import router as backstage_product_router
+from controls.backstage.user_backstage import router as backstage_user_router
+from controls.backstage.order_backstage import router as backstage_order_router
+from controls.frontstage.product_frontstage import router as frontstage_product_router
+from controls.frontstage.order_frontstage import router as frontstage_order_router
+from controls.frontstage.user_frontstage import router as frontstage_user_router
 
 
 app = FastAPI()

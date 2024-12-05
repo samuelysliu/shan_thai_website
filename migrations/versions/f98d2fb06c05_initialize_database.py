@@ -9,7 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from Modules.dbInit import Base, engine
+from modules.dbInit import Base, engine
 
 
 # revision identifiers, used by Alembic.

@@ -1,14 +1,14 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
-import Modules.dbConnect as db_connect
-import Modules.user_crud as user_db
+import modules.dbConnect as db_connect
+import modules.user_crud as user_db
 from bcrypt import hashpw, gensalt, checkpw
 from requests_oauthlib import OAuth2Session
 import os
 import jwt
 from datetime import datetime, timedelta
-from Controls.tools import jwt_required
+from controls.tools import jwt_required
 
 # jwt setting
 SECRET_KEY = "shan_thai_project"

@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from Modules.dbInit import ExternalLink
+from modules.dbInit import ExternalLink
 
 
 # 取得所有 ExternalLink 資料
