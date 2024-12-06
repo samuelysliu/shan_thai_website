@@ -3,9 +3,18 @@
 import React from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
 import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart } from "@/app/redux/slices/cartSlice";
+import config from "@/app/config";
+import axios from "axios";
 
 const Product_Grid = ({ initialProducts }) => {
   const router = useRouter();
+  const dispatch = useDispatch();
+  let endpoint = config.apiBaseUrl;
+
+  // 取得用戶資料
+  const { userInfo } = useSelector((state) => state.user);
 
   if (!initialProducts) {
     return (
@@ -22,6 +31,24 @@ const Product_Grid = ({ initialProducts }) => {
     );
   }
 
+  const clickToAdd = async (product) => {
+    try {
+      // 先更新 Redux 中的購物車
+      dispatch(addToCart(product));
+
+      // 然後呼叫後端 API，將該商品加入購物車
+      const response = await axios.post(`${endpoint}/frontstage/v1/cart`, {
+        uid: userInfo.uid,
+        pid: product.pid,
+        quantity: 1,
+      });
+      console.log(response.data)
+    } catch (error) {
+      console.error("無法將商品加入購物車：", error);
+      // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
+    }
+  };
+
   return (
     <Container className="my-4">
       <Row xs={2} md={3} xl={4} xxl={5}>
@@ -35,10 +62,14 @@ const Product_Grid = ({ initialProducts }) => {
                 onClick={() => router.push(`/product/${product.pid}`)}
                 style={{ cursor: "pointer" }} />
               <Card.Body>
-                <Card.Title>{product.title_cn}</Card.Title>
+                <Card.Title
+                  onClick={() => router.push(`/product/${product.pid}`)}
+                  style={{ cursor: "pointer" }}>
+                  {product.title_cn}
+                </Card.Title>
                 <Card.Text>NT. {product.price}</Card.Text>
                 <Button variant="outline-dark" size="sm">購買</Button>
-                <Button variant="outline-dark" size="sm" onClick={() => dispatch(addToCart(product))}>加入購物車</Button>
+                <Button variant="outline-dark" size="sm" onClick={() => clickToAdd(product)}>加入購物車</Button>
               </Card.Body>
             </Card>
           </Col>

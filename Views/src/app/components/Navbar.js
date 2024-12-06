@@ -1,20 +1,46 @@
 "use client";  // 設定為客戶端組件
 
-import React, { useState } from 'react';
-import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
 import LoginModal from './Login_Modal';
-import { useSelector } from 'react-redux';
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from '../redux/slices/userSlice';
+import { setCartItems } from '../redux/slices/cartSlice';
+import { FaShoppingCart } from "react-icons/fa";
+import axios from "axios";
+import config from '../config';
+
 
 export default function NavigationBar() {
   const router = useRouter();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const dispatch = useDispatch();
+  const endpoint = config.apiBaseUrl;
 
-  // 從 Redux 中取出會員資訊
+  // 從 Redux 中取出會員資訊和購物車資訊
   const { userInfo, isAuthenticated } = useSelector((state) => state.user);
+  const cartItems = useSelector((state) => state.cart.items);
+
+  // 計算購物車商品總數
+  const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+
+  // 當組件加載時獲取購物車數量
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        const response = await axios.get(`${endpoint}/frontstage/v1/cart`);
+        dispatch(setCartItems(response.data)); // 更新購物車商品數量到 Redux store
+      } catch (error) {
+        console.error("無法拉取購物車數據：", error);
+      }
+    };
+
+    // 如果已經認證過，用戶登入則呼叫購物車數據
+    if (isAuthenticated) {
+      fetchCartItems();
+    }
+  }, [isAuthenticated, dispatch]);
 
   const handleNavLink = (path) => {
     router.push(path);
@@ -41,7 +67,23 @@ export default function NavigationBar() {
               <Nav.Link onClick={() => handleNavLink('/faq')}>Q&A</Nav.Link>
               <Nav.Link onClick={() => handleNavLink('/contact')}>聯絡我們</Nav.Link>
             </Nav>
-            <Nav>
+
+            <Nav className="align-items-center">
+              {/* 購物車圖示 */}
+              <Nav.Link onClick={() => handleNavLink('/cart')} className="position-relative">
+                <FaShoppingCart size={24} />
+                {cartCount > 0 && (
+                  <Badge
+                    pill
+                    bg="danger"
+                    className="position-absolute top-0 start-100 translate-middle badge rounded-circle"
+                    style={{ fontSize: '0.75rem' }}
+                  >
+                    {cartCount}
+                  </Badge>
+                )}
+              </Nav.Link>
+
               {isAuthenticated ? (
                 // 已登入，顯示會員名稱和下拉選單
                 <NavDropdown title={userInfo.username == "" ? "會員" : userInfo.username} id="user-dropdown">

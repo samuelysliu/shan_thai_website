@@ -6,7 +6,7 @@
   /* 主要顏色 */
   --secondary-color: #666666;
   /* 次要顏色 */
-  --accent-color: #007bff;
+  --accent-color: #0065d1;
   /* 強調顏色 */
   --text-color: #171717;
   /* 主要文字顏色 */
@@ -125,7 +125,7 @@ a {
 .product-menu a {
   display: inline-block;
   padding: 0.5rem 1rem;
-  color: var(--text-color) !important;
+  color: var(--text-color);
   text-decoration: none;
   font-weight: bold;
   transition: color 0.3s, box-shadow 0.3s;
@@ -142,10 +142,21 @@ a {
 
 .product-menu a:hover {
   color: var(--accent-color);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* 滑鼠懸停時加強陰影效果 */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  /* 滑鼠懸停時加強陰影效果 */
 }
 
-/* 滾動條樣式（可選） */
+/* 選中的標籤樣式 */
+.selected-tag {
+  color: #ffffff !important;
+  /* 設置文字顏色為白色 */
+  background-color: var(--accent-color) !important;
+  /* 設置背景顏色為強調顏色 */
+  border-color: var(--accent-color) !important;
+  /* 修改邊框顏色 */
+}
+
+/* 滾動條樣式 */
 .product-menu-container::-webkit-scrollbar {
   height: 8px;
 }

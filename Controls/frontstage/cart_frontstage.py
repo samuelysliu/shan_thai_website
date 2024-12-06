@@ -12,6 +12,7 @@ get_db = db_connect.get_db
 # 用於新增商品至購物車的請求模型
 class AddToCartRequest(BaseModel):
     pid: int  # 商品的 ID
+    uid:int 
     quantity: int  # 商品數量
 
 
@@ -41,8 +42,10 @@ async def get_user_cart(uid: int, db: Session = Depends(get_db)):
 
 # 新增商品至購物車
 @router.post("/cart", response_model=CartItemResponse)
-async def add_to_cart(request: AddToCartRequest, uid: int, db: Session = Depends(get_db)):
-    new_cart_item = cart_db.add_to_cart(db, uid=uid, pid=request.pid, quantity=request.quantity)
+async def add_to_cart(request: AddToCartRequest, db: Session = Depends(get_db)):
+
+    new_cart_item = cart_db.add_to_cart(db, uid=request.uid, pid=request.pid, quantity=request.quantity)
+    print(new_cart_item)
     if not new_cart_item:
         raise HTTPException(status_code=500, detail="新增購物車項目失敗")
     return new_cart_item
@@ -55,7 +58,6 @@ async def update_cart_item(request: UpdateCartRequest, uid: int, db: Session = D
     cart_item = cart_db.get_cart_by_id(db, request.cart_id)
     if not cart_item or cart_item.uid != uid:
         raise HTTPException(status_code=403, detail="您無權修改此購物車項目")
-
     updated_cart_item = cart_db.update_cart(db, cart_id=request.cart_id, quantity=request.quantity)
     if not updated_cart_item:
         raise HTTPException(status_code=500, detail="更新購物車項目失敗")
