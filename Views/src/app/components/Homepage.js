@@ -43,8 +43,8 @@ const HomePageClient = ({ products, productTags }) => {
                 {/* Product Grid */}
                 <Product_Grid initialProducts={filteredProducts} />
                 <Pagination_Component />
-                <Footer />
             </Container>
+            <Footer />
         </>
     );
 };

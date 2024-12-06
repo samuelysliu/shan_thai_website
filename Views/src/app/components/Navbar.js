@@ -38,7 +38,7 @@ export default function NavigationBar() {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="mx-auto">
               <Nav.Link onClick={() => handleNavLink('/')}>首頁</Nav.Link>
-              <Nav.Link onClick={() => handleNavLink('/qna')}>Q&A</Nav.Link>
+              <Nav.Link onClick={() => handleNavLink('/faq')}>Q&A</Nav.Link>
               <Nav.Link onClick={() => handleNavLink('/contact')}>聯絡我們</Nav.Link>
             </Nav>
             <Nav>
