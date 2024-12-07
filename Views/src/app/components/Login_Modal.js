@@ -47,7 +47,7 @@ export default function LoginModal({ show, handleClose }) {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(endpoint + "/user/v1/login", form);
+      const response = await axios.post(endpoint + "/frontstage/v1/login", form);
       const responseData = response.data.detail
       const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin}
       const token = responseData.token;
@@ -63,7 +63,7 @@ export default function LoginModal({ show, handleClose }) {
   // 處理一般註冊
   const handleRegister = async () => {
     try {
-      const response = await axios.post(endpoint + "/user/v1/register", {
+      const response = await axios.post(endpoint + "/frontstage/v1/register", {
         email: form.email,
         password: form.password,
       });

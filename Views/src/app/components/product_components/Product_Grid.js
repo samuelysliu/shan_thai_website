@@ -31,18 +31,19 @@ const Product_Grid = ({ initialProducts }) => {
     );
   }
 
-  const clickToAdd = async (product) => {
+  const handleAddCart = async (product) => {
     try {
-      // 先更新 Redux 中的購物車
-      dispatch(addToCart(product));
-
-      // 然後呼叫後端 API，將該商品加入購物車
-      const response = await axios.post(`${endpoint}/frontstage/v1/cart`, {
+      let cartObject = {
         uid: userInfo.uid,
         pid: product.pid,
         quantity: 1,
-      });
-      console.log(response.data)
+      }
+
+      // 然後呼叫後端 API，將該商品加入購物車
+      await axios.post(`${endpoint}/frontstage/v1/cart`, cartObject);
+
+      // 更新 Redux 中的購物車
+      dispatch(addToCart(cartObject));
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
       // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
@@ -69,7 +70,7 @@ const Product_Grid = ({ initialProducts }) => {
                 </Card.Title>
                 <Card.Text>NT. {product.price}</Card.Text>
                 <Button variant="outline-dark" size="sm">購買</Button>
-                <Button variant="outline-dark" size="sm" onClick={() => clickToAdd(product)}>加入購物車</Button>
+                <Button variant="outline-dark" size="sm" onClick={() => handleAddCart(product)}>加入購物車</Button>
               </Card.Body>
             </Card>
           </Col>

@@ -13,6 +13,23 @@ const Product_Detail = ({ product }) => {
     console.log("立即購買", product.pid);
   };
 
+  const handleAddCart = async (product) => {
+    try {
+      // 然後呼叫後端 API，將該商品加入購物車
+      const response = await axios.post(`${endpoint}/frontstage/v1/cart`, {
+        uid: userInfo.uid,
+        pid: product.pid,
+        quantity: 1,
+      });
+
+      // 更新 Redux 中的購物車
+      dispatch(addToCart(response.data));
+    } catch (error) {
+      console.error("無法將商品加入購物車：", error);
+      // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
+    }
+  };
+
   if (!product) {
     return (
       <Container className="text-center my-4">
@@ -60,7 +77,7 @@ const Product_Detail = ({ product }) => {
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={() => dispatch(addToCart(product))}
+                  onClick={() => handleAddCart(product)}
                   disabled={product.remain <= 0}
                 >
                   直接購買

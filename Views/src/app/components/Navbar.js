@@ -25,20 +25,22 @@ export default function NavigationBar() {
   // 計算購物車商品總數
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  // 獲取購物車資料
+  const fetchCartItems = async () => {
+    try {
+      const response = await axios.get(`${endpoint}/frontstage/v1/cart/${userInfo.uid}`);
+      console.log(response.data);
+      dispatch(setCartItems(response.data)); // 更新購物車商品數量到 Redux store
+    } catch (error) {
+      console.error("無法拉取購物車數據：", error);
+    }
+  };
+
   // 當組件加載時獲取購物車數量
   useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const response = await axios.get(`${endpoint}/frontstage/v1/cart`);
-        dispatch(setCartItems(response.data)); // 更新購物車商品數量到 Redux store
-      } catch (error) {
-        console.error("無法拉取購物車數據：", error);
-      }
-    };
-
     // 如果已經認證過，用戶登入則呼叫購物車數據
     if (isAuthenticated) {
-      fetchCartItems();
+      fetchCartItems()
     }
   }, [isAuthenticated, dispatch]);
 
@@ -70,7 +72,7 @@ export default function NavigationBar() {
 
             <Nav className="align-items-center">
               {/* 購物車圖示 */}
-              <Nav.Link onClick={() => handleNavLink('/cart')} className="position-relative">
+              <Nav.Link onClick={() => handleNavLink('/product/cart')} className="position-relative">
                 <FaShoppingCart size={24} />
                 {cartCount > 0 && (
                   <Badge

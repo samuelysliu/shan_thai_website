@@ -8,6 +8,11 @@ export const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
+
+    setCartItems: (state, action) => {
+      state.items = action.payload; // 一次性設置購物車數據
+    },
+
     addToCart: (state, action) => {
       const product = action.payload;
       const existingItem = state.items.find((item) => item.pid === product.pid);
@@ -17,6 +22,7 @@ export const cartSlice = createSlice({
         state.items.push({ ...product, quantity: 1 });
       }
     },
+
     updateQuantity: (state, action) => {
       const { pid, quantity } = action.payload;
       const existingItem = state.items.find((item) => item.pid === pid);
@@ -27,11 +33,12 @@ export const cartSlice = createSlice({
         }
       }
     },
+
     removeFromCart: (state, action) => {
       state.items = state.items.filter((item) => item.pid !== action.payload);
     },
   },
 });
 
-export const { addToCart, updateQuantity, removeFromCart } = cartSlice.actions;
+export const { setCartItems, addToCart, updateQuantity, removeFromCart } = cartSlice.actions;
 export default cartSlice.reducer;

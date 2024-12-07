@@ -17,9 +17,8 @@ def get_carts_by_user(db: Session, uid: int) -> List[dict]:
                 "pid": cart.pid,
                 "quantity": cart.quantity,
                 "added_at": cart.added_at,
-                "is_active": cart.is_active,
-                "created_at": cart.created_at,
-                "updated_at": cart.updated_at,
+                "updated_at": cart.updated_at
+                
             }
             for cart in carts
         ]
@@ -42,7 +41,6 @@ def get_cart_by_id(db: Session, cart_id: int) -> dict:
                 "quantity": cart.quantity,
                 "added_at": cart.added_at,
                 "is_active": cart.is_active,
-                "created_at": cart.created_at,
                 "updated_at": cart.updated_at,
             }
         return None
@@ -67,8 +65,6 @@ def add_to_cart(db: Session, uid: int, pid: int, quantity: int) -> dict:
                 "pid": existing_cart.pid,
                 "quantity": existing_cart.quantity,
                 "added_at": existing_cart.added_at,
-                "is_active": existing_cart.is_active,
-                "created_at": existing_cart.created_at,
                 "updated_at": existing_cart.updated_at,
             }
 

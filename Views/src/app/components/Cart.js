@@ -1,33 +1,111 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Container, Row, Col, Table, Button } from "react-bootstrap";
 import { updateQuantity, removeFromCart } from "../redux/slices/cartSlice";
+import config from "../config";
+import axios from "axios";
 
 const Cart = () => {
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
+  const { userInfo, token } = useSelector((state) => state.user); // 獲取登入用戶與 Token
+  const [cartProduct, setCartProduct] = useState([]);
+  let endpoint = config.apiBaseUrl;
+
+  // 初始化購物車
+  useEffect(() => {
+    const fetchCartItems = async () => {
+      try {
+        const response = await axios.get(`${endpoint}/frontstage/v1/cart/${userInfo.uid}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        dispatch(setCartItems(response.data)); // 更新 Redux 購物車
+      } catch (err) {
+        console.error("無法加載購物車數據：", err);
+      }
+    };
+
+    if (userInfo.uid) {
+      fetchCartItems();
+    }
+  }, [userInfo.uid, token, dispatch]);
+
+  // 同步購物車與商品詳細資料
+  const productAndCartMapping = async () => {
+    try {
+      const productPromises = cart.map(async (item) => {
+        const response = await axios.get(`${endpoint}/frontstage/v1/product_by_pid/${item.pid}`);
+        return {
+          ...item,
+          ...response.data,
+        };
+      });
+
+      const resolvedProducts = await Promise.all(productPromises);
+      setCartProduct(resolvedProducts);
+    } catch (err) {
+      console.error("產品Mapping失敗：", err);
+    }
+  };
+
+
+  useEffect(() => {
+    if (cart.length > 0) {
+      productAndCartMapping();
+    }
+  }, [cart]);
+
+  // 更新購物車 API
+  const updateCartAPI = async (cart_id, quantity) => {
+    try {
+      await axios.patch(
+        `${endpoint}/frontstage/v1/cart/${cart_id}`,
+        { "quantity": quantity },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+    } catch (err) {
+      console.error("更新購物車失敗：", err);
+    }
+  };
+
+  // 操作購物車數量
+  const handleIncrease = (pid, cart_id) => {
+    dispatch(updateQuantity({ pid, quantity: 1 }));
+    updateCartAPI(cart_id, 1);
+  };
+
+  const handleDecrease = (pid, cart_id) => {
+    dispatch(updateQuantity({ pid, quantity: -1 }));
+    updateCartAPI(cart_id, -1);
+  };
+
+  const handleRemove = (pid, cart_id) => {
+    dispatch(removeFromCart(pid));
+    try {
+      axios.delete(`${endpoint}/frontstage/v1/cart/${cart_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (err) {
+      console.error("移除購物車失敗：", err);
+    }
+  };
 
   // 計算總額
   const calculateTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
-
-  const handleIncrease = (pid) => {
-    dispatch(updateQuantity({ pid, quantity: 1 })); // 增加數量
-  };
-
-  const handleDecrease = (pid) => {
-    dispatch(updateQuantity({ pid, quantity: -1 })); // 減少數量
-  };
-
-  const handleRemove = (pid) => {
-    dispatch(removeFromCart(pid)); // 移除商品
+    return cartProduct.reduce((total, item) => total + item.price * item.quantity, 0);
   };
 
   const handleCheckout = () => {
-    // 導航到結帳頁面
     console.log("前往結帳");
   };
 
@@ -50,14 +128,14 @@ const Cart = () => {
               </tr>
             </thead>
             <tbody>
-              {cart.map((item) => (
+              {cartProduct.map((item) => (
                 <tr key={item.pid}>
                   <td>
                     <img
                       src={item.productImageUrl}
                       alt={item.title_cn}
-                      width="80"
-                      height="80"
+                      width="100"
+                      height="100"
                     />
                   </td>
                   <td>{item.title_cn}</td>
@@ -66,7 +144,7 @@ const Cart = () => {
                     <Button
                       variant="outline-dark"
                       size="sm"
-                      onClick={() => handleDecrease(item.pid)}
+                      onClick={() => handleDecrease(item.pid, item.cart_id)}
                       disabled={item.quantity === 1}
                     >
                       -
@@ -75,7 +153,7 @@ const Cart = () => {
                     <Button
                       variant="outline-dark"
                       size="sm"
-                      onClick={() => handleIncrease(item.pid)}
+                      onClick={() => handleIncrease(item.pid, item.cart_id)}
                     >
                       +
                     </Button>
@@ -85,7 +163,7 @@ const Cart = () => {
                     <Button
                       variant="danger"
                       size="sm"
-                      onClick={() => handleRemove(item.pid)}
+                      onClick={() => handleRemove(item.pid, item.cart_id)}
                     >
                       移除
                     </Button>
