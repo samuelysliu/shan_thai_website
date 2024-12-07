@@ -18,7 +18,7 @@ const Cart = () => {
   useEffect(() => {
     const fetchCartItems = async () => {
       try {
-        const response = await axios.get(`${endpoint}/frontstage/v1/cart/${userInfo.uid}`, {
+        const response = await axios.get(`${endpoint}/frontstage/v1/user_cart/${userInfo.uid}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -64,7 +64,7 @@ const Cart = () => {
     try {
       await axios.patch(
         `${endpoint}/frontstage/v1/cart/${cart_id}`,
-        { "quantity": quantity },
+        { quantity }, // 正確的請求結構
         {
           headers: {
             Authorization: `Bearer ${token}`,

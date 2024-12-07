@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
@@ -34,8 +34,13 @@ class CartItemResponse(BaseModel):
 
 
 # 獲取使用者的購物車所有項目
-@router.get("/cart/{uid}", response_model=List[CartItemResponse])
-async def get_user_cart(uid: int, db: Session = Depends(get_db)):
+@router.get("/user_cart/{uid}", response_model=List[CartItemResponse])
+@jwt_required
+async def get_user_cart(uid: int, token_data: dict, db: Session = Depends(get_db)):
+    user_uid = token_data.get("uid")
+    if user_uid != uid:
+        raise HTTPException(status_code=403, detail="您無權訪問此購物車")
+
     cart_items = cart_db.get_carts_by_user(db, uid)
 
     if not cart_items:
@@ -81,9 +86,13 @@ async def update_cart_item(
     token_data: dict = Depends(jwt_required),
     db: Session = Depends(get_db),
 ):
+    print(cart_id)
+
     # 確保購物車項目屬於該使用者
     user_uid = token_data.get("uid")
     cart_item = cart_db.get_cart_by_id(db, cart_id=cart_id)
+    return cart_item
+
     if not cart_item or cart_item.uid != user_uid:
         raise HTTPException(status_code=403, detail="您無權修改此購物車項目")
 

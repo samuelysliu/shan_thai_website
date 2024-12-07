@@ -19,7 +19,7 @@ export default function NavigationBar() {
   const endpoint = config.apiBaseUrl;
 
   // 從 Redux 中取出會員資訊和購物車資訊
-  const { userInfo, isAuthenticated } = useSelector((state) => state.user);
+  const { userInfo, isAuthenticated, token } = useSelector((state) => state.user);
   const cartItems = useSelector((state) => state.cart.items);
 
   // 計算購物車商品總數
@@ -28,7 +28,11 @@ export default function NavigationBar() {
   // 獲取購物車資料
   const fetchCartItems = async () => {
     try {
-      const response = await axios.get(`${endpoint}/frontstage/v1/cart/${userInfo.uid}`);
+      const response = await axios.get(`${endpoint}/frontstage/v1/user_cart/${userInfo.uid}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       console.log(response.data);
       dispatch(setCartItems(response.data)); // 更新購物車商品數量到 Redux store
     } catch (error) {
