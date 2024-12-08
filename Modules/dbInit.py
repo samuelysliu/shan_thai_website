@@ -87,7 +87,8 @@ class Product(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
     # 關聯其他資料庫
-    orders = relationship("Order", back_populates="product")
+    #orders = relationship("Order", back_populates="product")
+    order_details = relationship("OrderDetail", back_populates="product")  # 新增關聯
     carts = relationship("Cart", back_populates="product")
     product_tag = relationship("ProductTag", back_populates="product")
     
@@ -111,20 +112,33 @@ class User(Base):
     
 class Order(Base):
     __tablename__ = "orders"
-    oid = Column(Integer, primary_key=True, autoincrement=True)
-    uid = Column(Integer, ForeignKey("users.uid"), nullable=False)
-    pid = Column(Integer, ForeignKey("product.pid"), nullable=False)
-    productNumber = Column(Integer, default=1)
-    totalAmount = Column(Integer, default=0)  # 新增欄位：訂單金額
-    address = Column(String)
-    transportationMethod = Column(String(50))
-    status = Column(String(50))
-    created_at = Column(DateTime, default=func.now(), onupdate=func.now()) 
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    
+    oid = Column(Integer, primary_key=True, autoincrement=True)  # 訂單 ID
+    uid = Column(Integer, ForeignKey("users.uid"), nullable=False)  # 用戶 ID
+    totalAmount = Column(Integer, default=0)  # 訂單總金額
+    address = Column(String)  # 收貨地址
+    transportationMethod = Column(String(50))  # 運輸方式
+    status = Column(String(50))  # 訂單狀態
+    created_at = Column(DateTime, default=func.now(), onupdate=func.now())  # 訂單建立時間
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())  # 訂單更新時間
     
     # 關聯其他資料庫
     users = relationship("User", back_populates="orders")
-    product = relationship("Product", back_populates="orders")
+    order_details = relationship("OrderDetail", back_populates="order", cascade="all, delete-orphan")  # 關聯訂單明細表
+
+class OrderDetail(Base):
+    __tablename__ = "order_details"
+    
+    odid = Column(Integer, primary_key=True, autoincrement=True)  # 訂單明細 ID
+    oid = Column(Integer, ForeignKey("orders.oid"), nullable=False)  # 訂單 ID
+    pid = Column(Integer, ForeignKey("product.pid"), nullable=False)  # 商品 ID
+    productNumber = Column(Integer, default=1)  # 商品數量
+    price = Column(Integer, nullable=False)  # 單價（記錄當前價格，避免後續商品價格變更影響訂單）
+    subtotal = Column(Integer, nullable=False)  # 小計金額
+    
+    # 關聯其他資料庫
+    order = relationship("Order", back_populates="order_details")  # 關聯訂單主表
+    product = relationship("Product", back_populates="order_details")  # 關聯商品表
 
 
 class Term(Base):

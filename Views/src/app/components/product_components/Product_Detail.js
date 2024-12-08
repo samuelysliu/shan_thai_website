@@ -2,11 +2,19 @@
 
 import React from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
+import { useDispatch, useSelector } from "react-redux";
+import { addToCart } from "@/app/redux/slices/cartSlice";
 import { Container, Row, Col, Image, Button, Card } from "react-bootstrap";
 import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
+import axios from "axios";
+import config from "@/app/config";
 
 const Product_Detail = ({ product }) => {
   const router = useRouter();
+  let endpoint = config.apiBaseUrl;
+  // 取得用戶資料
+  const { userInfo, token } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
 
   const handleBuyNow = () => {
     // 立即購買的邏輯
@@ -14,16 +22,25 @@ const Product_Detail = ({ product }) => {
   };
 
   const handleAddCart = async (product) => {
+    console.log(product)
     try {
-      // 然後呼叫後端 API，將該商品加入購物車
-      const response = await axios.post(`${endpoint}/frontstage/v1/cart`, {
+      let cartObject = {
         uid: userInfo.uid,
         pid: product.pid,
         quantity: 1,
-      });
+      }
+      console.log(cartObject)
+
+      // 然後呼叫後端 API，將該商品加入購物車
+      await axios.post(`${endpoint}/frontstage/v1/cart`, cartObject,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
       // 更新 Redux 中的購物車
-      dispatch(addToCart(response.data));
+      dispatch(addToCart(cartObject));
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
       // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
@@ -59,7 +76,7 @@ const Product_Detail = ({ product }) => {
             <Card.Body>
               <Card.Title className="product-title" as="h1">{product.title_cn}</Card.Title>
               <Card.Text className="product-price text-muted">
-                <h3>NT. {product.price}</h3>
+                <span style={{ fontSize: '1.75rem' }}>NT. {product.price}</span>
               </Card.Text>
               <Card.Text className="product-stock">
                 <span>庫存數量：{product.remain}</span>
@@ -69,7 +86,7 @@ const Product_Detail = ({ product }) => {
                 <Button
                   variant="outline-primary"
                   size="lg"
-                  onClick={handleAddToCart}
+                  onClick={() => handleAddCart(product)}
                   disabled={product.remain <= 0}
                 >
                   加入購物車
@@ -77,7 +94,7 @@ const Product_Detail = ({ product }) => {
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={() => handleAddCart(product)}
+                  onClick={() => handleBuyNow(product)}
                   disabled={product.remain <= 0}
                 >
                   直接購買

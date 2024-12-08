@@ -5,7 +5,7 @@ from typing import List
 import modules.dbConnect as db_connect
 import modules.cart_crud as cart_db
 from controls.tools import format_to_utc8 as timeformat
-from controls.tools import jwt_required
+from controls.tools import verify_token
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -35,8 +35,13 @@ class CartItemResponse(BaseModel):
 
 # 獲取使用者的購物車所有項目
 @router.get("/user_cart/{uid}", response_model=List[CartItemResponse])
-@jwt_required
-async def get_user_cart(uid: int, token_data: dict, db: Session = Depends(get_db)):
+async def get_user_cart(
+    uid: int,
+    db: Session = Depends(get_db),
+    token_data: dict = Depends(verify_token),
+):
+
+    # 驗證 uid 是否與 token_data 的 uid 匹配
     user_uid = token_data.get("uid")
     if user_uid != uid:
         raise HTTPException(status_code=403, detail="您無權訪問此購物車")
@@ -44,7 +49,7 @@ async def get_user_cart(uid: int, token_data: dict, db: Session = Depends(get_db
     cart_items = cart_db.get_carts_by_user(db, uid)
 
     if not cart_items:
-        raise HTTPException(status_code=404, detail="找不到購物車項目")
+        return []
 
     for cart_item in cart_items:
         cart_item["added_at"] = timeformat(cart_item["added_at"].isoformat())
@@ -54,10 +59,9 @@ async def get_user_cart(uid: int, token_data: dict, db: Session = Depends(get_db
 
 # 新增商品至購物車
 @router.post("/cart", response_model=CartItemResponse)
-@jwt_required
 async def add_to_cart(
     request: AddToCartRequest,
-    token_data: dict = Depends(jwt_required),
+    token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
     # 確保購物車項目屬於該使用者
@@ -79,55 +83,46 @@ async def add_to_cart(
 
 # 更新購物車商品數量
 @router.patch("/cart/{cart_id}", response_model=CartItemResponse)
-@jwt_required
 async def update_cart_item(
     cart_id: int,
     request: UpdateCartRequest,
-    token_data: dict = Depends(jwt_required),
+    token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
-    print(cart_id)
-
     # 確保購物車項目屬於該使用者
     user_uid = token_data.get("uid")
     cart_item = cart_db.get_cart_by_id(db, cart_id=cart_id)
-    return cart_item
+    
 
-    if not cart_item or cart_item.uid != user_uid:
+    if not cart_item or cart_item["uid"] != user_uid:
         raise HTTPException(status_code=403, detail="您無權修改此購物車項目")
 
     updated_cart_item = cart_db.update_cart_item(
-        db, cart_id=request.cart_id, quantity=(cart_item.quantity + request.quantity)
+        db, cart_id=cart_id, quantity=(cart_item["quantity"] + request.quantity)
     )
     if not updated_cart_item:
         raise HTTPException(status_code=500, detail="更新購物車項目失敗")
+    
+    updated_cart_item["added_at"] = timeformat(cart_item["added_at"].isoformat())
+    updated_cart_item["updated_at"] = timeformat(cart_item["updated_at"].isoformat())
+    
     return updated_cart_item
 
 
 # 移除購物車中的某一項商品
 @router.delete("/cart/{cart_id}")
-@jwt_required
 async def remove_cart_item(
     cart_id: int,
-    token_data: dict = Depends(jwt_required),
+    token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
     # 確保購物車項目屬於該使用者
     user_uid = token_data.get("uid")
     cart_item = cart_db.get_cart_by_id(db, cart_id=cart_id)
-    if not cart_item or cart_item.uid != user_uid:
+    if not cart_item or cart_item["uid"] != user_uid:
         raise HTTPException(status_code=403, detail="您無權修改此購物車項目")
 
     success = cart_db.remove_cart_item(db, cart_id=cart_id)
     if not success:
         raise HTTPException(status_code=500, detail="移除購物車項目失敗")
     return {"detail": "購物車項目成功移除"}
-
-
-# 清空使用者的購物車
-@router.delete("/cart")
-async def clear_cart(uid: int, db: Session = Depends(get_db)):
-    success = cart_db.clear_cart_by_user(db, uid)
-    if not success:
-        raise HTTPException(status_code=500, detail="清空購物車失敗")
-    return {"detail": "購物車已成功清空"}

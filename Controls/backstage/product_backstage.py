@@ -72,7 +72,6 @@ def handleImageUpload(file: UploadFile = File(...)):
 
 
 @router.get("/product")
-@admin_required
 async def get_product(db: Session = Depends(get_db)):
     product = product_db.get_product_join_tag(db)
     if not product:
@@ -81,7 +80,6 @@ async def get_product(db: Session = Depends(get_db)):
 
 
 @router.patch("/product/{product_id}")
-@admin_required
 async def update_partial_product(
     product_id: int,
     title_cn: str = Form(None),
@@ -118,7 +116,6 @@ async def update_partial_product(
 
 
 @router.post("/product")
-@admin_required
 async def create_product(
     title_cn: str = Form(...),
     content_cn: str = Form(...),
@@ -148,7 +145,6 @@ async def create_product(
 
 
 @router.delete("/product/{product_id}")
-@admin_required
 async def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
@@ -161,7 +157,6 @@ async def delete_product(
 
 # 取得產品清單用的 API
 @router.get("/product_list")
-@admin_required
 async def get_product_list(db: Session = Depends(get_db)):
     products = product_db.get_product_join_tag(db)
     if not products:
@@ -184,7 +179,6 @@ async def get_product_list(db: Session = Depends(get_db)):
 
 # 產品標籤的操作
 @router.get("/product_tag")
-@admin_required
 async def get_product_tag(db: Session = Depends(get_db)):
     product_tag = product_db.get_all_product_tags(db)
     if not product_tag:
@@ -193,7 +187,6 @@ async def get_product_tag(db: Session = Depends(get_db)):
 
 
 @router.post("/product_tag")
-@admin_required
 def create_tag(tag: ProductTagCreate, db: Session = Depends(get_db)):
     product_tag = product_db.create_product_tag(db, tag.productTag)
     if not product_tag:
@@ -203,7 +196,6 @@ def create_tag(tag: ProductTagCreate, db: Session = Depends(get_db)):
 
 
 @router.delete("/product_tag/{tag_id}")
-@admin_required
 def delete_tag(tag_id: int, db: Session = Depends(get_db)):
     product_tag = product_db.delete_product_tag(db, tag_id)
     if not product_tag:

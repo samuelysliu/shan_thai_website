@@ -1,4 +1,5 @@
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, Depends
+from fastapi.security import OAuth2PasswordBearer
 from typing import Callable
 import jwt
 from functools import wraps
@@ -8,54 +9,48 @@ import pytz
 
 SECRET_KEY = "shan_thai_project"
 ALGORITHM = "HS256"
+# OAuth2PasswordBearer 用於提取 Token
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/frontstage/v1/login")
 
+# 驗證並解碼 JWT Token
+def verify_token(token: str = Depends(oauth2_scheme)):
+    try:
+        # 解碼 JWT
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return payload  # 返回解碼的 Payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token 已過期")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=403, detail="無效的認證憑證")
+
+
+# JWT 驗證裝飾器
 def jwt_required(func: Callable):
     @wraps(func)
-    async def wrapper(*args, request: Request, **kwargs):
-        token = request.headers.get("Authorization")
-        if not token or not token.startswith("Bearer "):
-            raise HTTPException(
-                status_code=401,
-                detail="Missing or invalid Authorization header",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        token = token.split(" ")[1]  # 提取 token
-        
+    async def wrapper(*args, token: str = Depends(oauth2_scheme), **kwargs):
         try:
+            # 解碼 JWT Token
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            return await func(*args, token_data=payload, **kwargs)
         except jwt.ExpiredSignatureError:
-            raise HTTPException(
-                status_code=401,
-                detail="Token has expired",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+            raise HTTPException(status_code=401, detail="Token 已過期")
         except jwt.InvalidTokenError:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
+            raise HTTPException(status_code=403, detail="無效的認證憑證")
+        
+        # 將解析後的 payload 傳遞給路由
+        kwargs["token_data"] = payload
+        return await func(*args, **kwargs)
     return wrapper
-
 
 # 管理員角色驗證
 def admin_required(func: Callable):
     @wraps(func)
     async def wrapper(*args, request: Request, **kwargs):
-        # 从请求头提取 Authorization
-        auth_header = request.headers.get("Authorization")
-        if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(
-                status_code=401,
-                detail="Authorization header missing or invalid",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        authorization: str = request.headers.get("Authorization")
         
-        # 提取 token
-        token = auth_header.split(" ")[1]
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=403, detail="無效的或缺失的認證憑證")
+        
+        token = authorization.split(" ")[1]  # 取出 Bearer 後的 token
 
         try:
             # 解码并验证 Token
@@ -80,7 +75,7 @@ def admin_required(func: Callable):
                 detail=f"Invalid token: {e}",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        return await func(*args, **kwargs)
+        return await func(request, *args, **kwargs)
 
     return wrapper
 
@@ -101,3 +96,8 @@ def format_to_utc8(datetime_str):
     except Exception as e:
         print(f"Error formatting time: {e}")
         return None
+
+# 確認token 跟呼叫API是同一個人
+def userAuthorizationCheck(api_uid, token_uId):
+    if api_uid != token_uId:
+        raise HTTPException(status_code=403, detail="您無權修改此項目")

@@ -12,7 +12,7 @@ import axios from "axios";
 import config from '../config';
 
 
-export default function NavigationBar() {
+export default function NavBar() {
   const router = useRouter();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const dispatch = useDispatch();
@@ -33,7 +33,6 @@ export default function NavigationBar() {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(response.data);
       dispatch(setCartItems(response.data)); // 更新購物車商品數量到 Redux store
     } catch (error) {
       console.error("無法拉取購物車數據：", error);
@@ -93,7 +92,7 @@ export default function NavigationBar() {
               {isAuthenticated ? (
                 // 已登入，顯示會員名稱和下拉選單
                 <NavDropdown title={userInfo.username == "" ? "會員" : userInfo.username} id="user-dropdown">
-                  <NavDropdown.Item onClick={() => handleNavLink("/orders")}>
+                  <NavDropdown.Item onClick={() => handleNavLink("/order/history")}>
                     訂單管理
                   </NavDropdown.Item>
                   <NavDropdown.Item onClick={() => handleNavLink("/profile")}>

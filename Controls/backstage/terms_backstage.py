@@ -19,7 +19,6 @@ class Term(BaseModel):
 
 
 @router.post("/terms", response_model=Term)
-@admin_required
 async def create_term(term: Term, db: Session = Depends(get_db)):
     """
     新增條款
@@ -33,7 +32,6 @@ async def create_term(term: Term, db: Session = Depends(get_db)):
 
 
 @router.get("/terms/{tid}", response_model=Term)
-@admin_required
 async def get_term(tid: int, db: Session = Depends(get_db)):
     """
     根據 tid 獲取條款
@@ -45,7 +43,6 @@ async def get_term(tid: int, db: Session = Depends(get_db)):
 
 
 @router.get("/terms", response_model=list[Term])
-@admin_required
 async def get_all_terms(db: Session = Depends(get_db)):
     """
     獲取所有條款
@@ -57,7 +54,6 @@ async def get_all_terms(db: Session = Depends(get_db)):
 
 
 @router.patch("/terms/{tid}", response_model=Term)
-@admin_required
 async def update_term(
     tid: int, updates: dict, db: Session = Depends(get_db)
 ):
@@ -74,7 +70,6 @@ async def update_term(
 
 
 @router.delete("/terms/{tid}")
-@admin_required
 async def delete_term(tid: int, db: Session = Depends(get_db)):
     """
     刪除條款

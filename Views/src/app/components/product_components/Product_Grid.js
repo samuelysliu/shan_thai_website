@@ -14,7 +14,7 @@ const Product_Grid = ({ initialProducts }) => {
   let endpoint = config.apiBaseUrl;
 
   // 取得用戶資料
-  const { userInfo } = useSelector((state) => state.user);
+  const { userInfo, token } = useSelector((state) => state.user);
 
   if (!initialProducts) {
     return (
@@ -40,7 +40,12 @@ const Product_Grid = ({ initialProducts }) => {
       }
 
       // 然後呼叫後端 API，將該商品加入購物車
-      await axios.post(`${endpoint}/frontstage/v1/cart`, cartObject);
+      await axios.post(`${endpoint}/frontstage/v1/cart`, cartObject,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
       // 更新 Redux 中的購物車
       dispatch(addToCart(cartObject));

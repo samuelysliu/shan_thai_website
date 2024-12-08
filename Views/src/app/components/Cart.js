@@ -1,38 +1,20 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation"; // 引入 useRouter
 import { useSelector, useDispatch } from "react-redux";
-import { Container, Row, Col, Table, Button } from "react-bootstrap";
+import { Container, Table, Button } from "react-bootstrap";
 import { updateQuantity, removeFromCart } from "../redux/slices/cartSlice";
 import config from "../config";
 import axios from "axios";
 
 const Cart = () => {
+  const router = useRouter();
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
-  const { userInfo, token } = useSelector((state) => state.user); // 獲取登入用戶與 Token
+  const { token } = useSelector((state) => state.user); // 獲取登入Token
   const [cartProduct, setCartProduct] = useState([]);
   let endpoint = config.apiBaseUrl;
-
-  // 初始化購物車
-  useEffect(() => {
-    const fetchCartItems = async () => {
-      try {
-        const response = await axios.get(`${endpoint}/frontstage/v1/user_cart/${userInfo.uid}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        dispatch(setCartItems(response.data)); // 更新 Redux 購物車
-      } catch (err) {
-        console.error("無法加載購物車數據：", err);
-      }
-    };
-
-    if (userInfo.uid) {
-      fetchCartItems();
-    }
-  }, [userInfo.uid, token, dispatch]);
 
   // 同步購物車與商品詳細資料
   const productAndCartMapping = async () => {
@@ -64,7 +46,7 @@ const Cart = () => {
     try {
       await axios.patch(
         `${endpoint}/frontstage/v1/cart/${cart_id}`,
-        { quantity }, // 正確的請求結構
+        { quantity },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -103,10 +85,6 @@ const Cart = () => {
   // 計算總額
   const calculateTotal = () => {
     return cartProduct.reduce((total, item) => total + item.price * item.quantity, 0);
-  };
-
-  const handleCheckout = () => {
-    console.log("前往結帳");
   };
 
   return (
@@ -176,7 +154,7 @@ const Cart = () => {
             <h4>總額：NT. {calculateTotal()}</h4>
             <Button
               variant="primary"
-              onClick={handleCheckout}
+              onClick={() => router.push(`/order/buy`)}
               style={{
                 backgroundColor: "var(--accent-color)",
                 borderColor: "var(--accent-color)",
