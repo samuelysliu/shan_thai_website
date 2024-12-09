@@ -2,19 +2,22 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import { Container, Row, Col, Table, Button, Form } from "react-bootstrap";
 import axios from "axios";
 import config from "@/app/config";
 
 const OrderConfirm = () => {
     const router = useRouter();
-    const dispatch = useDispatch();
     const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
     const { userInfo, token } = useSelector((state) => state.user); // 獲取登入 Token
     const [cartProduct, setCartProduct] = useState([]);
     const [address, setAddress] = useState("");
+    const [recipientName, setRecipientName] = useState("");
+    const [recipientPhone, setRecipientPhone] = useState("");
+    const [recipientEmail, setRecipientEmail] = useState("");
     const [transportationMethod, setTransportationMethod] = useState("delivery");
+    const [note, setNote] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const endpoint = config.apiBaseUrl;
 
@@ -49,13 +52,8 @@ const OrderConfirm = () => {
 
     // 提交訂單
     const handleSubmitOrder = async () => {
-        if (!address) {
-            alert("請輸入送貨地址！");
-            return;
-        }
-
-        if (!transportationMethod) {
-            alert("請選擇運送方式！");
+        if (!recipientName || !recipientPhone || !recipientEmail || !address) {
+            alert("請完整填寫所有必填欄位！");
             return;
         }
 
@@ -74,9 +72,13 @@ const OrderConfirm = () => {
             // 組合訂單資料
             const orderData = {
                 uid: userInfo.uid,
-                totalAmount,
-                address,
+                totalAmount: totalAmount,
+                address: address,
+                recipientName: recipientName,
+                recipientPhone: recipientPhone,
+                recipientEmail: recipientEmail,
                 transportationMethod,
+                orderNote: orderNote,
                 order_details: orderDetails,
             };
 
@@ -134,6 +136,36 @@ const OrderConfirm = () => {
 
             <Row className="mt-4">
                 <Col xs={12} md={6}>
+                    <Form.Group controlId="formRecipientName" className="mb-3">
+                        <Form.Label>收件人姓名</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="請輸入收件人姓名"
+                            value={recipientName}
+                            onChange={(e) => setRecipientName(e.target.value)}
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formRecipientPhone" className="mb-3">
+                        <Form.Label>收件人電話</Form.Label>
+                        <Form.Control
+                            type="text"
+                            placeholder="請輸入收件人電話"
+                            value={recipientPhone}
+                            onChange={(e) => setRecipientPhone(e.target.value)}
+                        />
+                    </Form.Group>
+
+                    <Form.Group controlId="formRecipientEmail" className="mb-3">
+                        <Form.Label>收件人 Email</Form.Label>
+                        <Form.Control
+                            type="email"
+                            placeholder="請輸入收件人 Email"
+                            value={recipientEmail}
+                            onChange={(e) => setRecipientEmail(e.target.value)}
+                        />
+                    </Form.Group>
+
                     <Form.Group controlId="formTransportationMethod" className="mb-3">
                         <Form.Label>寄送方式</Form.Label>
                         <Form.Select
@@ -146,25 +178,26 @@ const OrderConfirm = () => {
                         </Form.Select>
                     </Form.Group>
 
-                    {transportationMethod == "delivery" ? <Form.Group controlId="formAddress" className="mb-3">
-                        <Form.Label>送貨地址</Form.Label>
+                    <Form.Group controlId="formAddress" className="mb-3">
+                        <Form.Label>{transportationMethod === "delivery" ? "送貨地址" : "超商門市"}</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder="請輸入送貨地址"
+                            placeholder={`請輸入${transportationMethod === "delivery" ? "送貨地址" : "超商門市名稱"}`}
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
                         />
                     </Form.Group>
-                        : <Form.Group controlId="formAddress" className="mb-3">
-                            <Form.Label>超商門市</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="請輸入門市名稱"
-                                value={address}
-                                onChange={(e) => setAddress(e.target.value)}
-                            />
-                        </Form.Group>
-                    }
+
+                    <Form.Group controlId="formNote" className="mb-3">
+                        <Form.Label>訂單備註</Form.Label>
+                        <Form.Control
+                            as="textarea"
+                            rows={3}
+                            placeholder="請輸入訂單備註（選填）"
+                            value={note}
+                            onChange={(e) => setNote(e.target.value)}
+                        />
+                    </Form.Group>
                 </Col>
 
                 <Col xs={12} md={6}>

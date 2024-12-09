@@ -41,44 +41,6 @@ def jwt_required(func: Callable):
         return await func(*args, **kwargs)
     return wrapper
 
-# 管理員角色驗證
-def admin_required(func: Callable):
-    @wraps(func)
-    async def wrapper(*args, request: Request, **kwargs):
-        authorization: str = request.headers.get("Authorization")
-        
-        if not authorization or not authorization.startswith("Bearer "):
-            raise HTTPException(status_code=403, detail="無效的或缺失的認證憑證")
-        
-        token = authorization.split(" ")[1]  # 取出 Bearer 後的 token
-
-        try:
-            # 解码并验证 Token
-            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-            role = payload.get("identity")
-            if role != "admin":
-                raise HTTPException(
-                    status_code=403,
-                    detail="Not authorized as admin",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
-            kwargs["token_data"] = payload  # 将 Token 数据传递给目标函数
-        except jwt.ExpiredSignatureError:
-            raise HTTPException(
-                status_code=401,
-                detail="Token has expired",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        except jwt.InvalidTokenError as e:
-            raise HTTPException(
-                status_code=401,
-                detail=f"Invalid token: {e}",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return await func(request, *args, **kwargs)
-
-    return wrapper
-
 
 def format_to_utc8(datetime_str):
     """
@@ -100,4 +62,9 @@ def format_to_utc8(datetime_str):
 # 確認token 跟呼叫API是同一個人
 def userAuthorizationCheck(api_uid, token_uId):
     if api_uid != token_uId:
+        raise HTTPException(status_code=403, detail="您無權修改此項目")
+
+# 確認是不是管理員
+def adminAutorizationCheck(isAdmin):
+    if not isAdmin:
         raise HTTPException(status_code=403, detail="您無權修改此項目")

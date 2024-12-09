@@ -12,7 +12,7 @@ import config from '../config';
 
 const HomePageClient = ({ products, productTags }) => {
     const [filteredProducts, setFilteredProducts] = useState(products);
-    let endpoint = config.apiBaseUrl;
+    const endpoint = config.apiBaseUrl;
 
     // 處理標籤選擇，根據選擇的標籤從伺服器端獲取產品
     const handleTagSelect = async (tagId) => {

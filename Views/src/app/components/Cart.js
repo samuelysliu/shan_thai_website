@@ -14,7 +14,7 @@ const Cart = () => {
   const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
   const { token } = useSelector((state) => state.user); // 獲取登入Token
   const [cartProduct, setCartProduct] = useState([]);
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
 
   // 同步購物車與商品詳細資料
   const productAndCartMapping = async () => {

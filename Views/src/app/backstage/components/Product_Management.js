@@ -10,7 +10,7 @@ import config from "../../config";
 import { useSelector } from 'react-redux';
 
 export default function ProductManagement() {
-    let endpoint = config.apiBaseUrl;
+    const endpoint = config.apiBaseUrl;
 
     // 從 Redux 中取出會員資訊
     const { token } = useSelector((state) => state.user);

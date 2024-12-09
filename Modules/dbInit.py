@@ -79,7 +79,7 @@ class Product(Base):
     content_cn = Column(Text)
     content_en = Column(Text)
     price = Column(Integer, default=0)
-    specialPrice = Column(Integer, default=None, nullable=True)
+    discountPrice = Column(Integer, default=None, nullable=True)
     remain = Column(Integer, default=0)
     sold = Column(Integer, default=0)
     productImageUrl = Column(String)
@@ -116,12 +116,18 @@ class Order(Base):
     oid = Column(Integer, primary_key=True, autoincrement=True)  # 訂單 ID
     uid = Column(Integer, ForeignKey("users.uid"), nullable=False)  # 用戶 ID
     totalAmount = Column(Integer, default=0)  # 訂單總金額
-    address = Column(String)  # 收貨地址
+    discountPrice = Column(Integer, default=0)  # 訂單優惠價
+    useDiscount = Column(Boolean, default=False) # 是否使用優惠價
+    address = Column(String, nullable=False)  # 收貨地址
+    recipientName = Column(String, nullable=False)  # 收件人姓名
+    recipientPhone = Column(String(15), nullable=False)  # 收件人電話
+    recipientEmail = Column(String, nullable=False)  # 收件人 Email
+    orderNote = Column(String, nullable=True)  # 訂單備註
     transportationMethod = Column(String(50))  # 運輸方式
     status = Column(String(50))  # 訂單狀態
-    created_at = Column(DateTime, default=func.now(), onupdate=func.now())  # 訂單建立時間
+    created_at = Column(DateTime, default=func.now())  # 訂單建立時間
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())  # 訂單更新時間
-    
+
     # 關聯其他資料庫
     users = relationship("User", back_populates="orders")
     order_details = relationship("OrderDetail", back_populates="order", cascade="all, delete-orphan")  # 關聯訂單明細表

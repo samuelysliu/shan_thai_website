@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "react-bootstrap";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import config from "../../config";
 
@@ -17,6 +18,7 @@ export default function OrderManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
   const [orders, setOrders] = useState([]);
+  const [expandedRows, setExpandedRows] = useState([]); // 存儲展開的訂單編號
   const [loading, setLoading] = useState(true);
 
   const [products, setProducts] = useState([]);
@@ -24,20 +26,19 @@ export default function OrderManagement() {
 
   // 控制彈出視窗顯示
   const [showOrderModal, setShowOrderModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // 區分新增與編輯模式
 
-  const [newOrder, setNewOrder] = useState({
+  const [editableOrder, setEditableOrder] = useState({
     oid: "",
-    uid: "",
-    pid: "",
-    productNumber: 1,
-    productPrice: 0,
-    totalAmount: 0,
-    discountPrice: 0,
-    useDiscount: false,
+    recipientName: "",
+    recipientPhone: "",
+    recipientEmail: "",
     address: "",
-    transportationMethod: "Seven 店到店",
-    status: "待出貨",
+    transportationMethod: "",
+    note: "",
+    status: "",
+    useDiscount: false,
+    discountPrice: 0,
+    totalAmount: 0,
   });
 
   useEffect(() => {
@@ -52,14 +53,24 @@ export default function OrderManagement() {
     try {
       const response = await axios.get(`${endpoint}/backstage/v1/orders`, {
         headers: {
-            Authorization: `Bearer ${token}`,
-        }
-    });
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setOrders(response.data);
+      console.log(response.data)
     } catch (error) {
       console.error("無法拉取訂單資料：", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // 切換展開行
+  const toggleRow = (oid) => {
+    if (expandedRows.includes(oid)) {
+      setExpandedRows(expandedRows.filter((rowId) => rowId !== oid));
+    } else {
+      setExpandedRows([...expandedRows, oid]);
     }
   };
 
@@ -68,9 +79,9 @@ export default function OrderManagement() {
     try {
       const response = await axios.get(`${endpoint}/backstage/v1/product_list`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         }
-    });
+      });
       setProducts(response.data);
     } catch (error) {
       console.error("無法拉取產品資料：", error);
@@ -82,130 +93,72 @@ export default function OrderManagement() {
     try {
       const response = await axios.get(`${endpoint}/backstage/v1/users_list`, {
         headers: {
-            Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         }
-    });
+      });
       setCustomers(response.data);
     } catch (error) {
       console.error("無法拉取客戶資料：", error);
     }
   };
 
-  // 控制新增或編輯訂單的變數初始值
-  const handleShowOrderModal = (order = null) => {
-    if (order) {
-      setNewOrder({
-        oid: order.oid,
-        uid: order.uid,
-        pid: order.pid,
-        productNumber: order.productNumber,
-        productPrice: order.productPrice,
-        totalAmount: order.totalAmount,
-        discountPrice: order.discountPrice,
-        useDiscount: order.discountPrice > 0,
-        address: order.address,
-        transportationMethod: order.transportationMethod,
-        status: order.status,
-      });
-      setIsEditing(true);
-    } else {
-      setNewOrder({
-        oid: "",
-        uid: "",
-        pid: "",
-        productNumber: 1,
-        productPrice: 0,
-        totalAmount: 0,
-        discountPrice: 0,
-        useDiscount: false,
-        address: "",
-        transportationMethod: "Seven 店到店",
-        status: "待出貨",
-      });
-      setIsEditing(false);
-    }
+  // 控制彈出視窗
+  const handleShowOrderModal = (order) => {
+    setEditableOrder({
+      oid: order.oid,
+      recipientName: order.recipientName || "",
+      recipientPhone: order.recipientPhone || "",
+      recipientEmail: order.recipientEmail || "",
+      address: order.address || "",
+      transportationMethod: order.transportationMethod || "delivery",
+      note: order.note || "",
+      status: order.status || "待出貨",
+      useDiscount: order.useDiscount || false,
+      discountPrice: order.discountPrice || 0,
+      totalAmount: order.totalAmount || 0,
+    });
     setShowOrderModal(true);
   };
 
-  const handleCloseOrderModal = () => {
-    setShowOrderModal(false);
-    setIsEditing(false);
-  };
-
-  //新增訂單
-  const createOrder = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.post(`${endpoint}/backstage/v1/orders`, newOrder, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        }
-    });
-
-      const newOrderData = response.data;
-      newOrderData.username = newOrder.customerName;
-      let selectedProduct = products.find(
-        (product) => product.pid === parseInt(newOrder.pid)
-      );
-      newOrderData.productTitle_cn = selectedProduct.title_cn;
-
-      setOrders((prevOrders) => [...prevOrders, newOrderData]);
-      handleCloseOrderModal();
-    } catch (error) {
-      console.error("無法新增訂單：", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 編輯訂單
+  // 更新訂單
   const updateOrder = async () => {
     setLoading(true);
     try {
-      let requestData = {
-        productNumber: newOrder.productNumber,
-        totalAmount: newOrder.totalAmount,
-        discountPrice: newOrder.discountPrice,
-        useDiscount: newOrder.useDiscount,
-        address: newOrder.address,
-        transportationMethod: newOrder.transportationMethod,
-        status: newOrder.status,
-      }
+      const requestData = {
+        recipientName: editableOrder.recipientName,
+        recipientPhone: editableOrder.recipientPhone,
+        recipientEmail: editableOrder.recipientEmail,
+        address: editableOrder.address,
+        transportationMethod: editableOrder.transportationMethod,
+        note: editableOrder.note,
+        status: editableOrder.status,
+        useDiscount: editableOrder.useDiscount,
+        discountPrice: editableOrder.discountPrice,
+      };
 
-      const response = await axios.patch(`${endpoint}/backstage/v1/orders/${newOrder.oid}`, requestData, {
-        headers: {
+      const response = await axios.patch(
+        `${endpoint}/backstage/v1/orders/${editableOrder.oid}`,
+        requestData,
+        {
+          headers: {
             Authorization: `Bearer ${token}`,
+          },
         }
-    });
-
-      const newOrderData = response.data;
-
-      let selectedCustomer = customers.find((customer) => customer.uid === parseInt(newOrder.uid));
-      newOrderData.username = selectedCustomer.username;
-      let selectedProduct = products.find(
-        (product) => product.pid === parseInt(newOrder.pid)
       );
-      newOrderData.productTitle_cn = selectedProduct.title_cn;
+
+      const updatedOrder = response.data;
 
       setOrders((prevOrders) =>
         prevOrders.map((order) =>
-          order.oid === newOrder.oid ? { ...order, ...newOrderData } : order
+          order.oid === updatedOrder.oid ? { ...order, ...updatedOrder } : order
         )
       );
-      handleCloseOrderModal();
+
+      setShowOrderModal(false);
     } catch (error) {
       console.error("無法更新訂單：", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // 控制表單送出是要新增還是編輯訂單
-  const handleSubmit = () => {
-    if (isEditing) {
-      updateOrder();
-    } else {
-      createOrder();
     }
   };
 
@@ -245,15 +198,6 @@ export default function OrderManagement() {
                 <option value="已取消">已取消</option>
               </Form.Select>
             </Col>
-            <Col md={2}>
-              <Button
-                variant="primary"
-                style={{ backgroundColor: "var(--accent-color)", borderColor: "var(--accent-color)" }}
-                onClick={() => handleShowOrderModal()}
-              >
-                新增訂單
-              </Button>
-            </Col>
           </Row>
           {loading ? (
             <p>Loading...</p>
@@ -262,33 +206,88 @@ export default function OrderManagement() {
               <thead>
                 <tr>
                   <th>訂單編號</th>
-                  <th>客戶名稱</th>
-                  <th>產品名稱</th>
                   <th>總金額</th>
+                  <th>優惠價</th>
+                  <th>收件人姓名</th>
+                  <th>電話</th>
+                  <th>地址</th>
+                  <th>Email</th>
+                  <th>運輸方式</th>
+                  <th>備註</th>
                   <th>狀態</th>
-                  <th>訂單日期</th>
+                  <th>成立時間</th>
+                  <th>展開</th>
                   <th>操作</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredOrders.map((order) => (
-                  <tr key={order.oid}>
-                    <td>{order.oid}</td>
-                    <td>{order.username}</td>
-                    <td>{order.productTitle_cn}</td>
-                    <td>{order.totalAmount}</td>
-                    <td>{order.status}</td>
-                    <td>{order.created_at}</td>
-                    <td>
-                      <Button
-                        variant="link"
-                        style={{ color: "var(--accent-color)" }}
-                        onClick={() => handleShowOrderModal(order)}
-                      >
-                        編輯
-                      </Button>
-                    </td>
-                  </tr>
+                  <>
+                    <tr key={order.oid}>
+                      <td>{order.oid}</td>
+                      <td>NT. {order.totalAmount}</td>
+                      <td>{order.useDiscount ? order.discountPrice : "無優惠價"}</td>
+                      <td>{order.recipientName}</td>
+                      <td>{order.recipientPhone}</td>
+                      <td>{order.address}</td>
+                      <td>{order.recipientEmail}</td>
+                      <td>{
+                        order.transportationMethod == "delivery" ? "宅配"
+                          : (order.transportationMethod == "seven" ? "Seven 自取" : "全家自取")
+                      }</td>
+                      <td>{order.orderNote || "無"}</td>
+                      <td>{order.status}</td>
+                      <td>{order.created_at}</td>
+                      <td>
+                        <Button
+                          variant="link"
+                          style={{ color: "var(--accent-color)" }}
+                          onClick={() => toggleRow(order.oid)}
+                        >
+                          {expandedRows.includes(order.oid) ? (
+                            <FaChevronUp />
+                          ) : (
+                            <FaChevronDown />
+                          )}
+                        </Button>
+                      </td>
+                      <td>
+                        <Button
+                          variant="link"
+                          style={{ color: "var(--accent-color)" }}
+                          onClick={() => handleShowOrderModal(order)}
+                        >
+                          編輯
+                        </Button>
+                      </td>
+                    </tr>
+                    {expandedRows.includes(order.oid) && (
+                      <tr>
+                        <td colSpan="13">
+                          <Table bordered size="sm">
+                            <thead>
+                              <tr>
+                                <th>商品名稱</th>
+                                <th>商品數量</th>
+                                <th>單價</th>
+                                <th>總額</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {order.details.map((detail) => (
+                                <tr key={detail.pid}>
+                                  <td>{detail.productTitle_cn}</td>
+                                  <td>{detail.productNumber}</td>
+                                  <td>NT. {detail.price}</td>
+                                  <td>NT. {detail.subtotal}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 ))}
               </tbody>
             </Table>
@@ -296,154 +295,138 @@ export default function OrderManagement() {
         </Col>
       </Row>
 
-      {/* 訂單彈出視窗 */}
-      <Modal show={showOrderModal} onHide={handleCloseOrderModal}>
+      {/* 編輯訂單視窗 */}
+      <Modal show={showOrderModal} onHide={() => setShowOrderModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>{isEditing ? "編輯訂單" : "新增訂單"}</Modal.Title>
+          <Modal.Title>編輯訂單</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
-            {/* 客戶名稱 */}
             <Form.Group className="mb-3">
-              <Form.Label>客戶名稱</Form.Label>
-              <Form.Select
-                value={newOrder.uid}
-                required
-                onChange={(e) => {
-                  const selectedUid = e.target.value;
-                  const selectedCustomer = customers.find((customer) => customer.uid === parseInt(selectedUid));
-                  setNewOrder({
-                    ...newOrder,
-                    uid: selectedUid,
-                    customerName: selectedCustomer?.username || "",
-                    customerEmail: selectedCustomer?.email || "",
-                  });
-                }}
-                disabled={isEditing}
-              >
-                <option value="">選擇客戶</option>
-                {customers.map((customer) => (
-                  <option key={customer.uid} value={customer.uid}>
-                    {customer.username}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            {/* 客戶 Email */}
-            <Form.Group className="mb-3">
-              <Form.Label>客戶 Email</Form.Label>
-              <Form.Select
-                value={newOrder.customerEmail}
-                required
-                onChange={(e) => {
-                  const selectedEmail = e.target.value;
-                  const selectedCustomer = customers.find((customer) => customer.email === selectedEmail);
-                  setNewOrder({
-                    ...newOrder,
-                    uid: selectedCustomer?.uid || "",
-                    customerName: selectedCustomer?.username || "",
-                    customerEmail: selectedEmail,
-                  });
-                }}
-                disabled={isEditing}
-              >
-                <option value="">選擇 Email</option>
-                {customers.map((customer) => (
-                  <option key={customer.uid} value={customer.email}>
-                    {customer.email}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-
-            {/* 產品名稱 */}
-            <Form.Group className="mb-3">
-              <Form.Label>產品名稱</Form.Label>
-              <Form.Select
-                value={newOrder.pid}
-                required
-                onChange={(e) => {
-                  const selectedPid = e.target.value;
-                  const selectedProduct = products.find(
-                    (product) => product.pid === parseInt(selectedPid)
-                  );
-                  setNewOrder({
-                    ...newOrder,
-                    pid: selectedPid,
-                    productPrice: selectedProduct?.price || 0,
-                    totalAmount: (selectedProduct?.price || 0) * newOrder.productNumber,
-                  });
-                }}
-                disabled={isEditing}
-              >
-                <option value="">選擇產品</option>
-                {products.map((product) => (
-                  <option key={product.pid} value={product.pid}>
-                    {product.title_cn}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            {/* 下單數量 */}
-            <Form.Group className="mb-3">
-              <Form.Label>數量</Form.Label>
+              <Form.Label>收件人姓名</Form.Label>
               <Form.Control
-                type="number"
-                value={newOrder.productNumber || 1}
-                required
-                onChange={(e) => {
-                  const quantity = parseInt(e.target.value) || 1;
-                  setNewOrder({
-                    ...newOrder,
-                    productNumber: quantity,
-                    totalAmount: quantity * newOrder.productPrice,
-                  });
-                }}
+                type="text"
+                value={editableOrder.recipientName}
+                onChange={(e) =>
+                  setEditableOrder({
+                    ...editableOrder,
+                    recipientName: e.target.value,
+                  })
+                }
               />
             </Form.Group>
 
-            {/* 總金額 */}
             <Form.Group className="mb-3">
-              <Form.Label>總金額</Form.Label>
+              <Form.Label>電話</Form.Label>
               <Form.Control
-                type="number"
-                value={newOrder.totalAmount || 0}
-                disabled={true}
+                type="text"
+                value={editableOrder.recipientPhone}
+                onChange={(e) =>
+                  setEditableOrder({
+                    ...editableOrder,
+                    recipientPhone: e.target.value,
+                  })
+                }
               />
             </Form.Group>
 
-            {/* 優惠價 */}
+            <Form.Group className="mb-3">
+              <Form.Label>Email</Form.Label>
+              <Form.Control
+                type="email"
+                value={editableOrder.recipientEmail}
+                onChange={(e) =>
+                  setEditableOrder({
+                    ...editableOrder,
+                    recipientEmail: e.target.value,
+                  })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>地址</Form.Label>
+              <Form.Control
+                type="text"
+                value={editableOrder.address}
+                onChange={(e) =>
+                  setEditableOrder({
+                    ...editableOrder,
+                    address: e.target.value,
+                  })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>運輸方式</Form.Label>
+              <Form.Select
+                value={editableOrder.transportationMethod}
+                onChange={(e) =>
+                  setEditableOrder({
+                    ...editableOrder,
+                    transportationMethod: e.target.value,
+                  })
+                }
+              >
+                <option value="delivery">宅配</option>
+                <option value="seven">Seven 自取</option>
+                <option value="family">Family 自取</option>
+              </Form.Select>
+            </Form.Group>
+
+            {/* 優惠價功能 */}
             <Form.Group className="mb-3">
               <Form.Check
                 type="checkbox"
-                label="是否使用優惠價"
-                checked={newOrder.useDiscount || false}
+                label="使用優惠價"
+                checked={editableOrder.useDiscount}
                 onChange={(e) =>
-                  setNewOrder({ ...newOrder, useDiscount: e.target.checked })
+                  setEditableOrder({
+                    ...editableOrder,
+                    useDiscount: e.target.checked,
+                  })
                 }
               />
-              {newOrder.useDiscount && (
+              {editableOrder.useDiscount && (
                 <Form.Control
                   className="mt-2"
                   type="number"
-                  value={newOrder.discountPrice || 0}
+                  value={editableOrder.discountPrice}
                   onChange={(e) =>
-                    setNewOrder({ ...newOrder, discountPrice: parseInt(e.target.value) || 0 })
+                    setEditableOrder({
+                      ...editableOrder,
+                      discountPrice: parseInt(e.target.value) || 0,
+                    })
                   }
                 />
               )}
             </Form.Group>
 
-            {/* 訂單狀態 */}
             <Form.Group className="mb-3">
-              <Form.Label>狀態</Form.Label>
+              <Form.Label>備註</Form.Label>
+              <Form.Control
+                type="text"
+                value={editableOrder.note}
+                onChange={(e) =>
+                  setEditableOrder({
+                    ...editableOrder,
+                    note: e.target.value,
+                  })
+                }
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>訂單狀態</Form.Label>
               <Form.Select
-                value={newOrder.status}
-                required
-                onChange={(e) => setNewOrder({ ...newOrder, status: e.target.value })}
+                value={editableOrder.status}
+                onChange={(e) =>
+                  setEditableOrder({
+                    ...editableOrder,
+                    status: e.target.value,
+                  })
+                }
               >
                 <option value="待出貨">待出貨</option>
                 <option value="已出貨">已出貨</option>
@@ -451,44 +434,21 @@ export default function OrderManagement() {
                 <option value="已取消">已取消</option>
               </Form.Select>
             </Form.Group>
-
-            {/* 貨運方式 */}
-            <Form.Group className="mb-3">
-              <Form.Label>貨運方式</Form.Label>
-              <Form.Select
-                value={newOrder.transportationMethod}
-                required
-                onChange={(e) => setNewOrder({ ...newOrder, transportationMethod: e.target.value })}
-              >
-                <option value="Seven 店到店">Seven 店到店</option>
-                <option value="全家 店到">全家 店到店</option>
-                <option value="宅配">宅配</option>
-              </Form.Select>
-            </Form.Group>
-
-            {/* 運送地址 */}
-            <Form.Group className="mb-3">
-              <Form.Label>地址或超商店名</Form.Label>
-              <Form.Control
-                type="string"
-                value={newOrder.address}
-                required
-                onChange={(e) => setNewOrder({ ...newOrder, address: e.target.value })}
-              />
-            </Form.Group>
           </Form>
-
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseOrderModal}>
+          <Button variant="secondary" onClick={() => setShowOrderModal(false)}>
             取消
           </Button>
           <Button
             variant="primary"
-            style={{ backgroundColor: "var(--accent-color)", borderColor: "var(--accent-color)" }}
-            onClick={handleSubmit}
+            onClick={updateOrder}
+            style={{
+              backgroundColor: "var(--accent-color)",
+              borderColor: "var(--accent-color)",
+            }}
           >
-            {isEditing ? "儲存" : "新增"}
+            儲存
           </Button>
         </Modal.Footer>
       </Modal>

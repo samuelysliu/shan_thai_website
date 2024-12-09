@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import modules.product_crud as product_db
 import modules.dbConnect as db_connect
-from controls.tools import admin_required
 
 import cloudinary
 import cloudinary.uploader
@@ -170,7 +169,7 @@ async def get_product_list(db: Session = Depends(get_db)):
             "title_en": product["title_en"],
             "remain": product["remain"],
             "price": product["price"],
-            "specialPrice": product["specialPrice"],
+            "discountPrice": product["discountPrice"],
         }
         for product in products
     ]

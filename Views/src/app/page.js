@@ -8,7 +8,7 @@ import Head from "next/head";
 
 // 提前讀取產品清單，以利SEO
 const fetchProducts = async () => {
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
   try {
     const response = await fetch(`${endpoint}/frontstage/v1/product`, { cache: 'no-store' });
     if (!response.ok) {
@@ -23,7 +23,7 @@ const fetchProducts = async () => {
 
 // 伺服器端獲取產品標籤列表
 async function fetchProductTags() {
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
   let productTags = [];
   try {
     const response = await fetch(endpoint + "/frontstage/v1/product_tag", { cache: 'no-store' });

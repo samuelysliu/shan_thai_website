@@ -3,7 +3,6 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 import modules.user_crud as user_db
 import modules.dbConnect as db_connect
-from controls.tools import admin_required
 
 router = APIRouter()
 get_db = db_connect.get_db

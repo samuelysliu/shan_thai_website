@@ -4,7 +4,7 @@ import Term from "@/app/components/Term";
 
 // 提前讀取產品清單，以利SEO
 const fetchTermDetail = async (tid) => {
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
   try {
     const response = await fetch(`${endpoint}/frontstage/v1/term_by_id/${tid}`);
     if (!response.ok) {

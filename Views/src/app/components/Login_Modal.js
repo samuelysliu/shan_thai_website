@@ -10,7 +10,7 @@ import { useDispatch } from "react-redux";
 import { login } from '../redux/slices/userSlice';
 
 export default function LoginModal({ show, handleClose }) {
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
   const router = useRouter();
   const dispatch = useDispatch();
 

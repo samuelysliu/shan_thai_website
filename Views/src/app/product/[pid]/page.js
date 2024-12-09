@@ -9,7 +9,7 @@ import Head from "next/head";
 
 // 提前讀取產品清單，以利SEO
 const fetchProductDetail = async (pid) => {
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
   try {
     const response = await fetch(`${endpoint}/frontstage/v1/product_by_pid/${pid}`, { cache: 'no-store' });
     if (!response.ok) {

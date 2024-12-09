@@ -11,7 +11,7 @@ import axios from "axios";
 const Product_Grid = ({ initialProducts }) => {
   const router = useRouter();
   const dispatch = useDispatch();
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
 
   // 取得用戶資料
   const { userInfo, token } = useSelector((state) => state.user);

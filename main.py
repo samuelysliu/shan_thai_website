@@ -24,6 +24,7 @@ app.add_middleware(
 
 app.include_router(backstage_product_router, prefix="/backstage/v1")
 app.include_router(backstage_user_router, prefix="/backstage/v1")
+app.include_router(backstage_order_router, prefix="/backstage/v1")
 app.include_router(frontstage_product_router, prefix="/frontstage/v1")
 app.include_router(frontstage_order_router, prefix="/frontstage/v1")
 app.include_router(frontstage_user_router, prefix="/frontstage/v1")

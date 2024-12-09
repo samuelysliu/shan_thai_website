@@ -11,7 +11,7 @@ import config from "@/app/config";
 
 const Product_Detail = ({ product }) => {
   const router = useRouter();
-  let endpoint = config.apiBaseUrl;
+  const endpoint = config.apiBaseUrl;
   // 取得用戶資料
   const { userInfo, token } = useSelector((state) => state.user);
   const dispatch = useDispatch();
