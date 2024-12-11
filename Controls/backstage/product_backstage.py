@@ -169,7 +169,7 @@ async def get_product_list(db: Session = Depends(get_db)):
             "title_en": product["title_en"],
             "remain": product["remain"],
             "price": product["price"],
-            "discountPrice": product["discountPrice"],
+            "specialPrice": product["specialPrice"],
         }
         for product in products
     ]

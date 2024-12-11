@@ -79,7 +79,7 @@ class Product(Base):
     content_cn = Column(Text)
     content_en = Column(Text)
     price = Column(Integer, default=0)
-    discountPrice = Column(Integer, default=None, nullable=True)
+    specialPrice = Column(Integer, default=None, nullable=True)
     remain = Column(Integer, default=0)
     sold = Column(Integer, default=0)
     productImageUrl = Column(String)

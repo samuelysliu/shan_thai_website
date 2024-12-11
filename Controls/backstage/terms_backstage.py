@@ -3,7 +3,8 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import modules.term_crud as term_db
 import modules.dbConnect as db_connect
-from controls.tools import admin_required
+from controls.tools import format_to_utc8 as timeformat
+from controls.tools import verify_token, adminAutorizationCheck
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -17,12 +18,12 @@ class Term(BaseModel):
     class Config:
         from_attributes = True
 
-
+# 新增條款
 @router.post("/terms", response_model=Term)
-async def create_term(term: Term, db: Session = Depends(get_db)):
-    """
-    新增條款
-    """
+async def create_term(term: Term, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    # 確認是否為管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+    
     created_term = term_db.create_term(
         db, name=term.name, content=term.content, version=term.version
     )
@@ -30,36 +31,25 @@ async def create_term(term: Term, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Failed to create term")
     return created_term
 
-
-@router.get("/terms/{tid}", response_model=Term)
-async def get_term(tid: int, db: Session = Depends(get_db)):
-    """
-    根據 tid 獲取條款
-    """
-    term = term_db.get_term_by_id(db, tid)
-    if not term:
-        raise HTTPException(status_code=404, detail="Term not found")
-    return term
-
-
+# 獲取所有條款
 @router.get("/terms", response_model=list[Term])
-async def get_all_terms(db: Session = Depends(get_db)):
-    """
-    獲取所有條款
-    """
+async def get_all_terms(token_data: dict = Depends(verify_token),db: Session = Depends(get_db)):
+    # 確認是否為管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+    
     terms = term_db.get_all_terms(db)
     if not terms:
         raise HTTPException(status_code=404, detail="No terms found")
     return terms
 
-
+# 更新條款
 @router.patch("/terms/{tid}", response_model=Term)
 async def update_term(
-    tid: int, updates: dict, db: Session = Depends(get_db)
+    tid: int, updates: dict, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)
 ):
-    """
-    更新條款
-    """
+    # 確認是否為管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+    
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
     
@@ -68,12 +58,12 @@ async def update_term(
         raise HTTPException(status_code=404, detail="Term not found")
     return updated_term
 
-
+# 刪除條款
 @router.delete("/terms/{tid}")
-async def delete_term(tid: int, db: Session = Depends(get_db)):
-    """
-    刪除條款
-    """
+async def delete_term(tid: int, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    # 確認是否為管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+    
     success = term_db.delete_term(db, tid)
     if not success:
         raise HTTPException(status_code=404, detail="Term not found")

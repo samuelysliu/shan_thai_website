@@ -60,7 +60,6 @@ async def get_user_orders(
     return orders
 
 
-# **新增訂單**
 @router.post("/orders", response_model=OrderResponse)
 async def create_user_order(
     order: OrderBase,
@@ -70,7 +69,10 @@ async def create_user_order(
     # 確認是新增本人的訂單
     userAuthorizationCheck(order.uid, token_data.get("uid"))
 
-    # 確認所有產品是否有足夠的庫存
+    total_amount = 0  # 初始化總金額
+    order_details = []  # 儲存處理後的訂單明細
+
+    # 確認所有產品是否存在並有足夠庫存，並計算價格
     for detail in order.order_details:
         product = product_db.get_product_by_id(db, detail.pid)
         if not product:
@@ -82,23 +84,36 @@ async def create_user_order(
                 status_code=400,
                 detail=f"Product ID {detail.pid} is out of stock or insufficient quantity",
             )
+        
+        # 從資料庫中獲取價格並計算小計
+        subtotal = product.price * detail.productNumber
+        total_amount += subtotal
+
+        # 添加到訂單明細
+        order_details.append({
+            "pid": detail.pid,
+            "productNumber": detail.productNumber,
+            "price": product.price,  # 使用資料庫中的價格
+            "subtotal": subtotal,
+        })
 
     # 減少剩餘產品數量
-    for detail in order.order_details:
-        product = product_db.get_product_by_id(db, detail.pid)
-        update_data = {"remain": product.remain - detail.productNumber}
-        product_updated = product_db.update_partial_product(db, detail.pid, update_data)
+    for detail in order_details:
+        update_data = {"remain": product.remain - detail["productNumber"]}
+        product_updated = product_db.update_partial_product(db, detail["pid"], update_data)
         if not product_updated:
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to update product remain for Product ID {detail.pid}",
+                detail=f"Failed to update product remain for Product ID {detail['pid']}",
             )
 
     # 創建訂單
     new_order = order_db.create_order(
         db,
         uid=order.uid,
-        totalAmount=order.totalAmount,
+        totalAmount=total_amount,  # 使用後端計算的總金額
+        discountPrice=0,
+        useDiscount=False,
         address=order.address,
         recipientName=order.recipientName,
         recipientPhone=order.recipientPhone,
@@ -106,15 +121,7 @@ async def create_user_order(
         transportationMethod=order.transportationMethod,
         orderNote=order.orderNote,
         status="待出貨",
-        order_details=[
-            {
-                "pid": detail.pid,
-                "productNumber": detail.productNumber,
-                "price": detail.price,
-                "subtotal": detail.subtotal,
-            }
-            for detail in order.order_details
-        ],
+        order_details=order_details,  # 使用後端生成的明細
     )
     
     if not new_order:
@@ -123,8 +130,8 @@ async def create_user_order(
     # 清空購物車中對應的項目
     selected_cart_items = cart_db.get_carts_by_user(db, order.uid)
     for cart_item in selected_cart_items:
-        for detail in order.order_details:
-            if cart_item["pid"] == detail.pid:
+        for detail in order_details:
+            if cart_item["pid"] == detail["pid"]:
                 cart_db.remove_cart_item(db, cart_item["cart_id"])
 
     return new_order

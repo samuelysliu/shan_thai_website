@@ -32,6 +32,11 @@ export default function Sidebar() {
           </Button>
         </li>
         <li>
+          <Button variant="link" style={{ color: "var(--light-text-color)" }} onClick={() => handleNavigation('/backstage/term_management')}>
+            條款管理
+          </Button>
+        </li>
+        <li>
           <Button variant="link" style={{ color: "var(--light-text-color)" }} onClick={() => handleNavigation('/')}>
             回前台
           </Button>

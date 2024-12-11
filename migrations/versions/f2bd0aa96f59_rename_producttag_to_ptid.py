@@ -94,7 +94,7 @@ def downgrade() -> None:
     sa.Column('content_cn', sa.TEXT(), autoincrement=False, nullable=True),
     sa.Column('content_en', sa.TEXT(), autoincrement=False, nullable=True),
     sa.Column('price', sa.INTEGER(), autoincrement=False, nullable=True),
-    sa.Column('discountPrice', sa.INTEGER(), autoincrement=False, nullable=True),
+    sa.Column('specialPrice', sa.INTEGER(), autoincrement=False, nullable=True),
     sa.Column('remain', sa.INTEGER(), autoincrement=False, nullable=True),
     sa.Column('sold', sa.INTEGER(), autoincrement=False, nullable=True),
     sa.Column('productImageUrl', sa.VARCHAR(), autoincrement=False, nullable=True),

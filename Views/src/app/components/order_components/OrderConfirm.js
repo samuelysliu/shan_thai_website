@@ -17,7 +17,7 @@ const OrderConfirm = () => {
     const [recipientPhone, setRecipientPhone] = useState("");
     const [recipientEmail, setRecipientEmail] = useState("");
     const [transportationMethod, setTransportationMethod] = useState("delivery");
-    const [note, setNote] = useState("");
+    const [orderNote, setOrderNote] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const endpoint = config.apiBaseUrl;
 
@@ -194,8 +194,8 @@ const OrderConfirm = () => {
                             as="textarea"
                             rows={3}
                             placeholder="請輸入訂單備註（選填）"
-                            value={note}
-                            onChange={(e) => setNote(e.target.value)}
+                            value={orderNote}
+                            onChange={(e) => setOrderNote(e.target.value)}
                         />
                     </Form.Group>
                 </Col>

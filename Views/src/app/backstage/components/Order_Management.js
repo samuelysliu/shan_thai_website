@@ -226,7 +226,7 @@ export default function OrderManagement() {
                     <tr key={order.oid}>
                       <td>{order.oid}</td>
                       <td>NT. {order.totalAmount}</td>
-                      <td>{order.useDiscount ? order.discountPrice : "無優惠價"}</td>
+                      <td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無優惠價"}</td>
                       <td>{order.recipientName}</td>
                       <td>{order.recipientPhone}</td>
                       <td>{order.address}</td>
