@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Container, Row, Col, Card, Badge, Button, Modal, Spinner } from "react-bootstrap";
 import { FaTimes } from "react-icons/fa";
-import config from "../config";
+import config from "../../config";
 import { useSelector } from "react-redux";
 
 const OrderHistory = () => {

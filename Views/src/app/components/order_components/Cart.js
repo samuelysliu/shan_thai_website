@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
 import { useSelector, useDispatch } from "react-redux";
 import { Container, Table, Button } from "react-bootstrap";
-import { updateQuantity, removeFromCart } from "../redux/slices/cartSlice";
-import config from "../config";
+import { updateQuantity, removeFromCart } from "../../redux/slices/cartSlice";
+import config from "../../config";
 import axios from "axios";
 
 const Cart = () => {

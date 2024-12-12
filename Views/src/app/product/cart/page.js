@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import Cart from "@/app/components/Cart";
+import Cart from "@/app/components/order_components/Cart";
 import ClientProvider from "@/app/components/Client_Provider";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
