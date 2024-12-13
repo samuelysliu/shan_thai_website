@@ -8,10 +8,13 @@ import { addToCart } from "@/app/redux/slices/cartSlice";
 import config from "@/app/config";
 import axios from "axios";
 
+import { showToast } from "@/app/redux/slices/toastSlice";
+
 const Product_Grid = ({ initialProducts }) => {
   const router = useRouter();
   const dispatch = useDispatch();
   const endpoint = config.apiBaseUrl;
+  const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
 
   // 取得用戶資料
   const { userInfo, token } = useSelector((state) => state.user);
@@ -33,6 +36,13 @@ const Product_Grid = ({ initialProducts }) => {
 
   const handleAddCart = async (product) => {
     try {
+      const productCheck = initialProducts.find((item) => item.pid === product.pid);
+      const cartCheck = cart.find((item) => item.pid == product.pid);
+      if (cartCheck.quantity >= productCheck.remain) {
+        handleError(`超出庫存限制，剩餘數量僅有 ${product.remain}`);
+        return;
+      }
+
       let cartObject = {
         uid: userInfo.uid,
         pid: product.pid,
@@ -49,11 +59,22 @@ const Product_Grid = ({ initialProducts }) => {
 
       // 更新 Redux 中的購物車
       dispatch(addToCart(cartObject));
+      handleSuccess("加入成功！")
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
       // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
     }
   };
+
+  // 控制彈出視窗訊息區
+  const handleSuccess = (message) => {
+    dispatch(showToast({ message: message, variant: "success" }));
+  };
+
+  const handleError = (message) => {
+    dispatch(showToast({ message: message, variant: "danger" }));
+  };
+
 
   return (
     <Container className="my-4">

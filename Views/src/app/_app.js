@@ -5,9 +5,13 @@ import { PersistGate } from "redux-persist/integration/react";
 
 
 function MyApp({ Component, pageProps }) {
+  
+
   return (
     <Provider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate loading={<Loader />} persistor={persistor}>
+        <Loader />
+        <AlertToast />
         <Component {...pageProps} />
       </PersistGate>
     </Provider>

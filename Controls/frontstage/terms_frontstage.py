@@ -21,5 +21,6 @@ class Term(BaseModel):
 async def get_term_by_id(tid:int, db: Session = Depends(get_db)):
     terms = term_db.get_term_by_id(db, tid)
     if not terms:
-        raise HTTPException(status_code=404, detail="No terms found")
+        print("System log: No terms found")
+        return []
     return terms

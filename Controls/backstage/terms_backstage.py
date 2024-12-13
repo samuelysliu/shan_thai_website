@@ -43,7 +43,8 @@ async def get_all_terms(token_data: dict = Depends(verify_token),db: Session = D
     
     terms = term_db.get_all_terms(db)
     if not terms:
-        raise HTTPException(status_code=404, detail="No terms found")
+        print("System log: No terms found")
+        return []
     return terms
 
 # 更新條款

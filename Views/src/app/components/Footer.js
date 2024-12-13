@@ -38,7 +38,7 @@ export default function Footer() {
         </Col>
         <Col xs={12} sm={6} md={4}>
           <h5>條例條款</h5>
-          <a onClick={() => handleNavLink('shanthaiteam@gmail.com')}>使用者條款</a>
+          <a onClick={() => handleNavLink('/term/1')}>使用者條款</a>
         </Col>
       </Row>
       <Row className="justify-content-center text-center mt-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, {useState} from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/app/redux/slices/cartSlice";
@@ -9,12 +9,16 @@ import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
 import axios from "axios";
 import config from "@/app/config";
 
+import { showToast } from "@/app/redux/slices/toastSlice";
+
 const Product_Detail = ({ product }) => {
   const router = useRouter();
   const endpoint = config.apiBaseUrl;
   // 取得用戶資料
   const { userInfo, token } = useSelector((state) => state.user);
   const dispatch = useDispatch();
+  const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
+
 
   const handleBuyNow = () => {
     // 立即購買的邏輯
@@ -22,8 +26,13 @@ const Product_Detail = ({ product }) => {
   };
 
   const handleAddCart = async (product) => {
-    console.log(product)
     try {
+      const cartCheck = cart.find((item) => item.pid == product.pid);
+      if (cartCheck.quantity >= product.remain) {
+        handleError(`超出庫存限制，剩餘數量僅有 ${product.remain}`)
+        return;
+      }
+
       let cartObject = {
         uid: userInfo.uid,
         pid: product.pid,
@@ -41,6 +50,7 @@ const Product_Detail = ({ product }) => {
 
       // 更新 Redux 中的購物車
       dispatch(addToCart(cartObject));
+      handleSuccess("加入成功！")
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
       // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
@@ -61,6 +71,16 @@ const Product_Detail = ({ product }) => {
       </Container>
     );
   }
+
+
+  // 控制彈出視窗訊息區
+  const handleSuccess = (message) => {
+    dispatch(showToast({ message: message, variant: "success" }));
+  };
+
+  const handleError = (message) => {
+    dispatch(showToast({ message: message, variant: "danger" }));
+  };
 
   return (
     <Container className="my-4">

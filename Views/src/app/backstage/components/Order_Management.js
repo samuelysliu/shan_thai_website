@@ -222,8 +222,8 @@ export default function OrderManagement() {
               </thead>
               <tbody>
                 {filteredOrders.map((order) => (
-                  <>
-                    <tr key={order.oid}>
+                  <React.Fragment key={order.oid}>
+                    <tr>
                       <td>{order.oid}</td>
                       <td>NT. {order.totalAmount}</td>
                       <td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無優惠價"}</td>
@@ -261,8 +261,9 @@ export default function OrderManagement() {
                         </Button>
                       </td>
                     </tr>
+
                     {expandedRows.includes(order.oid) && (
-                      <tr>
+                      <tr key={`${order.oid}-details`}>
                         <td colSpan="13">
                           <Table bordered size="sm">
                             <thead>
@@ -287,7 +288,7 @@ export default function OrderManagement() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </Table>

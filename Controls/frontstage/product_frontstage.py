@@ -29,9 +29,8 @@ async def get_products_by_tag(ptid: int, db: Session = Depends(get_db)):
     else:
         products = product_db.get_products_by_tag(db, ptid)
     if not products:
-        raise HTTPException(
-            status_code=404, detail=f"No products found for tag ID {ptid}"
-        )
+        print(f"System Log: No products found for tag ID {ptid}")
+        return []
     return products
 
 

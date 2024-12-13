@@ -3,6 +3,7 @@ import "./globals.css";
 import "./backstage.css"
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import ClientWrapper from "./components/Client_Wrapper";
 
 
 const geistSans = localFont({

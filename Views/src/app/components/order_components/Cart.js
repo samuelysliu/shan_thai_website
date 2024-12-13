@@ -7,6 +7,7 @@ import { Container, Table, Button } from "react-bootstrap";
 import { updateQuantity, removeFromCart } from "../../redux/slices/cartSlice";
 import config from "../../config";
 import axios from "axios";
+import { showToast } from "@/app/redux/slices/toastSlice";
 
 const Cart = () => {
   const router = useRouter();
@@ -60,6 +61,12 @@ const Cart = () => {
 
   // 操作購物車數量
   const handleIncrease = (pid, cart_id) => {
+    const product = cartProduct.find((item) => item.pid === pid);
+    if (product.quantity >= product.remain) {
+      handleError(`超出庫存限制，剩餘數量僅有 ${product.remain}`);
+      return;
+    }
+
     dispatch(updateQuantity({ pid, quantity: 1 }));
     updateCartAPI(cart_id, 1);
   };
@@ -85,6 +92,15 @@ const Cart = () => {
   // 計算總額
   const calculateTotal = () => {
     return cartProduct.reduce((total, item) => total + item.price * item.quantity, 0);
+  };
+
+  // 控制彈出視窗訊息區
+  const handleSuccess = (message) => {
+    dispatch(showToast({ message: message, variant: "success" }));
+  };
+
+  const handleError = (message) => {
+    dispatch(showToast({ message: message, variant: "danger" }));
   };
 
   return (
