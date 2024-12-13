@@ -185,10 +185,7 @@ a {
 
 .footer a {
   color: var(--text-color) !important;
-}
-
-.footer a:hover {
-  color: var(--accent-color);
+  cursor: pointer;
 }
 
 .footer i {

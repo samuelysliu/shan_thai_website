@@ -8,7 +8,7 @@ from requests_oauthlib import OAuth2Session
 import os
 import jwt
 from datetime import datetime, timedelta
-from controls.tools import jwt_required
+from controls.tools import verify_token, userAuthorizationCheck
 
 # jwt setting
 SECRET_KEY = "shan_thai_project"
@@ -51,7 +51,6 @@ class PasswordChangeRequest(BaseModel):
     old_password: str
     new_password: str
 
-
 # 生成 JWT token
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -88,16 +87,18 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
 
 
 # 查看用戶資料
-@router.get("/profile", response_model=UserBase)
-@jwt_required
-async def get_user_profile(token_data: dict = None):
-    user = token_data
+@router.get("/profile")
+async def get_user_profile(token_data: dict = Depends(verify_token)):
+    user = {
+        "email": token_data["email"],
+        "username": token_data["username"],
+        "sex": token_data["sex"]
+    }
     return user
 
 
 # 修改會員資料
 @router.put("/profile", response_model=UserBase)
-@jwt_required
 async def update_user_profile(
     updates: UserBase, db: Session = Depends(get_db), token_data: dict = None
 ):
@@ -117,7 +118,6 @@ async def update_user_profile(
 
 # 修改密碼
 @router.put("/change-password")
-@jwt_required
 async def change_password(
     request: PasswordChangeRequest,
     db: Session = Depends(get_db),

@@ -17,9 +17,13 @@ class Term(BaseModel):
 
     class Config:
         from_attributes = True
+        
+class ResponseTerm(Term):
+    tid: int
+    
 
 # 新增條款
-@router.post("/terms", response_model=Term)
+@router.post("/terms", response_model=ResponseTerm)
 async def create_term(term: Term, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
     # 確認是否為管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
@@ -32,7 +36,7 @@ async def create_term(term: Term, token_data: dict = Depends(verify_token), db: 
     return created_term
 
 # 獲取所有條款
-@router.get("/terms", response_model=list[Term])
+@router.get("/terms", response_model=list[ResponseTerm])
 async def get_all_terms(token_data: dict = Depends(verify_token),db: Session = Depends(get_db)):
     # 確認是否為管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
@@ -43,7 +47,7 @@ async def get_all_terms(token_data: dict = Depends(verify_token),db: Session = D
     return terms
 
 # 更新條款
-@router.patch("/terms/{tid}", response_model=Term)
+@router.patch("/terms/{tid}", response_model=ResponseTerm)
 async def update_term(
     tid: int, updates: dict, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)
 ):
@@ -52,7 +56,6 @@ async def update_term(
     
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
-    
     updated_term = term_db.update_term(db, tid=tid, updates=updates)
     if not updated_term:
         raise HTTPException(status_code=404, detail="Term not found")

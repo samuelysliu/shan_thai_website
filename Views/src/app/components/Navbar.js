@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Nav, Container, NavDropdown, Badge } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
-import LoginModal from './Login_Modal';
+import LoginModal from './user_components/Login_Modal';
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from '../redux/slices/userSlice';
 import { setCartItems } from '../redux/slices/cartSlice';
 import { FaShoppingCart } from "react-icons/fa";
 import axios from "axios";
 import config from '../config';
+import Image from "next/image";
 
 
 export default function NavBar() {
@@ -64,13 +65,21 @@ export default function NavBar() {
     <>
       <Navbar className="navbar" expand="lg">
         <Container>
-          <Navbar.Brand onClick={() => handleNavLink('/')}>善泰團隊</Navbar.Brand>
+          <Navbar.Brand>
+            <img
+              src="/logo.png" // 確保圖片放在 public 資料夾內
+              alt="Logo"
+              width="30" // 設定寬度
+              height="30" // 設定高度
+              style={{ objectFit: 'contain' }} // 保持圖片比例
+              className="me-2" // Bootstrap 樣式，讓圖片與文字有間距
+            />
+            善泰團隊</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="mx-auto">
               <Nav.Link onClick={() => handleNavLink('/')}>首頁</Nav.Link>
               <Nav.Link onClick={() => handleNavLink('/faq')}>Q&A</Nav.Link>
-              <Nav.Link onClick={() => handleNavLink('/contact')}>聯絡我們</Nav.Link>
             </Nav>
 
             <Nav className="align-items-center">

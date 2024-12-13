@@ -10,6 +10,7 @@ from controls.frontstage.product_frontstage import router as frontstage_product_
 from controls.frontstage.order_frontstage import router as frontstage_order_router
 from controls.frontstage.user_frontstage import router as frontstage_user_router
 from controls.frontstage.cart_frontstage import router as frontstage_cart_router
+from controls.frontstage.terms_frontstage import router as frontstage_term_router
 
 
 app = FastAPI()
@@ -31,6 +32,7 @@ app.include_router(frontstage_product_router, prefix="/frontstage/v1")
 app.include_router(frontstage_order_router, prefix="/frontstage/v1")
 app.include_router(frontstage_user_router, prefix="/frontstage/v1")
 app.include_router(frontstage_cart_router, prefix="/frontstage/v1")
+app.include_router(frontstage_term_router, prefix="/frontstage/v1")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

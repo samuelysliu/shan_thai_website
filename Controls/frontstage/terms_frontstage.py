@@ -9,6 +9,7 @@ get_db = db_connect.get_db
 
 # 條款的 Pydantic 模型
 class Term(BaseModel):
+    tid: int
     name: str
     content: str
     version: str
@@ -16,7 +17,7 @@ class Term(BaseModel):
     class Config:
         from_attributes = True
         
-@router.get("/term_by_id/{tid}", response_model=list[Term])
+@router.get("/term_by_id/{tid}", response_model=Term)
 async def get_term_by_id(tid:int, db: Session = Depends(get_db)):
     terms = term_db.get_term_by_id(db, tid)
     if not terms:

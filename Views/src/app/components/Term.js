@@ -2,7 +2,8 @@
 
 import React from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
-import { Container, Row, Col, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Spinner, Button } from "react-bootstrap";
+import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
 
 const Term = ({ term }) => {
   const router = useRouter();
@@ -24,9 +25,12 @@ const Term = ({ term }) => {
 
   return (
     <Container className="my-4">
+      <Button variant="link" onClick={() => router.back()} className="mb-3">
+        <FaArrowLeft />返回
+      </Button>
       <Row xs={1} md={1} xl={1} xxl={1}>
         <Col>
-            {term}
+          <div dangerouslySetInnerHTML={{ __html: term.content }}></div>
         </Col>
       </Row>
     </Container>

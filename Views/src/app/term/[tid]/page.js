@@ -1,8 +1,12 @@
 import React from "react";
 import Term from "@/app/components/Term";
+import config from "@/app/config";
+import ClientProvider from "@/app/components/Client_Provider";
+import { Container } from "react-bootstrap";
+import NavBar from "@/app/components/Navbar";
 
 
-// 提前讀取產品清單，以利SEO
+// 提前讀取條款，以利SEO
 const fetchTermDetail = async (tid) => {
   const endpoint = config.apiBaseUrl;
   try {
@@ -12,7 +16,7 @@ const fetchTermDetail = async (tid) => {
     }
     return await response.json();
   } catch (err) {
-    console.error("無法加載產品清單", err);
+    console.error("無法加載條款", err);
     return [];
   }
 }
@@ -23,9 +27,12 @@ const termPage = async ({ params }) => {
 
 
   return (
-    <>
-      <Term term={term}></Term>
-    </>
+    <ClientProvider>
+      <NavBar />
+      <Container>
+        <Term term={term}></Term>
+      </Container>
+    </ClientProvider>
   );
 };
 

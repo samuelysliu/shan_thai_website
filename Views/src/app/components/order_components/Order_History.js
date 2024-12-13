@@ -6,9 +6,12 @@ import { Container, Row, Col, Card, Badge, Button, Modal, Spinner } from "react-
 import { FaTimes } from "react-icons/fa";
 import config from "../../config";
 import { useSelector } from "react-redux";
+import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
+import { useRouter } from "next/navigation";
 
 const OrderHistory = () => {
   const endpoint = config.apiBaseUrl;
+  const router = useRouter();
 
   const [orders, setOrders] = useState([]); // 訂單列表
   const [loading, setLoading] = useState(true); // 加載狀態
@@ -98,6 +101,13 @@ const OrderHistory = () => {
 
   return (
     <Container className="my-4">
+      <Row className="my-3">
+        <Col xs={1}>
+          <Button variant="link" onClick={() => router.push("/")}>
+            <FaArrowLeft /> 返回
+          </Button>
+        </Col>
+      </Row>
       <h2 className="mb-4">我的訂單</h2>
       <Row className="gy-4">
         {orders.map((order) => (
