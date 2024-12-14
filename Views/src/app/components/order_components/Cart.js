@@ -95,10 +95,6 @@ const Cart = () => {
   };
 
   // 控制彈出視窗訊息區
-  const handleSuccess = (message) => {
-    dispatch(showToast({ message: message, variant: "success" }));
-  };
-
   const handleError = (message) => {
     dispatch(showToast({ message: message, variant: "danger" }));
   };

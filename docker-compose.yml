@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: shan_thai_backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./controls:/app/controls
+      - ./modules:/app/modules
+      - ./main.py:/app/main.py
+      - ./requirements.txt:/app/requirements.txt
+    depends_on:
+      - frontend
+    env_file: 
+      - .env  # 從 .env 文件讀取環境變數
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+
+  frontend:
+    build:
+      context: ./views
+      dockerfile: Dockerfile.frontend
+    container_name: shan_thai_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./views:/app
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  db_data:
