@@ -5,7 +5,7 @@ const api_url = {
 }
 
 const config = {
-  apiBaseUrl: api_url[process.env.APP_ENV],
+  apiBaseUrl: api_url[process.env.APP_ENV]
   };
   
   export default config;
