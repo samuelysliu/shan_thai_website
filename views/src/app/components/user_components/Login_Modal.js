@@ -21,14 +21,19 @@ export default function LoginModal({ show, handleClose }) {
 
   // 處理Google 登入、註冊
   const handleGoogleSuccess = async (credentialResponse) => {
-    console.log("Google JWT:", credentialResponse.credential);
     try {
       // 將 Google JWT 傳送到後端進行驗證
-      const response = await axios.post(endpoint + "/api/login/google", {
+      const response = await axios.post(`${endpoint}/frontstage/v1/login/google`, {
         token: credentialResponse.credential,
       });
-      console.log("Google login success:", response.data);
-      router.push("/dashboard");
+
+      const responseData = response.data.detail
+      const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin }
+      const token = responseData.token;
+      dispatch(login({ userInfo, token }));
+
+      handleClose();
+      router.push("/");
     } catch (err) {
       console.error("Google login failed:", err);
       setError("Google 登入失敗，請稍後再試");
@@ -49,12 +54,12 @@ export default function LoginModal({ show, handleClose }) {
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(endpoint + "/frontstage/v1/login", form);
+      const response = await axios.post(`${endpoint}/frontstage/v1/login`, form);
       const responseData = response.data.detail
-      const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin}
+      const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin }
       const token = responseData.token;
       dispatch(login({ userInfo, token }));
-      
+
       handleClose();
       router.push("/");
     } catch (err) {
@@ -65,7 +70,7 @@ export default function LoginModal({ show, handleClose }) {
   // 處理一般註冊
   const handleRegister = async () => {
     try {
-      const response = await axios.post(endpoint + "/frontstage/v1/register", {
+      const response = await axios.post(`${endpoint}/frontstage/v1/register`, {
         email: form.email,
         password: form.password,
       });

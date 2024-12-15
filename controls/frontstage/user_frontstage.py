@@ -9,6 +9,8 @@ import os
 import jwt
 from datetime import datetime, timedelta
 from controls.tools import verify_token, userAuthorizationCheck
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 # jwt setting
 SECRET_KEY = "shan_thai_project"
@@ -51,6 +53,11 @@ class PasswordChangeRequest(BaseModel):
     old_password: str
     new_password: str
 
+
+class GoogleUserBase(BaseModel):
+    token: str
+
+
 # 生成 JWT token
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -58,6 +65,37 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+
+# 給email跟google登入用的 function
+def loginFunction(existing_user):
+    if existing_user.identity != "admin":
+        isAdmin = False
+    else:
+        isAdmin = True
+
+    # 生成 JWT token
+    access_token = create_access_token(
+        data={
+            "uid": existing_user.uid,
+            "email": existing_user.email,
+            "username": existing_user.username,
+            "sex": existing_user.sex,
+            "star": existing_user.star,
+            "isAdmin": isAdmin,
+        }
+    )
+
+    return {
+        "detail": {
+            "uid": existing_user.uid,
+            "email": existing_user.email,
+            "username": existing_user.username,
+            "sex": existing_user.sex,
+            "isAdmin": isAdmin,
+            "token": access_token,
+        }
+    }
 
 
 # 註冊 API
@@ -92,7 +130,7 @@ async def get_user_profile(token_data: dict = Depends(verify_token)):
     user = {
         "email": token_data["email"],
         "username": token_data["username"],
-        "sex": token_data["sex"]
+        "sex": token_data["sex"],
     }
     return user
 
@@ -158,33 +196,9 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     ):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
-    if existing_user.identity != "admin":
-        isAdmin = False
-    else:
-        isAdmin = True
+    response = loginFunction(existing_user)
 
-    # 生成 JWT token
-    access_token = create_access_token(
-        data={
-            "uid": existing_user.uid,
-            "email": existing_user.email,
-            "username": existing_user.username,
-            "sex": existing_user.sex,
-            "star": existing_user.star,
-            "isAdmin": isAdmin,
-        }
-    )
-
-    return {
-        "detail": {
-            "uid": existing_user.uid,
-            "email": existing_user.email,
-            "username": existing_user.username,
-            "sex": existing_user.sex,
-            "isAdmin": isAdmin,
-            "token": access_token,
-        }
-    }
+    return response
 
 
 # 忘記密碼 API
@@ -202,53 +216,53 @@ async def forgot_password(request: PasswordResetRequest, db: Session = Depends(g
 
 
 # Google OAuth 2.0 設定
-CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")  # 從你的 .env 文件中讀取
+CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-REDIRECT_URI = "http://localhost:8000/frontstage/auth/callback"  # 修改為你的回調 URL
+REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI")
+
 SCOPE = [
     "https://www.googleapis.com/auth/userinfo.email",
     "https://www.googleapis.com/auth/userinfo.profile",
 ]
 AUTHORIZATION_BASE_URL = "https://accounts.google.com/o/oauth2/auth"
 TOKEN_URL = "https://accounts.google.com/o/oauth2/token"
+USERINFO_URL = "https://www.googleapis.com/oauth2/v1/userinfo"
 
 
 # 取得 Google OAuth 2.0 登入 URL
-@router.get("/login/google")
-async def google_login():
-    google = OAuth2Session(CLIENT_ID, redirect_uri=REDIRECT_URI, scope=SCOPE)
-    authorization_url, state = google.authorization_url(
-        AUTHORIZATION_BASE_URL, access_type="offline"
-    )
-    return {"authorization_url": authorization_url}
-
-
-# Google OAuth 2.0 回調
-@router.get("/auth/callback")
-async def google_callback(
-    db: Session = Depends(get_db), state: str = None, code: str = None
-):
-    google = OAuth2Session(CLIENT_ID, redirect_uri=REDIRECT_URI, scope=SCOPE)
-    token = google.fetch_token(TOKEN_URL, client_secret=CLIENT_SECRET, code=code)
-
-    # 使用訪問令牌請求用戶資料
-    response = google.get("https://www.googleapis.com/oauth2/v1/userinfo")
-    user_info = response.json()
-
-    # 檢查用戶是否存在
-    email = user_info.get("email")
-    existing_user = user_db.get_user_by_email(db, email)
-    
-    if not existing_user:
-        # 如果用戶不存在，創建新用戶
-        new_user = user_db.create_user(
-            db,
-            email=email,
-            username=user_info.get("name"),
-            password="google_user",  # 第三方登入不需要密碼
-            identity="user",
+@router.post("/login/google")
+async def google_login(user: GoogleUserBase, db: Session = Depends(get_db)):
+    try:
+        # 驗證 Google Token
+        user_info = id_token.verify_oauth2_token(
+            user.token, requests.Request(), CLIENT_ID
         )
-        if not new_user:
-            raise HTTPException(status_code=500, detail="Failed to create user")
-        
-    return {"detail": "Login successful", "user_info": user_info}
+
+        # 取得使用者資料
+        email = user_info.get("email")
+        name = user_info.get("name")
+
+        # 檢查用戶是否存在
+        existing_user = user_db.get_user_by_email(db, email)
+        print(user_info)
+        if not existing_user:
+            # 自動註冊新使用者
+            new_user = user_db.create_user(
+                db,
+                email=email,
+                username=name,
+                password="google_user",  # 第三方登入不需要密碼
+                identity="user",
+            )
+            if not new_user:
+                raise HTTPException(status_code=500, detail="Failed to create user")
+
+            response = loginFunction(new_user)
+            return response
+
+        # 如果用戶已存在，返回登入成功
+        response = loginFunction(existing_user)
+        return response
+
+    except:
+        raise HTTPException(status_code=500, detail="Google 驗證錯誤")
