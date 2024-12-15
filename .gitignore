@@ -12,6 +12,7 @@ venv
 !.yarn/releases
 !.yarn/versions
 /views/.pnp
+/vuews/.env
 
 # testing
 /views/coverage
