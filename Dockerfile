@@ -4,6 +4,8 @@ FROM python:3.11-slim
 # 設置工作目錄
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y libpq-dev gcc
+
 # 複製代碼和依賴文件
 COPY requirements.txt requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
