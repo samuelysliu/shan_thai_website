@@ -3,7 +3,6 @@ import "./globals.css";
 import "./backstage.css"
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import ClientWrapper from "./components/Client_Wrapper";
 
 
 const geistSans = localFont({
@@ -20,6 +19,9 @@ const geistMono = localFont({
 export const metadata = {
   title: "善泰團隊 - 南傳聖物請供",
   description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。善泰團隊，幫您找到最適合的聖物。",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {
