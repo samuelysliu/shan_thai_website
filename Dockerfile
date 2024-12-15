@@ -4,10 +4,6 @@ FROM python:3.11-slim
 # 设置工作目录
 WORKDIR /app
 
-# 安装必要的系统依赖并清理临时文件
-RUN apt-get update && apt-get install -y --no-install-recommends libpq-dev gcc && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
 # 复制依赖文件并安装，仅安装必需的依赖
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
