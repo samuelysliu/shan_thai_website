@@ -235,24 +235,20 @@ async def google_callback(
     response = google.get("https://www.googleapis.com/oauth2/v1/userinfo")
     user_info = response.json()
 
-    # 檢查用戶是否已經存在
+    # 檢查用戶是否存在
     email = user_info.get("email")
-    if not email:
-        raise HTTPException(
-            status_code=400, detail="Failed to retrieve user email from Google"
-        )
-
     existing_user = user_db.get_user_by_email(db, email)
+    
     if not existing_user:
         # 如果用戶不存在，創建新用戶
         new_user = user_db.create_user(
             db,
             email=email,
             username=user_info.get("name"),
-            password="",  # 第三方登入不需要密碼
-            identity="google",
+            password="google_user",  # 第三方登入不需要密碼
+            identity="user",
         )
         if not new_user:
             raise HTTPException(status_code=500, detail="Failed to create user")
-
+        
     return {"detail": "Login successful", "user_info": user_info}

@@ -17,6 +17,8 @@ export default function LoginModal({ show, handleClose }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [message, setMessage] = useState("");
 
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
   // 處理Google 登入、註冊
   const handleGoogleSuccess = async (credentialResponse) => {
     console.log("Google JWT:", credentialResponse.credential);
@@ -78,7 +80,7 @@ export default function LoginModal({ show, handleClose }) {
   };
 
   return (
-    <GoogleOAuthProvider clientId="YOUR_GOOGLE_CLIENT_ID">
+    <GoogleOAuthProvider clientId={googleClientId}>
       <Modal className="login-modal" show={show} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>會員登入</Modal.Title>
