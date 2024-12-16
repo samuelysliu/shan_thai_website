@@ -51,7 +51,7 @@ async def get_user_orders(
 
     orders = order_db.get_orders_by_uid(db, uid)
     if not orders:
-        raise HTTPException(status_code=404, detail="No orders found for this user")
+        return []
 
     for order in orders:
         order["created_at"] = timeformat(order["created_at"].isoformat())
@@ -125,7 +125,8 @@ async def create_user_order(
     )
     
     if not new_order:
-        raise HTTPException(status_code=500, detail="Failed to create order")
+        print("Error Message: Failed to create order" )
+        return []
 
     # 清空購物車中對應的項目
     selected_cart_items = cart_db.get_carts_by_user(db, order.uid)
@@ -152,5 +153,6 @@ async def cancel_user_order(
     # 刪除訂單及其明細
     success = order_db.delete_order(db, order_id)
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to cancel order")
+        print("Error Message: Failed to cancel order" )
+        return []
     return {"detail": "Order cancelled successfully"}

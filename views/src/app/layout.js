@@ -16,17 +16,31 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
 export const metadata = {
   title: "善泰團隊 - 南傳聖物請供",
   description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。善泰團隊，幫您找到最適合的聖物。",
   icons: {
-    icon: "/logo.png",
+    icon: "/favicon.ico",
   },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} />
+        <script>
+          {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', '${gaId}');
+          `}
+        </script>
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         {children}
       </body>

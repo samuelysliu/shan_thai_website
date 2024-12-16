@@ -61,6 +61,20 @@ export default function NavBar() {
   const handleShowLoginModal = () => setShowLoginModal(true);
   const handleCloseLoginModal = () => setShowLoginModal(false);
 
+  // GA 用戶ID追蹤事件
+  const trackUserID = (userId) => {
+    if (typeof window !== "undefined" && window.gtag) {
+      window.gtag("set", { user_id: userId }); // 設定 User-ID
+      window.gtag("event", "login", { user_id: userId, method: "email" }); // 發送登入事件
+    }
+  };
+
+  useEffect(() => {
+    if (userInfo != null) {
+      trackUserID(userInfo.uid)
+    }
+  }, [userInfo])
+
   return (
     <>
       <Navbar className="navbar" expand="lg">

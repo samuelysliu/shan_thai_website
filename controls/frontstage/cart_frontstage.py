@@ -74,7 +74,8 @@ async def add_to_cart(
     )
 
     if not cart_item:
-        raise HTTPException(status_code=500, detail="新增購物車項目失敗")
+        print("Error Message: 新增購物車項目失敗")
+        return []
 
     cart_item["added_at"] = timeformat(cart_item["added_at"].isoformat())
     cart_item["updated_at"] = timeformat(cart_item["updated_at"].isoformat())
@@ -101,7 +102,8 @@ async def update_cart_item(
         db, cart_id=cart_id, quantity=(cart_item["quantity"] + request.quantity)
     )
     if not updated_cart_item:
-        raise HTTPException(status_code=500, detail="更新購物車項目失敗")
+        print("Error Message: 更新購物車項目失敗")
+        return []
     
     updated_cart_item["added_at"] = timeformat(cart_item["added_at"].isoformat())
     updated_cart_item["updated_at"] = timeformat(cart_item["updated_at"].isoformat())
@@ -124,5 +126,6 @@ async def remove_cart_item(
 
     success = cart_db.remove_cart_item(db, cart_id=cart_id)
     if not success:
-        raise HTTPException(status_code=500, detail="移除購物車項目失敗")
+        print("Error Message: 移除購物車項目失敗")
+        return []
     return {"detail": "購物車項目成功移除"}
