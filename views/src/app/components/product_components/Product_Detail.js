@@ -1,6 +1,6 @@
 "use client";
 
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/app/redux/slices/cartSlice";
@@ -28,7 +28,13 @@ const Product_Detail = ({ product }) => {
   const handleAddCart = async (product) => {
     try {
       const cartCheck = cart.find((item) => item.pid == product.pid);
-      if (cartCheck.quantity >= product.remain) {
+      const checkNum = 0;
+
+      if (cartCheck != undefined) { // 代表購物車有此項目
+        checkNum = cartCheck.quantity;
+      }
+
+      if (checkNum >= product.remain) {
         handleError(`超出庫存限制，剩餘數量僅有 ${product.remain}`)
         return;
       }
@@ -84,9 +90,11 @@ const Product_Detail = ({ product }) => {
 
   return (
     <Container className="my-4">
-      <Button variant="link" onClick={() => router.back()} className="mb-3">
-        <FaArrowLeft />返回
-      </Button>
+      <Col xs={12}>
+        <Button variant="link" onClick={() => router.back()}>
+          <FaArrowLeft /> 返回
+        </Button>
+      </Col>
       <Row className="align-items-start">
         <Col xs={12} md={6} className="text-center">
           <Image src={product.productImageUrl} alt={product.title_cn} fluid rounded />

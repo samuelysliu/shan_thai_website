@@ -45,7 +45,7 @@ const HomePageClient = ({ products, productTags }) => {
     return (
         <>
             <Navbar />
-            <Container>
+            <Container className="app-container">
                 {/* Banner */}
                 {/* Menu */}
                 <Product_Menu productTags={productTags} onTagSelect={handleTagSelect} />

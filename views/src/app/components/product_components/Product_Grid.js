@@ -38,7 +38,13 @@ const Product_Grid = ({ initialProducts }) => {
     try {
       const productCheck = initialProducts.find((item) => item.pid === product.pid);
       const cartCheck = cart.find((item) => item.pid == product.pid);
-      if (cartCheck.quantity >= productCheck.remain) {
+      const checkNum = 0;
+
+      if(cartCheck != undefined){ // 代表購物車有此項目
+        checkNum = cartCheck.quantity;
+      }
+
+      if (checkNum >= productCheck.remain) {
         handleError(`超出庫存限制，剩餘數量僅有 ${product.remain}`);
         return;
       }

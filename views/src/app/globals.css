@@ -41,6 +41,9 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
   color: #000000;
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -179,21 +182,39 @@ a {
   height: auto;
 }
 
+/* Footer 的部分 */
+
+/* 讓所有 .container 使用 Flexbox 並填滿高度 */
+.container {
+  min-height: 100%;
+}
+
 .footer {
-  border-top: 1px solid var(--primary-color);
+  background-color: #f8f9fa;
+  /* 添加背景顏色以凸顯 Footer */
+  border-top: 1px solid #ddd;
+  /* 最外層的邊框 */
+  margin-top: auto;
+  /* 將 Footer 推到最底部 */
+}
+
+.footer .footer-col {
+  padding: 10px 0;
+  /* 每個項目增加間距 */
+  border-bottom: 1px solid #ddd;
+  /* 項目之間的分隔線 */
 }
 
 .footer a {
+  text-decoration: none;
+  /* 移除連結底線 */
   color: var(--text-color) !important;
   cursor: pointer;
 }
 
-.footer i {
-  color: var(--primary-color);
-}
-
-.footer i:hover {
-  color: var(--accent-color);
+.footer a:hover {
+  color: #007bff;
+  /* 滑鼠懸停時的顏色 */
 }
 
 /* navbar 區塊 */
@@ -321,5 +342,3 @@ a {
   font-size: 0.85rem;
   padding: 0.5rem 1rem;
 }
-
-

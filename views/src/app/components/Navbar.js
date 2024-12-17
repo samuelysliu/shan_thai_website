@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import LoginModal from './user_components/Login_Modal';
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from '../redux/slices/userSlice';
-import { setCartItems } from '../redux/slices/cartSlice';
+import { setCartItems, clearCart } from '../redux/slices/cartSlice';
 import { FaShoppingCart } from "react-icons/fa";
 import axios from "axios";
 import config from '../config';
-import Image from "next/image";
+import { isTokenExpired } from '../utils/is_Token_Expired';
 
 
 export default function NavBar() {
@@ -42,11 +42,15 @@ export default function NavBar() {
 
   // 當組件加載時獲取購物車數量
   useEffect(() => {
-    // 如果已經認證過，用戶登入則呼叫購物車數據
     if (isAuthenticated) {
-      fetchCartItems()
+      if (isTokenExpired(token)) { // 確認token是否有過期
+        dispatch(logout());
+        dispatch(clearCart());
+      } else {
+        fetchCartItems()// 如果已經認證過，用戶登入則呼叫購物車數據
+      }
     }
-  }, [isAuthenticated, dispatch]);
+  }, [isAuthenticated, dispatch, token]);
 
   const handleNavLink = (path) => {
     router.push(path);
@@ -54,6 +58,7 @@ export default function NavBar() {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(clearCart()); // 清空購物車
     router.push("/");
   }
 

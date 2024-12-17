@@ -106,7 +106,7 @@ export default function UserProfile() {
     return (
         <Container fluid>
             <Row className="my-3">
-                <Col xs={1}>
+                <Col xs={12}>
                     <Button variant="link" onClick={() => router.push("/")}>
                         <FaArrowLeft /> 返回
                     </Button>

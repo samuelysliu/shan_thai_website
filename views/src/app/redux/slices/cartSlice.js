@@ -37,8 +37,12 @@ export const cartSlice = createSlice({
     removeFromCart: (state, action) => {
       state.items = state.items.filter((item) => item.pid !== action.payload);
     },
+
+    clearCart: (state) => {
+      state.items = []; // 清空購物車
+    },
   },
 });
 
-export const { setCartItems, addToCart, updateQuantity, removeFromCart } = cartSlice.actions;
+export const { setCartItems, addToCart, updateQuantity, removeFromCart, clearCart } = cartSlice.actions;
 export default cartSlice.reducer;

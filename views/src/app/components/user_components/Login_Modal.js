@@ -36,13 +36,13 @@ export default function LoginModal({ show, handleClose }) {
       router.push("/");
     } catch (err) {
       console.error("Google login failed:", err);
-      setError("Google 登入失敗，請稍後再試");
+      setMessage("Google 登入失敗，請稍後再試");
     }
   };
 
   const handleGoogleFailure = () => {
     console.error("Google 登入失敗");
-    setError("Google 登入失敗，請稍後再試");
+    setMessage("Google 登入失敗，請稍後再試");
   };
 
   const handleFormChange = (e) => {
@@ -63,7 +63,7 @@ export default function LoginModal({ show, handleClose }) {
       handleClose();
       router.push("/");
     } catch (err) {
-      setError("登入失敗，請檢查帳號或密碼");
+      setMessage("登入失敗，請檢查帳號或密碼");
     }
   };
 

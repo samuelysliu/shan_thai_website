@@ -21,9 +21,6 @@ const gaId = process.env.NEXT_PUBLIC_GA_ID;
 export const metadata = {
   title: "善泰團隊 - 南傳聖物請供",
   description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。善泰團隊，幫您找到最適合的聖物。",
-  icons: {
-    icon: "/favicon.ico",
-  },
 };
 
 export default function RootLayout({ children }) {
@@ -41,7 +38,7 @@ export default function RootLayout({ children }) {
           `}
         </script>
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable}` } >
         {children}
       </body>
     </html>
