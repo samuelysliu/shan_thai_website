@@ -124,6 +124,7 @@ class Order(Base):
     recipientEmail = Column(String, nullable=False)  # 收件人 Email
     orderNote = Column(String, nullable=True)  # 訂單備註
     transportationMethod = Column(String(50))  # 運輸方式
+    paymentMethod = Column(String(50), nullable=False, default="匯款")  # 付款方式
     status = Column(String(50))  # 訂單狀態
     created_at = Column(DateTime, default=func.now())  # 訂單建立時間
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())  # 訂單更新時間
