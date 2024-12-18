@@ -28,7 +28,7 @@ const Product_Detail = ({ product }) => {
   const handleAddCart = async (product) => {
     try {
       const cartCheck = cart.find((item) => item.pid == product.pid);
-      const checkNum = 0;
+      let checkNum = 0;
 
       if (cartCheck != undefined) { // 代表購物車有此項目
         checkNum = cartCheck.quantity;

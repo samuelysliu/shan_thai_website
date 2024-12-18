@@ -35,6 +35,7 @@ def get_orders_by_uid(db: Session, uid: int) -> List[dict]:
                 "recipientPhone": order.recipientPhone,
                 "recipientEmail": order.recipientEmail,
                 "transportationMethod": order.transportationMethod,
+                "paymentMethod": order.paymentMethod,
                 "status": order.status,
                 "orderNote": order.orderNote,
                 "created_at": order.created_at,
@@ -73,6 +74,7 @@ def get_order_by_oid(db: Session, oid: int) -> dict:
 
         return {
             "oid": order.oid,
+            "uid": order.uid,
             "totalAmount": order.totalAmount,
             "discountPrice": order.discountPrice,
             "useDiscount": order.useDiscount,
@@ -81,6 +83,7 @@ def get_order_by_oid(db: Session, oid: int) -> dict:
             "recipientPhone": order.recipientPhone,
             "recipientEmail": order.recipientEmail,
             "transportationMethod": order.transportationMethod,
+            "paymentMethod": order.paymentMethod,
             "status": order.status,
             "orderNote": order.orderNote,
             "created_at": order.created_at,
@@ -127,6 +130,7 @@ def get_order_join_user_product(db: Session):
                 "recipientEmail": order.recipientEmail,
                 "address": order.address,
                 "transportationMethod": order.transportationMethod,
+                "paymentMethod": order.paymentMethod,
                 "orderNote": order.orderNote,
                 "status": order.status,
                 "totalAmount": order.totalAmount,
@@ -166,6 +170,7 @@ def create_order(
     recipientPhone: str,
     recipientEmail: str,
     transportationMethod: str,
+    paymentMethod: str,
     status: str,
     orderNote: str,
     order_details: List[dict],  # 訂單明細資料
@@ -181,6 +186,7 @@ def create_order(
             recipientPhone=recipientPhone,
             recipientEmail=recipientEmail,
             transportationMethod=transportationMethod,
+            paymentMethod=paymentMethod,
             status=status,
             orderNote=orderNote,
         )

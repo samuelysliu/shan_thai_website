@@ -119,7 +119,6 @@ export default function ProductManagement() {
             );
 
             const updatedProduct = response.data;
-            console.log(updatedProduct)
             // 更新本地產品列表
             setProducts((prevProducts) =>
                 prevProducts.map((product) =>

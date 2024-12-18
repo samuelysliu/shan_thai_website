@@ -30,6 +30,7 @@ class OrderBase(BaseModel):
     recipientPhone: str
     recipientEmail: str
     transportationMethod: str
+    paymentMethod: str
     orderNote: str
     order_details: List[OrderDetailBase]  # 訂單明細
 
@@ -39,6 +40,12 @@ class OrderResponse(OrderBase):
 
     class Config:
         from_attributes = True
+
+
+# **更新訂單用的 Model**
+class OrderUpdate(BaseModel):
+    paymentMethod: str | None = None
+    status: str | None = None
 
 
 # **檢視用戶自己的歷史訂單**
@@ -60,6 +67,7 @@ async def get_user_orders(
     return orders
 
 
+# 建立新訂單
 @router.post("/orders", response_model=OrderResponse)
 async def create_user_order(
     order: OrderBase,
@@ -84,28 +92,37 @@ async def create_user_order(
                 status_code=400,
                 detail=f"Product ID {detail.pid} is out of stock or insufficient quantity",
             )
-        
+
         # 從資料庫中獲取價格並計算小計
         subtotal = product.price * detail.productNumber
         total_amount += subtotal
 
         # 添加到訂單明細
-        order_details.append({
-            "pid": detail.pid,
-            "productNumber": detail.productNumber,
-            "price": product.price,  # 使用資料庫中的價格
-            "subtotal": subtotal,
-        })
+        order_details.append(
+            {
+                "pid": detail.pid,
+                "productNumber": detail.productNumber,
+                "price": product.price,  # 使用資料庫中的價格
+                "subtotal": subtotal,
+            }
+        )
 
     # 減少剩餘產品數量
     for detail in order_details:
         update_data = {"remain": product.remain - detail["productNumber"]}
-        product_updated = product_db.update_partial_product(db, detail["pid"], update_data)
+        product_updated = product_db.update_partial_product(
+            db, detail["pid"], update_data
+        )
         if not product_updated:
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to update product remain for Product ID {detail['pid']}",
             )
+
+    if order.paymentMethod == "匯款":
+        order_status = "待匯款"
+    else:
+        order_status = "待出貨"
 
     # 創建訂單
     new_order = order_db.create_order(
@@ -119,13 +136,14 @@ async def create_user_order(
         recipientPhone=order.recipientPhone,
         recipientEmail=order.recipientEmail,
         transportationMethod=order.transportationMethod,
+        paymentMethod=order.paymentMethod,
         orderNote=order.orderNote,
-        status="待出貨",
+        status=order_status,
         order_details=order_details,  # 使用後端生成的明細
     )
-    
+
     if not new_order:
-        print("Error Message: Failed to create order" )
+        print("Error Message: Failed to create order")
         return []
 
     # 清空購物車中對應的項目
@@ -139,20 +157,89 @@ async def create_user_order(
 
 
 # **取消訂單**
-@router.delete("/orders/{order_id}")
+@router.delete("/orders/{oid}")
 async def cancel_user_order(
-    order_id: int,
+    oid: int,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
-    # 檢查該訂單是否屬於當前用戶
-    order = order_db.get_order_by_oid(db, order_id)
-    if not order or order.uid != token_data.get("uid"):
-        raise HTTPException(status_code=403, detail="Order not found or access denied")
+    #try:
+        # 1. 檢查該訂單是否屬於當前用戶
+        order = order_db.get_order_by_oid(db, oid)
+        if not order or order["uid"] != token_data.get("uid"):
+            raise HTTPException(
+                status_code=403, detail="Order not found or access denied"
+            )
+        # 檢查訂單狀態是否已取消，避免重複操作
+        if order["status"] == "已取消":
+            raise HTTPException(status_code=400, detail="Order is already cancelled")
 
-    # 刪除訂單及其明細
-    success = order_db.delete_order(db, order_id)
-    if not success:
-        print("Error Message: Failed to cancel order" )
-        return []
-    return {"detail": "Order cancelled successfully"}
+        # 2. 將庫存數量加回
+        order_details = order_db.get_order_details_by_oid(db, oid)
+        for order_detail in order_details:
+            product = product_db.get_product_by_id(db, order_detail.pid)
+            if not product:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Product ID {order_detail.pid} not found for restocking",
+                )
+
+            # 更新庫存
+            update_data = {"remain": product.remain + order_detail.productNumber}
+            product_updated = product_db.update_partial_product(
+                db, order_detail.pid, update_data
+            )
+            if not product_updated:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to update product remain for Product ID {order_detail.pid}",
+                )
+
+        # 3. 更新訂單狀態成為取消
+        update_data = {"status": "已取消"}
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        updated_order = order_db.update_order(db, oid=oid, updates=update_data)
+        if not updated_order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return updated_order
+    
+    #except:
+        #raise HTTPException(status_code=500, detail="Failed to cancel the order")
+
+# 更新訂單
+@router.put("/orders/{oid}")
+async def update_order_status(
+    oid: int,
+    order: OrderUpdate,
+    token_data: dict = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
+    try:
+        # 檢查該訂單是否屬於當前用戶
+        check_order = order_db.get_order_by_oid(db, oid)
+        if not check_order or check_order["uid"] != token_data.get("uid"):
+            raise HTTPException(
+                status_code=403, detail="Order not found or access denied"
+            )
+
+        # 確認是合法修改的內容
+        valid_payment = ["匯款", "貨到付款", None]
+        if order.paymentMethod not in valid_payment:
+            raise HTTPException(status_code=400, detail="Invalid order payment")
+
+        valid_status = ["待確認", None]
+        if order.status not in valid_status:
+            raise HTTPException(status_code=400, detail="Invalid order status")
+
+        update_data = order.dict(exclude_unset=True)  # 排除未設置的字段
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        updated_order = order_db.update_order(db, oid=oid, updates=update_data)
+        if not updated_order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return updated_order
+    except:
+        raise HTTPException(status_code=500, detail="Failed to update the order")

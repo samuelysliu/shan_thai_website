@@ -1,35 +1,45 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Container, Row, Col, Button, Table, Form } from "react-bootstrap";
+import { Container, Row, Col, Button, Table, Form, Modal } from "react-bootstrap";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import config from "../../config";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
+import { logout } from "@/app/redux/slices/userSlice";
+import { clearCart } from '@/app/redux/slices/cartSlice';
+
+import { showToast } from "@/app/redux/slices/toastSlice";
 
 export default function UserProfile() {
     const endpoint = config.apiBaseUrl;
     const router = useRouter();
     const { token, userInfo } = useSelector((state) => state.user);
 
+    const dispatch = useDispatch();
+
     const [userData, setUserData] = useState({
         username: "",
         email: "",
     });
 
-    const [editableData, setEditableData] = useState({});
     const [loading, setLoading] = useState(true);
     const [editing, setEditing] = useState(false);
 
     const [updatedData, setUpdatedData] = useState({
         username: "",
         email: "",
+        sex: ""
     });
+
+    // 密碼相關狀態
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [passwordData, setPasswordData] = useState({
-        old_password: "",
         new_password: "",
+        confirm_password: "",
     });
+    const [passwordError, setPasswordError] = useState("");
 
     useEffect(() => {
         fetchUserData();
@@ -56,14 +66,14 @@ export default function UserProfile() {
         setLoading(true);
         try {
             const response = await axios.put(
-                `${endpoint}/profile`,
+                `${endpoint}/frontstage/v1/profile`,
                 updatedData,
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
             );
             setUserData(response.data);
-            setShowEditModal(false);
+            setEditing(false);
         } catch (error) {
             console.error("無法更新用戶資料：", error);
         } finally {
@@ -73,19 +83,25 @@ export default function UserProfile() {
 
     // 修改密碼
     const handleChangePassword = async () => {
+        if (passwordData.new_password !== passwordData.confirm_password) {
+            setPasswordError("新密碼與確認密碼不一致");
+            return;
+        }
         setLoading(true);
         try {
             await axios.put(
-                `${endpoint}/change-password`,
-                passwordData,
+                `${endpoint}/frontstage/v1/change-password`,
+                { new_password: passwordData.new_password },
                 {
                     headers: { Authorization: `Bearer ${token}` },
                 }
             );
+            handleSuccess("密碼修改成功！");
             setShowPasswordModal(false);
-            setPasswordData({ old_password: "", new_password: "" });
+            setPasswordData({ new_password: "", confirm_password: "" });
         } catch (error) {
             console.error("無法更新密碼：", error);
+            handleError("密碼修改失敗，請重試。");
         } finally {
             setLoading(false);
         }
@@ -94,13 +110,30 @@ export default function UserProfile() {
     // 處理輸入框改變
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setEditableData({ ...editableData, [name]: value });
+        setUpdatedData({ ...updatedData, [name]: value });
+    };
+
+    // 處理密碼輸入框改變
+    const handlePasswordInputChange = (e) => {
+        const { name, value } = e.target;
+        setPasswordData({ ...passwordData, [name]: value });
+        setPasswordError(""); // 清除錯誤訊息
     };
 
     // 登出功能
     const handleLogout = () => {
-        dispatch(logout()); // 清空 Redux 狀態
-        router.push("/"); // 返回首頁
+        dispatch(logout());
+        dispatch(clearCart()); // 清空購物車
+        router.push("/");
+    };
+
+    // 控制彈出視窗訊息區
+    const handleSuccess = (message) => {
+        dispatch(showToast({ message: message, variant: "success" }));
+    };
+
+    const handleError = (message) => {
+        dispatch(showToast({ message: message, variant: "danger" }));
     };
 
     return (
@@ -127,7 +160,7 @@ export default function UserProfile() {
                                             <Form.Control
                                                 type="text"
                                                 name="username"
-                                                value={editableData.username}
+                                                value={updatedData.username}
                                                 onChange={handleInputChange}
                                             />
                                         ) : (
@@ -137,18 +170,7 @@ export default function UserProfile() {
                                 </tr>
                                 <tr>
                                     <td><strong>Email</strong></td>
-                                    <td>
-                                        {editing ? (
-                                            <Form.Control
-                                                type="email"
-                                                name="email"
-                                                value={editableData.email}
-                                                onChange={handleInputChange}
-                                            />
-                                        ) : (
-                                            userData.email
-                                        )}
-                                    </td>
+                                    <td>{updatedData.email}</td>
                                 </tr>
                                 <tr>
                                     <td><strong>性別</strong></td>
@@ -156,12 +178,12 @@ export default function UserProfile() {
                                         {editing ? (
                                             <Form.Select
                                                 name="sex"
-                                                value={editableData.sex}
+                                                value={updatedData.sex}
                                                 onChange={handleInputChange}
                                             >
-                                                <option value="male">男</option>
-                                                <option value="female">女</option>
-                                                <option value="other">其他</option>
+                                                <option value="男">男</option>
+                                                <option value="女">女</option>
+                                                <option value="其他">其他</option>
                                             </Form.Select>
                                         ) : (
                                             userData.sex
@@ -177,7 +199,7 @@ export default function UserProfile() {
                                 <Button
                                     variant="primary"
                                     className="me-2"
-                                    onClick={handleSave}
+                                    onClick={handleUpdateProfile}
                                     disabled={loading}
                                 >
                                     儲存
@@ -186,18 +208,25 @@ export default function UserProfile() {
                                     variant="secondary"
                                     onClick={() => setEditing(false)}
                                     disabled={loading}
+                                    className="me-2"
                                 >
                                     取消
                                 </Button>
                             </>
                         ) : (
-                            <Button
-                                variant="primary"
-                                className="me-2"
-                                onClick={() => setEditing(true)}
-                            >
-                                修改資料
-                            </Button>
+                            <>
+                                <Button
+                                    variant="primary"
+                                    className="me-2"
+                                    onClick={() => setEditing(true)}
+                                >
+                                    修改資料
+                                </Button>
+                                <Button variant="warning" className="me-2" onClick={() => setShowPasswordModal(true)}>
+                                    修改密碼
+                                </Button>
+                            </>
+
                         )}
                         <Button variant="danger" onClick={handleLogout}>
                             登出
@@ -205,6 +234,46 @@ export default function UserProfile() {
                     </div>
                 </Col>
             </Row>
+
+            {/* 修改密碼彈出視窗 */}
+            <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>修改密碼</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form>
+                        <Form.Group controlId="newPassword" className="mb-3">
+                            <Form.Label>新密碼</Form.Label>
+                            <Form.Control
+                                type="password"
+                                name="new_password"
+                                value={passwordData.new_password}
+                                onChange={handlePasswordInputChange}
+                                placeholder="輸入新密碼"
+                            />
+                        </Form.Group>
+                        <Form.Group controlId="confirmPassword" className="mb-3">
+                            <Form.Label>確認新密碼</Form.Label>
+                            <Form.Control
+                                type="password"
+                                name="confirm_password"
+                                value={passwordData.confirm_password}
+                                onChange={handlePasswordInputChange}
+                                placeholder="再次輸入新密碼"
+                            />
+                        </Form.Group>
+                        {passwordError && <p className="text-danger">{passwordError}</p>}
+                    </Form>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>
+                        取消
+                    </Button>
+                    <Button variant="primary" onClick={handleChangePassword}>
+                        確認修改
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </Container>
     );
 }

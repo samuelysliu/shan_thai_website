@@ -50,7 +50,6 @@ class PasswordResetRequest(BaseModel):
 
 # 修改密碼用模型
 class PasswordChangeRequest(BaseModel):
-    old_password: str
     new_password: str
 
 
@@ -138,9 +137,9 @@ async def get_user_profile(token_data: dict = Depends(verify_token)):
 # 修改會員資料
 @router.put("/profile", response_model=UserBase)
 async def update_user_profile(
-    updates: UserBase, db: Session = Depends(get_db), token_data: dict = None
-):
-    uid = token_data.uid
+    updates: UserBase, db: Session = Depends(get_db), token_data: dict = Depends(verify_token),
+):  
+    uid = token_data.get("uid")
     if uid is None:
         raise HTTPException(status_code=400, detail="User ID is required")
     existing_user = user_db.get_user_by_uid(db, uid)
@@ -158,18 +157,15 @@ async def update_user_profile(
 @router.put("/change-password")
 async def change_password(
     request: PasswordChangeRequest,
+    token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
-    token_data: dict = None,
-):
-    uid = token_data.uid
+):      
+    uid = token_data.get("uid")
     if uid is None:
         raise HTTPException(status_code=400, detail="User ID is required")
     user = user_db.get_user_by_uid(db, uid)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
-    if not checkpw(request.old_password.encode("utf-8"), user.password.encode("utf-8")):
-        raise HTTPException(status_code=401, detail="Old password is incorrect")
 
     hashed_new_password = hashpw(
         request.new_password.encode("utf-8"), gensalt()

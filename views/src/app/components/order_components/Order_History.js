@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Container, Row, Col, Card, Badge, Button, Modal, Spinner } from "react-bootstrap";
-import { FaTimes } from "react-icons/fa";
 import config from "../../config";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
 import { useRouter } from "next/navigation";
+
+import { showToast } from "@/app/redux/slices/toastSlice";
 
 const OrderHistory = () => {
   const endpoint = config.apiBaseUrl;
@@ -20,12 +21,13 @@ const OrderHistory = () => {
   const [selectedOrderId, setSelectedOrderId] = useState(null); // 被選中的訂單 ID
 
   const { token, userInfo } = useSelector((state) => state.user); // 從 Redux 獲取使用者資訊與 Token
+  const dispatch = useDispatch();
 
   useEffect(() => {
     fetchOrders();
   }, [userInfo, token]);
 
-  // 新增訂單 API
+  // 取得所有訂單 API
   const fetchOrders = async () => {
     setLoading(true);
     try {
@@ -49,18 +51,35 @@ const OrderHistory = () => {
   // 刪除訂單 API
   const cancelOrder = async (orderId) => {
     try {
-      await axios.delete(`${endpoint}/frontstage/v1/orders/${orderId}`, {
+      const response = await axios.delete(`${endpoint}/frontstage/v1/orders/${orderId}`, {
         headers: {
           Authorization: `Bearer ${token}`, // 請替換成正確的 Token
         },
       });
-      alert("訂單已成功取消");
-      fetchOrders(); // 刷新訂單列表
+      handleSuccess("訂單已成功取消");
+
+      fetchOrders();
     } catch (err) {
       console.error("取消訂單失敗：", err);
-      alert("取消訂單失敗，請稍後再試。");
+      handleError("取消訂單失敗，請稍後再試。");
     } finally {
       setShowModal(false); // 關閉彈出視窗
+    }
+  };
+
+  // 更新訂單 API
+  const updateOrder = async (orderId) => {
+    try {
+      const response = await axios.put(`${endpoint}/frontstage/v1/orders/${orderId}`, { "status": "待確認" }, {
+        headers: {
+          Authorization: `Bearer ${token}`, // 請替換成正確的 Token
+        },
+      });
+
+      fetchOrders();
+    } catch (err) {
+      console.error("更新訂單失敗：", err);
+    } finally {
     }
   };
 
@@ -99,6 +118,15 @@ const OrderHistory = () => {
     );
   }
 
+  // 控制彈出視窗訊息區
+  const handleSuccess = (message) => {
+    dispatch(showToast({ message: message, variant: "success" }));
+  };
+
+  const handleError = (message) => {
+    dispatch(showToast({ message: message, variant: "danger" }));
+  };
+
   return (
     <Container className="my-4">
       <Row className="my-3">
@@ -118,16 +146,25 @@ const OrderHistory = () => {
                   <Card.Title className="mb-3">
                     訂單編號: <strong>{order.oid}</strong>
                   </Card.Title>
-                  {/* 如果狀態是 "待出貨"，顯示 X 按鈕 */}
-                  {order.status === "待出貨" && (
-                    <Button
-                      variant="link"
-                      className="text-danger"
-                      onClick={() => handleShowModal(order.oid)}
+
+                  <div>
+                    <strong>訂單狀態:</strong>{" "}
+                    <Badge
+                      bg={
+                        order.status === "已完成"
+                          ? "success"
+                          : order.status === "送貨中"
+                            ? "warning"
+                            : order.status === "待出貨"
+                              ? "primary"
+                              : order.status === "取消"
+                                ? "secondary"
+                                : "danger"
+                      }
                     >
-                      <FaTimes size={20} />
-                    </Button>
-                  )}
+                      {order.status}
+                    </Badge>
+                  </div>
                 </div>
                 <Card.Text>
                   <strong>訂單日期:</strong> {order.created_at}
@@ -153,23 +190,35 @@ const OrderHistory = () => {
                   ))}
                 </div>
                 <hr />
-                <div>
-                  <strong>總價:</strong> NT. {order.totalAmount}
+                {(order.paymentMethod === "匯款" && order.status === "待匯款") &&
+                  <>
+                    < div >
+                      <strong>銀行代號：</strong>001 <strong>匯款帳號：</strong>123456 { }
+                      <Button onClick={() => { updateOrder(order.oid) }}>
+                        我已匯款，通知管理員
+                      </Button>
+                    </div>
+                    <hr />
+                  </>
+                }
+
+                <div className="d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>總價:</strong> NT. {order.totalAmount}
+                  </div>
+
+                  {/* 如果狀態是 "待出貨"、"待確認"，顯示 X 按鈕 */}
+                  {(order.status === "待出貨" || order.status === "待匯款") && (
+                    <Button
+                      variant="link"
+                      className="text-danger"
+                      onClick={() => handleShowModal(order.oid)}
+                    >
+                      取消訂單
+                    </Button>
+                  )}
                 </div>
-                <div className="mt-3">
-                  <strong>訂單狀態:</strong>{" "}
-                  <Badge
-                    bg={
-                      order.status === "completed"
-                        ? "success"
-                        : order.status === "processing"
-                          ? "warning"
-                          : "danger"
-                    }
-                  >
-                    {order.status}
-                  </Badge>
-                </div>
+
               </Card.Body>
             </Card>
           </Col>
@@ -194,7 +243,7 @@ const OrderHistory = () => {
           </Button>
         </Modal.Footer>
       </Modal>
-    </Container>
+    </Container >
 
   );
 };
