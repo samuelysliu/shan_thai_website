@@ -1,8 +1,6 @@
 venv
 .env
 
-
-
 # frontend
 /views/node_modules
 .pnp.*
