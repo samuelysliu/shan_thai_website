@@ -7,13 +7,15 @@ import Sidebar from "./Sidebar";
 import AddTagModal from "./Add_Tag_Modal";
 import config from "../../config";
 
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { showToast } from "@/app/redux/slices/toastSlice";
 
 export default function ProductManagement() {
     const endpoint = config.apiBaseUrl;
 
     // 從 Redux 中取出會員資訊
     const { token } = useSelector((state) => state.user);
+    const dispatch = useDispatch();
 
     const [searchTerm, setSearchTerm] = useState("");
     const [filter, setFilter] = useState("all");
@@ -234,14 +236,23 @@ export default function ProductManagement() {
                     Authorization: `Bearer ${token}`,
                 }
             });
-            console.log("新增標籤成功:", response.data);
+            handleSuccess("新增標籤成功");
 
             // 更新標籤列表
             setProductTags((prevTags) => [...prevTags, response.data]);
         } catch (error) {
             console.error("新增標籤失敗:", error);
-            alert("新增標籤失敗，請稍後再試！");
+            handleError("新增標籤失敗，請稍後再試！");
         }
+    };
+
+    // 控制彈出視窗訊息區
+    const handleSuccess = (message) => {
+        dispatch(showToast({ message: message, variant: "success" }));
+    };
+
+    const handleError = (message) => {
+        dispatch(showToast({ message: message, variant: "danger" }));
     };
 
     return (
@@ -416,7 +427,7 @@ export default function ProductManagement() {
                                                 productImageFile: file, // 圖片檔案
                                             });
                                         } else {
-                                            alert("請上傳 JPG 或 PNG 格式的圖片");
+                                            handleSuccess("請上傳 JPG 或 PNG 格式的圖片");
                                             e.target.value = ""; // 清空輸入
                                         }
                                     }
