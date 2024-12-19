@@ -1,10 +1,6 @@
 venv
 .env
 
-/migrations/alembic.ini
-/migrations/versions
-/migrations/__pycache__
-
 # frontend
 /views/node_modules
 .pnp.*

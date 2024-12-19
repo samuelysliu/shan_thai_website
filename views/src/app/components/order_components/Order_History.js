@@ -102,22 +102,6 @@ const OrderHistory = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Container className="text-center my-4">
-        <Alert variant="danger">{error}</Alert>
-      </Container>
-    );
-  }
-
-  if (orders.length === 0) {
-    return (
-      <Container className="text-center my-4">
-        <Alert variant="info">目前沒有任何訂單。</Alert>
-      </Container>
-    );
-  }
-
   // 控制彈出視窗訊息區
   const handleSuccess = (message) => {
     dispatch(showToast({ message: message, variant: "success" }));
