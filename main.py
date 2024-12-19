@@ -18,7 +18,7 @@ app = FastAPI()
 # 設定 CORS 中介軟體
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "https://shan-thai-website.vercel.app"],  # 允許的前端來源
+    allow_origins=["*"],  # 允許的前端來源
     allow_credentials=True,
     allow_methods=["*"],  # 允許所有 HTTP 方法
     allow_headers=["*"],  # 允許所有標頭

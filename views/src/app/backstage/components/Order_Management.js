@@ -429,8 +429,10 @@ export default function OrderManagement() {
                   })
                 }
               >
+                <option value="待匯款">待匯款</option>
+                <option value="待確認">待確認</option>
                 <option value="待出貨">待出貨</option>
-                <option value="已出貨">已出貨</option>
+                <option value="配送中">配送中</option>
                 <option value="已完成">已完成</option>
                 <option value="已取消">已取消</option>
               </Form.Select>

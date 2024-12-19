@@ -29,6 +29,7 @@ class OrderCreate(BaseModel):
     recipientPhone: str
     recipientEmail: str
     transportationMethod: str
+    paymentMethod: str
     note: str | None = None
     status: str
     order_details: list[OrderDetailCreate]
@@ -44,6 +45,7 @@ class OrderUpdate(BaseModel):
     recipientPhone: str | None = None
     recipientEmail: str | None = None
     transportationMethod: str | None = None
+    paymentMethod: str | None = None
     note: str | None = None
     status: str | None = None
 
@@ -91,6 +93,7 @@ async def get_order_by_oid(
         "recipientPhone": order.recipientPhone,
         "recipientEmail": order.recipientEmail,
         "transportationMethod": order.transportationMethod,
+        "paymentMethod": order.paymentMethod,
         "note": order.note,
         "status": order.status,
         "created_at": timeformat(order.created_at.isoformat()),
@@ -132,9 +135,7 @@ async def create_order(
 ):
     adminAutorizationCheck(token_data.get("isAdmin"))
 
-    if order.useDiscount and (
-        order.discountPrice is None or order.discountPrice <= 0
-    ):
+    if order.useDiscount and (order.discountPrice is None or order.discountPrice <= 0):
         raise HTTPException(status_code=400, detail="Invalid special price")
 
     for detail in order.order_details:
@@ -167,6 +168,7 @@ async def create_order(
         recipientPhone=order.recipientPhone,
         recipientEmail=order.recipientEmail,
         transportationMethod=order.transportationMethod,
+        paymentMethod=order.paymentMethod,
         note=order.note,
         status=order.status,
         order_details=[detail.dict() for detail in order.order_details],
@@ -177,38 +179,41 @@ async def create_order(
 
 
 # 更新訂單
-@router.patch("/orders/{order_id}")
+@router.patch("/orders/{oid}")
 async def update_order(
-    order_id: int,
+    oid: int,
     order: OrderUpdate,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
-    # 確認是否是管理員
-    adminAutorizationCheck(token_data.get("isAdmin"))
+    try:
+        # 確認是否是管理員
+        adminAutorizationCheck(token_data.get("isAdmin"))
 
-    # 構建要更新的資料
-    update_data = order.dict(exclude_unset=True)  # 排除未設置的字段
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No fields to update")
+        # 構建要更新的資料
+        update_data = order.dict(exclude_unset=True)  # 排除未設置的字段
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
 
-    updated_order = order_db.update_order(db, oid=order_id, updates=update_data)
-    if not updated_order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return updated_order
+        updated_order = order_db.update_order(db, oid=oid, updates=update_data)
+        if not updated_order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        return updated_order
+    except:
+        raise HTTPException(status_code=500, detail="Failed to cancel the order")
 
 
 # 刪除訂單
-@router.delete("/orders/{order_id}")
+@router.delete("/orders/{oid}")
 async def delete_order(
-    order_id: int,
+    oid: int,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
     # 確認是否是管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
 
-    success = order_db.delete_order(db, oid=order_id)
+    success = order_db.delete_order(db, oid=oid)
     if not success:
         raise HTTPException(status_code=404, detail="Order not found")
     return {"detail": "Order deleted successfully"}

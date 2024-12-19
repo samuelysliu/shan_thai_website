@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Container, Row, Col, Table, Button, Form } from "react-bootstrap";
 import axios from "axios";
 import config from "@/app/config";
+
+import { showToast } from "@/app/redux/slices/toastSlice";
 
 const OrderConfirm = () => {
     const router = useRouter();
@@ -17,9 +19,12 @@ const OrderConfirm = () => {
     const [recipientPhone, setRecipientPhone] = useState("");
     const [recipientEmail, setRecipientEmail] = useState("");
     const [transportationMethod, setTransportationMethod] = useState("delivery");
+    const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
     const [orderNote, setOrderNote] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const endpoint = config.apiBaseUrl;
+
+    const dispatch = useDispatch();
 
     // 同步購物車與商品詳細資料
     const productAndCartMapping = async () => {
@@ -53,7 +58,7 @@ const OrderConfirm = () => {
     // 提交訂單
     const handleSubmitOrder = async () => {
         if (!recipientName || !recipientPhone || !recipientEmail || !address) {
-            alert("請完整填寫所有必填欄位！");
+            handleError("請完整填寫所有必填欄位！");
             return;
         }
 
@@ -78,6 +83,7 @@ const OrderConfirm = () => {
                 recipientPhone: recipientPhone,
                 recipientEmail: recipientEmail,
                 transportationMethod,
+                paymentMethod, // 付款方式
                 orderNote: orderNote,
                 order_details: orderDetails,
             };
@@ -89,14 +95,23 @@ const OrderConfirm = () => {
                 },
             });
 
-            alert("訂單已提交成功！");
+            handleSuccess("訂單已提交成功！");
             router.push("/order/history");
         } catch (error) {
             console.error("提交訂單失敗：", error);
-            alert("提交訂單失敗，請重試。");
+            handleError("提交訂單失敗，請重試。");
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // 控制彈出視窗訊息區
+    const handleSuccess = (message) => {
+        dispatch(showToast({ message: message, variant: "success" }));
+    };
+
+    const handleError = (message) => {
+        dispatch(showToast({ message: message, variant: "danger" }));
     };
 
 
@@ -186,6 +201,17 @@ const OrderConfirm = () => {
                             value={address}
                             onChange={(e) => setAddress(e.target.value)}
                         />
+                    </Form.Group>
+
+                    <Form.Group controlId="formPaymentMethod" className="mb-3">
+                        <Form.Label>付款方式</Form.Label>
+                        <Form.Select
+                            value={paymentMethod}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                        >
+                            <option value="匯款">匯款</option>
+                            <option value="貨到付款">貨到付款</option>
+                        </Form.Select>
                     </Form.Group>
 
                     <Form.Group controlId="formNote" className="mb-3">
