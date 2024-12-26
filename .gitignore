@@ -1,7 +1,10 @@
 venv
 .env
-*/__pycache__
 /__pycache__
+controls/__pycache__
+modules/__pycache__
+migrations/__pycache__
+migrations/versions
 # frontend
 /views/node_modules
 .pnp.*

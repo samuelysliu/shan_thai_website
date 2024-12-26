@@ -35,11 +35,16 @@ const Product_Grid = ({ initialProducts }) => {
   }
 
   const handleAddCart = async (product) => {
+    if (userInfo === null) {
+      handleSuccess("請先登入會員");
+      return;
+    }
+
     try {
       const productCheck = initialProducts.find((item) => item.pid === product.pid);
       const cartCheck = cart.find((item) => item.pid == product.pid);
       let checkNum = 0;
-      if(cartCheck != undefined){ // 代表購物車有此項目
+      if (cartCheck != undefined) { // 代表購物車有此項目
         checkNum = cartCheck.quantity;
       }
 
