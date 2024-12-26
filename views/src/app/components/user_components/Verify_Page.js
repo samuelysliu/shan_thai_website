@@ -7,7 +7,6 @@ import axios from "axios";
 import config from "@/app/config";
 
 const VerifyPage = ({ code }) => {
-    console.log(code)
     const endpoint = config.apiBaseUrl;
 
     const router = useRouter();
@@ -20,7 +19,8 @@ const VerifyPage = ({ code }) => {
     const verifyCode = async () => {
         try {
             const response = await axios.get(`${endpoint}/frontstage/v1/verify/${code}`);
-            if (response.detail === "User registered successfully") {
+            console.log(response.data.detail)
+            if (response.data.detail === "User verified successfully") {
                 setStatus("success");
                 setMessage("驗證成功！即將跳轉至首頁...");
             } else {

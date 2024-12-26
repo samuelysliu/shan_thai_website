@@ -87,7 +87,7 @@ def update_user(db: Session, user_id: int, updates: dict):
         user = db.query(User).filter(User.uid == user_id).first()
         if user:
             for key, value in updates.items():
-                if key in {"username", "sex", "star", "note"}:
+                if key in {"username", "sex", "star", "note", "identity"}:
                     setattr(user, key, value)
             db.commit()
             db.refresh(user)

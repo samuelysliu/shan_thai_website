@@ -16,6 +16,8 @@ export default function LoginModal({ show, handleClose }) {
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false); // 新增 loading 狀態
+  const [registerLoading, setRegisterLoading] = useState(false); // 註冊按鈕的 loading 狀態
 
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
@@ -53,6 +55,8 @@ export default function LoginModal({ show, handleClose }) {
   // 處理一般登入
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true); // 啟用 loading 狀態
+    setMessage(""); // 清空之前的訊息
     try {
       const response = await axios.post(`${endpoint}/frontstage/v1/login`, form);
       const responseData = response.data.detail
@@ -64,23 +68,32 @@ export default function LoginModal({ show, handleClose }) {
       router.push("/");
     } catch (err) {
       setMessage("登入失敗，請檢查帳號或密碼");
+    } finally {
+      setLoading(false); // 停止 loading 狀態
     }
   };
 
   // 處理一般註冊
   const handleRegister = async () => {
+    setRegisterLoading(true); // 啟用註冊按鈕的 loading 狀態
+    setMessage(""); // 清空之前的訊息
     try {
       const response = await axios.post(`${endpoint}/frontstage/v1/register`, {
         email: form.email,
         password: form.password,
       });
 
-      setMessage(response.data.detail === "Email is already registered"
-        ? "此 Email 已經註冊過了！"
-        : "註冊成功，請登入！");
+      if (response.data.detail === "Email is already registered") {
+        setMessage("此 Email 已經註冊過了！");
+      } else {
+        setMessage("請前往電子郵件，查看驗證信件");
+        handleClose();
+      }
     } catch (err) {
       console.log(err)
       setMessage("註冊失敗，請確認資料是否正確");
+    } finally {
+      setRegisterLoading(false); // 停止註冊按鈕的 loading 狀態
     }
   };
 
@@ -124,14 +137,15 @@ export default function LoginModal({ show, handleClose }) {
               />
             </Form.Group>
             {message && <p className="text-danger text-center">{message}</p>}
-            <Button type="submit" className="button-primary w-100">
-              登入
+            <Button type="submit" className="button-primary w-100" disabled={loading}>
+              {loading ? "登入中..." : "登入"}
             </Button>
             <Button
               className="button-secondary w-100 mt-2"
               onClick={handleRegister}
+              disabled={registerLoading}
             >
-              註冊
+              {registerLoading ? "註冊中..." : "註冊"}
             </Button>
 
           </Form>

@@ -19,13 +19,20 @@ const Product_Detail = ({ product }) => {
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
 
-
-  const handleBuyNow = () => {
-    // 立即購買的邏輯
-    console.log("立即購買", product.pid);
+  // 立即購買的邏輯
+  const handleBuyNow = async (product) => {
+    if (await handleAddCart(product)) {
+      router.push(`/order/buy`)
+      return;
+    }
   };
 
   const handleAddCart = async (product) => {
+    if (userInfo === null) {
+      handleSuccess("請先登入會員");
+      return false;
+    }
+
     try {
       const cartCheck = cart.find((item) => item.pid == product.pid);
       let checkNum = 0;
@@ -36,7 +43,7 @@ const Product_Detail = ({ product }) => {
 
       if (checkNum >= product.remain) {
         handleError(`超出庫存限制，剩餘數量僅有 ${product.remain}`)
-        return;
+        return false;
       }
 
       let cartObject = {
@@ -44,7 +51,6 @@ const Product_Detail = ({ product }) => {
         pid: product.pid,
         quantity: 1,
       }
-      console.log(cartObject)
 
       // 然後呼叫後端 API，將該商品加入購物車
       await axios.post(`${endpoint}/frontstage/v1/cart`, cartObject,
@@ -57,9 +63,11 @@ const Product_Detail = ({ product }) => {
       // 更新 Redux 中的購物車
       dispatch(addToCart(cartObject));
       handleSuccess("加入成功！")
+      return true;
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
       // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
+      return false;
     }
   };
 
