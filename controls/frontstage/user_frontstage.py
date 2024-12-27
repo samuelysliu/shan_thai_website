@@ -345,7 +345,7 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     send_email(user.email, subject, html_content)
     return {"detail": "User registered successfully"}
 
-
+# 取得驗證碼並驗證身分
 @router.get("/verify/{verification_code}")
 async def verify_user(verification_code:str, db: Session = Depends(get_db)):
     # 查詢驗證碼
@@ -369,12 +369,8 @@ async def verify_user(verification_code:str, db: Session = Depends(get_db)):
 
 # 查看用戶資料
 @router.get("/profile")
-async def get_user_profile(token_data: dict = Depends(verify_token)):
-    user = {
-        "email": token_data["email"],
-        "username": token_data["username"],
-        "sex": token_data["sex"],
-    }
+async def get_user_profile(token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    user = user_db.get_user_by_uid(db, token_data["uid"])
     return user
 
 
@@ -391,9 +387,9 @@ async def update_user_profile(
     existing_user = user_db.get_user_by_uid(db, uid)
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
-
     update_data = updates.dict(exclude_unset=True)  # 僅更新提供的字段
     updated_user = user_db.update_user(db, user_id=uid, updates=update_data)
+    print(updated_user.username)
     if not updated_user:
         raise HTTPException(status_code=500, detail="Failed to update user")
     return updated_user

@@ -52,6 +52,7 @@ export default function UserProfile() {
             const response = await axios.get(`${endpoint}/frontstage/v1/profile`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
+            console.log(response.data)
             setUserData(response.data);
             setUpdatedData(response.data);
         } catch (error) {
