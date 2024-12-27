@@ -85,12 +85,12 @@ export default function LoginModal({ show, handleClose }) {
 
       if (response.data.detail === "Email is already registered") {
         setMessage("此 Email 已經註冊過了！");
+      } else if (response.data.detail === "Please check Email") {
+        setMessage("註冊碼已發出，請檢察您的電子郵件");
       } else {
         setMessage("請前往電子郵件，查看驗證信件");
-        handleClose();
       }
     } catch (err) {
-      console.log(err)
       setMessage("註冊失敗，請確認資料是否正確");
     } finally {
       setRegisterLoading(false); // 停止註冊按鈕的 loading 狀態
