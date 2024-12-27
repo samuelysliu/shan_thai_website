@@ -113,7 +113,17 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     # 檢查用戶是否已存在
     existing_user = user_db.get_user_by_email(db, user.email)
     if existing_user:
-        return {"detail": "Email is already registered"}
+        if existing_user.identity != "unauth":
+            return {"detail": "Email is already registered"}
+        else:
+            # 查詢驗證碼
+            verification_entry = user_verify_db.get_latest_verification_code(db, existing_user.uid)
+            if not verification_entry:
+                pass
+
+            # 如果驗證碼還沒過期，叫他檢查 Email
+            if verification_entry.expires_at > datetime.utcnow():
+                raise {"detail": "Please check Email"}
 
     # 雜湊密碼
     hashed_password = hashpw(user.password.encode("utf-8"), gensalt()).decode("utf-8")
