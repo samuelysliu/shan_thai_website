@@ -1,10 +1,14 @@
-from fastapi import HTTPException, Request, Depends
+from fastapi import HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 from typing import Callable
 import jwt
 from functools import wraps
 from datetime import datetime
 import pytz
+import smtplib
+import random
+import string
+from email.message import EmailMessage
 
 
 SECRET_KEY = "shan_thai_project"
@@ -68,3 +72,28 @@ def userAuthorizationCheck(api_uid, token_uId):
 def adminAutorizationCheck(isAdmin):
     if not isAdmin:
         raise HTTPException(status_code=403, detail="您無權修改此項目")
+    
+# 寄信
+def send_email(to_email: str, subject: str, html_content: str):
+    # Gmail 設定
+    GMAIL_USER = "shanthaiteam@gmail.com"
+    GMAIL_PASSWORD = "jrsj qdkn auwf meeg"
+    
+    msg = EmailMessage()
+    msg["From"] = GMAIL_USER
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content("此電子郵件支援 HTML 格式，請切換至 HTML 檢視。")
+    msg.add_alternative(html_content, subtype="html")
+    
+    try:
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(GMAIL_USER, GMAIL_PASSWORD)
+            server.send_message(msg)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Email sending failed: {str(e)}")
+
+# 生成隨機驗證碼
+def generate_verification_code(length=6):
+    return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))

@@ -108,8 +108,20 @@ class User(Base):
     # 關聯其他資料庫
     carts = relationship("Cart", back_populates="users")
     orders = relationship("Order", back_populates="users")
+    user_verifications = relationship("UserVerify", back_populates="user")  # 新增與 UserVerify 的關聯
 
-    
+
+class UserVerify(Base):
+    __tablename__ = "user_verify"
+    id = Column(Integer, primary_key=True, autoincrement=True)  # 主鍵
+    uid = Column(Integer, ForeignKey("users.uid"), nullable=False)  # 與 User 表格關聯
+    verification_code = Column(String(10), nullable=False)  # 驗證碼
+    expires_at = Column(DateTime, nullable=False)  # 驗證碼過期時間
+    created_at = Column(DateTime, default=func.now())  # 建立時間
+
+    # 建立與 User 的反向關聯
+    user = relationship("User", back_populates="user_verifications")
+
 class Order(Base):
     __tablename__ = "orders"
     
