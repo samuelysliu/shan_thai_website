@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text, Date
 from sqlalchemy.orm import relationship
 from modules.dbConnect import engine, Base
 from sqlalchemy.sql import func
@@ -102,6 +102,10 @@ class User(Base):
     star = Column(Integer, default=0)
     identity = Column(String(255), nullable=True)
     note =Column(Text, nullable=True)
+    birth_date = Column(Date, nullable=True)  # 新增出生年月日欄位
+    mbti = Column(String(4), nullable=True)  # 新增 MBTI 欄位
+    phone = Column(String(20), nullable=True)  # 新增聯絡電話欄位
+    address = Column(Text, nullable=True)  # 新增常用地址欄位
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     

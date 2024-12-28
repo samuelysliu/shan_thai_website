@@ -27,6 +27,7 @@ const Product_Detail = ({ product }) => {
     }
   };
 
+  // 加入購物車的邏輯
   const handleAddCart = async (product) => {
     if (userInfo === null) {
       handleSuccess("請先登入會員");
@@ -62,11 +63,10 @@ const Product_Detail = ({ product }) => {
 
       // 更新 Redux 中的購物車
       dispatch(addToCart(cartObject));
-      handleSuccess("加入成功！")
+      handleSuccess("加入成功！");
       return true;
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
-      // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
       return false;
     }
   };

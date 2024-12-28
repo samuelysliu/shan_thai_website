@@ -61,6 +61,10 @@ def create_user(
     sex: str = None,
     star: int = 0,
     note: str = None,
+    birth_date = None,
+    mbti = None,
+    phone = None,
+    address = None,
 ):
     try:
         new_user = User(
@@ -71,6 +75,10 @@ def create_user(
             sex=sex,
             star=star,
             note=note,
+            birth_date=birth_date,
+            mbti=mbti,
+            phone=phone,
+            address=address
         )
         db.add(new_user)
         db.commit()
@@ -87,7 +95,7 @@ def update_user(db: Session, user_id: int, updates: dict):
         user = db.query(User).filter(User.uid == user_id).first()
         if user:
             for key, value in updates.items():
-                if key in {"username", "sex", "star", "note", "identity"}:
+                if key in {"username", "sex", "star", "note", "identity", "birth_date", "mbti", "phone", "address"}:
                     setattr(user, key, value)
             db.commit()
             db.refresh(user)
@@ -132,7 +140,7 @@ def soft_delete_user(db: Session, uid: int):
     try:
         user = db.query(User).filter(User.uid == uid).first()
         if user:
-            user.is_active = False  # 標記為已刪除
+            user.identity = "delete"  # 標記為已刪除
             db.commit()
             db.refresh(user)
             return True

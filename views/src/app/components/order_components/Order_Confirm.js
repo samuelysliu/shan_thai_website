@@ -13,11 +13,12 @@ const OrderConfirm = () => {
     const router = useRouter();
     const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
     const { userInfo, token } = useSelector((state) => state.user); // 獲取登入 Token
+    console.log(userInfo)
     const [cartProduct, setCartProduct] = useState([]);
-    const [address, setAddress] = useState("");
-    const [recipientName, setRecipientName] = useState("");
-    const [recipientPhone, setRecipientPhone] = useState("");
-    const [recipientEmail, setRecipientEmail] = useState("");
+    const [recipientName, setRecipientName] = useState(userInfo.username);
+    const [recipientPhone, setRecipientPhone] = useState(userInfo.phone);
+    const [recipientEmail, setRecipientEmail] = useState(userInfo.email);
+    const [address, setAddress] = useState(userInfo.address);
     const [transportationMethod, setTransportationMethod] = useState("delivery");
     const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
     const [orderNote, setOrderNote] = useState("");
@@ -156,7 +157,7 @@ const OrderConfirm = () => {
                         <Form.Control
                             type="text"
                             placeholder="請輸入收件人姓名"
-                            value={recipientName}
+                            value={recipientName || ""}
                             onChange={(e) => setRecipientName(e.target.value)}
                         />
                     </Form.Group>
@@ -166,7 +167,7 @@ const OrderConfirm = () => {
                         <Form.Control
                             type="text"
                             placeholder="請輸入收件人電話"
-                            value={recipientPhone}
+                            value={recipientPhone || ""}
                             onChange={(e) => setRecipientPhone(e.target.value)}
                         />
                     </Form.Group>
@@ -176,7 +177,7 @@ const OrderConfirm = () => {
                         <Form.Control
                             type="email"
                             placeholder="請輸入收件人 Email"
-                            value={recipientEmail}
+                            value={recipientEmail || ""}
                             onChange={(e) => setRecipientEmail(e.target.value)}
                         />
                     </Form.Group>
@@ -198,7 +199,7 @@ const OrderConfirm = () => {
                         <Form.Control
                             type="text"
                             placeholder={`請輸入${transportationMethod === "delivery" ? "送貨地址" : "超商門市名稱"}`}
-                            value={address}
+                            value={address || ""}
                             onChange={(e) => setAddress(e.target.value)}
                         />
                     </Form.Group>

@@ -30,7 +30,17 @@ export default function LoginModal({ show, handleClose }) {
       });
 
       const responseData = response.data.detail
-      const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin }
+      const userInfo = {
+        "uid": responseData.uid,
+        "email": responseData.email,
+        "username": responseData.username,
+        "sex": responseData.sex,
+        "birth_date": responseData.birth_date,
+        "mbti": responseData.mbti,
+        "phone": responseData.phone,
+        "address": responseData.address,
+        "isAdmin": responseData.isAdmin
+      }
       const token = responseData.token;
       dispatch(login({ userInfo, token }));
 
@@ -60,7 +70,18 @@ export default function LoginModal({ show, handleClose }) {
     try {
       const response = await axios.post(`${endpoint}/frontstage/v1/login`, form);
       const responseData = response.data.detail
-      const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin }
+      const userInfo = {
+        "uid": responseData.uid,
+        "email": responseData.email,
+        "username": responseData.username,
+        "sex": responseData.sex,
+        "birth_date": responseData.birth_date,
+        "mbti": responseData.mbti,
+        "phone": responseData.phone,
+        "address": responseData.address,
+        "isAdmin": responseData.isAdmin
+      }
+      
       const token = responseData.token;
       dispatch(login({ userInfo, token }));
 
