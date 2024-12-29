@@ -5,6 +5,7 @@ import axios from "axios";
 import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "react-bootstrap";
 import Sidebar from "./Sidebar";
 import config from "../../config";
+import Select from "react-select";
 
 import { useSelector } from 'react-redux';
 
@@ -30,7 +31,30 @@ export default function UserManagement() {
         star: 0,
         identity: "",
         note: "",
+        birth_date: "",
+        mbti: "",
+        phone: "",
+        address: ""
     });
+
+    const mbtiOptions = [
+        { value: "INTJ", label: "INTJ" },
+        { value: "INTP", label: "INTP" },
+        { value: "ENTJ", label: "ENTJ" },
+        { value: "ENTP", label: "ENTP" },
+        { value: "INFJ", label: "INFJ" },
+        { value: "INFP", label: "INFP" },
+        { value: "ENFJ", label: "ENFJ" },
+        { value: "ENFP", label: "ENFP" },
+        { value: "ISTJ", label: "ISTJ" },
+        { value: "ISFJ", label: "ISFJ" },
+        { value: "ESTJ", label: "ESTJ" },
+        { value: "ESFJ", label: "ESFJ" },
+        { value: "ISTP", label: "ISTP" },
+        { value: "ISFP", label: "ISFP" },
+        { value: "ESTP", label: "ESTP" },
+        { value: "ESFP", label: "ESFP" },
+    ];
 
     useEffect(() => {
         fetchUsers();
@@ -130,6 +154,10 @@ export default function UserManagement() {
                 star: 0,
                 identity: "",
                 note: "",
+                birth_date: "",
+                mbti: "",
+                phone: "",
+                address: ""
             });
         }
         setShowModal(true);
@@ -145,6 +173,10 @@ export default function UserManagement() {
             star: 0,
             identity: "",
             note: "",
+            birth_date: "",
+            mbti: "",
+            phone: "",
+            address: ""
         });
     };
 
@@ -184,11 +216,14 @@ export default function UserManagement() {
                         <Table striped bordered hover>
                             <thead style={{ backgroundColor: "var(--primary-color)", color: "var(--light-text-color)" }}>
                                 <tr>
-                                    <th>使用者編號</th>
+                                    <th>編號</th>
                                     <th>Email</th>
                                     <th>名稱</th>
                                     <th>性別</th>
                                     <th>星數</th>
+                                    <th>生日</th>
+                                    <th>MBTI</th>
+                                    <th>電話</th>
                                     <th>身份</th>
                                     <th>操作</th>
                                 </tr>
@@ -201,6 +236,9 @@ export default function UserManagement() {
                                         <td>{user.username}</td>
                                         <td>{user.sex || "未指定"}</td>
                                         <td>{user.star}</td>
+                                        <td>{user.birth_date}</td>
+                                        <td>{user.mbti}</td>
+                                        <td>{user.phone}</td>
                                         <td>{user.identity || "未指定"}</td>
                                         <td>
                                             <Button
@@ -276,6 +314,43 @@ export default function UserManagement() {
                                 type="number"
                                 value={currentUser.star}
                                 onChange={(e) => setCurrentUser({ ...currentUser, star: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>生日</Form.Label>
+                            <Form.Control
+                                type="date"
+                                name="birth_date"
+                                value={currentUser.birth_date}
+                                onChange={(e) => setCurrentUser({ ...currentUser, birth_date: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>MBTI</Form.Label>
+                            <Select
+                                options={mbtiOptions}
+                                value={currentUser.mbti}
+                                onChange={(e) => setCurrentUser({ ...currentUser, mbti: e.target.value })}
+                                placeholder="選擇 MBTI"
+                                isSearchable
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>生日</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="phone"
+                                value={currentUser.phone}
+                                onChange={(e) => setCurrentUser({ ...currentUser, phone: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>地址</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                name="address"
+                                value={currentUser.address}
+                                onChange={(e) => setCurrentUser({ ...currentUser, address: e.target.value })}
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">

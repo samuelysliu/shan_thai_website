@@ -3,6 +3,7 @@ from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 import modules.user_crud as user_db
 import modules.dbConnect as db_connect
+from datetime import date
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -17,6 +18,10 @@ class UserCreate(BaseModel):
     star: int | None = 0
     identity: str | None = "user"
     note: str | None = None
+    birth_date: date | None = None
+    mbti: str | None = None
+    phone: str | None = None
+    address: str | None = None
 
 
 class UserUpdate(BaseModel):
@@ -27,6 +32,10 @@ class UserUpdate(BaseModel):
     star: int | None = None
     identity: str | None = None
     note: str | None = None
+    birth_date: date | None = None
+    mbti: str | None = None
+    phone: str | None = None
+    address: str | None = None
 
 
 # 獲取所有用戶
@@ -59,6 +68,10 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
         star=user.star,
         identity="user",
         note=user.note,
+        birth_date=user.birth_date,
+        mbti=user.mbti,
+        phone=user.phone,
+        address=user.address
     )
     if not created_user:
         raise HTTPException(status_code=500, detail="User creation failed")
@@ -85,6 +98,7 @@ async def delete_user(uid: int, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"detail": "User deleted successfully"}
+
 
 # 取得用戶清單
 @router.get("/users_list")

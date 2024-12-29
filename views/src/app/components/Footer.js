@@ -33,7 +33,7 @@ export default function Footer() {
           <br />
           <a href="mailto:shanthaiteam@gmail.com" target="_blank" rel="noopener noreferrer">
             <AiOutlineMail style={{ marginRight: "5px" }} />
-            Email
+            shanthaiteam@gmail.com
           </a>
         </Col>
         <Col xs={12} sm={6} md={4} className="footer-col">
