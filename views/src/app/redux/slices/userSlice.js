@@ -18,8 +18,16 @@ export const userSlice = createSlice({
       state.userInfo = null;
       state.token = null;
     },
+    updateUserInfo: (state, action) => {
+      if (state.userInfo) {
+        state.userInfo = {
+          ...state.userInfo,
+          ...action.payload, // 合併新的資料
+        };
+      }
+    },
   },
 });
 
-export const { login, logout } = userSlice.actions;
+export const { login, logout, updateUserInfo } = userSlice.actions;
 export default userSlice.reducer;

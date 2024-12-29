@@ -43,7 +43,7 @@ class ProductTag(ProductTagBase):
     class Config:
         from_attributes = True
 
-
+# 處理上傳照片
 def handleImageUpload(file: UploadFile = File(...)):
     cloudinary.config(
         cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
@@ -70,6 +70,7 @@ def handleImageUpload(file: UploadFile = File(...)):
     return srcURL
 
 
+# 取得所有產品
 @router.get("/product")
 async def get_product(db: Session = Depends(get_db)):
     product = product_db.get_product_join_tag(db)
@@ -77,7 +78,7 @@ async def get_product(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Product not found")
     return product
 
-
+# 更新指定產品內容
 @router.patch("/product/{product_id}")
 async def update_partial_product(
     product_id: int,
@@ -113,7 +114,7 @@ async def update_partial_product(
         raise HTTPException(status_code=404, detail="Product not found")
     return updated_product
 
-
+# 建立新產品
 @router.post("/product")
 async def create_product(
     title_cn: str = Form(...),
@@ -142,7 +143,7 @@ async def create_product(
         raise HTTPException(status_code=404, detail="Product create failed")
     return created_product
 
-
+# 刪除指定產品
 @router.delete("/product/{product_id}")
 async def delete_product(
     product_id: int,

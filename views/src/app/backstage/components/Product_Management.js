@@ -84,6 +84,7 @@ export default function ProductManagement() {
                     },
                 });
             const newProduct = response.data;
+            newProduct.productTag=currentProduct.productTag
             setProducts((prevProducts) => [...prevProducts, newProduct]);
             handleCloseModal();
         } catch (error) {

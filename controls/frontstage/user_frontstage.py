@@ -7,7 +7,7 @@ import modules.user_verify_crud as user_verify_db
 from bcrypt import hashpw, gensalt, checkpw
 import os
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from controls.tools import (
     verify_token,
     userAuthorizationCheck,
@@ -38,7 +38,10 @@ class UserBase(BaseModel):
     sex: str | None = None
     star: int | None = 0
     note: str | None = None
-
+    birth_date: date | None = None
+    mbti: str | None = None
+    phone: str | None = None
+    address: str | None = None
     class Config:
         from_attributes = True
 
@@ -82,7 +85,6 @@ def loginFunction(existing_user):
         isAdmin = False
     else:
         isAdmin = True
-
     # 生成 JWT token
     access_token = create_access_token(
         data={
@@ -91,6 +93,10 @@ def loginFunction(existing_user):
             "username": existing_user.username,
             "sex": existing_user.sex,
             "star": existing_user.star,
+            "birth_date": str(existing_user.birth_date),
+            "mbti": existing_user.mbti,
+            "phone": existing_user.phone,
+            "address": existing_user.address,
             "isAdmin": isAdmin,
         }
     )
@@ -101,6 +107,10 @@ def loginFunction(existing_user):
             "email": existing_user.email,
             "username": existing_user.username,
             "sex": existing_user.sex,
+            "birth_date": existing_user.birth_date,
+            "mbti": existing_user.mbti,
+            "phone": existing_user.phone,
+            "address": existing_user.address,
             "isAdmin": isAdmin,
             "token": access_token,
         }
@@ -112,36 +122,61 @@ def loginFunction(existing_user):
 async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     # 檢查用戶是否已存在
     existing_user = user_db.get_user_by_email(db, user.email)
+    user_object = existing_user
     if existing_user:
-        return {"detail": "Email is already registered"}
+        if existing_user.identity != "unauth":
+            return {"detail": "Email is already registered"}
+        else:
+            # 查詢驗證碼
+            verification_entry = user_verify_db.get_latest_verification_code(
+                db, existing_user.uid
+            )
+            # 如果驗證碼還沒過期，叫他檢查 Email
+            if verification_entry and verification_entry.expires_at > datetime.utcnow():
+                return {"detail": "Please check Email"}
+            else:
+                hashed_password = hashpw(
+                    user.password.encode("utf-8"), gensalt()
+                ).decode("utf-8")
+                updated_user = user_db.update_user_password(
+                    db, uid=existing_user.uid, new_password=hashed_password
+                )
+                if not updated_user:
+                    raise HTTPException(
+                        status_code=500, detail="Failed to update password"
+                    )
 
-    # 雜湊密碼
-    hashed_password = hashpw(user.password.encode("utf-8"), gensalt()).decode("utf-8")
+    else:
+        # 雜湊密碼
+        hashed_password = hashpw(user.password.encode("utf-8"), gensalt()).decode(
+            "utf-8"
+        )
 
-    # 創建用戶
-    new_user = user_db.create_user(
-        db,
-        email=user.email,
-        username=user.username,
-        password=hashed_password,
-        identity="unauth",
-    )
+        # 創建用戶
+        new_user = user_db.create_user(
+            db,
+            email=user.email,
+            username=user.username,
+            password=hashed_password,
+            identity="unauth",
+        )
 
-    if not new_user:
-        raise HTTPException(status_code=500, detail="Failed to create user")
+        if not new_user:
+            raise HTTPException(status_code=500, detail="Failed to create user")
+        user_object = new_user
 
     verification_code = generate_verification_code()
-    
+
     # 將驗證碼存入資料庫
     verification_entry = user_verify_db.create_verification_code(
-        db,
-        uid=new_user.uid,
-        verification_code=verification_code
+        db, uid=user_object.uid, verification_code=verification_code
     )
 
     if not verification_entry:
-        raise HTTPException(status_code=500, detail="Failed to create verification code")
-    
+        raise HTTPException(
+            status_code=500, detail="Failed to create verification code"
+        )
+
     verify_page = f"{endpoint}/profile/verify/{verification_code}"
     subject = "善泰團隊網站註冊驗證碼"
 
@@ -329,8 +364,9 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     return {"detail": "User registered successfully"}
 
 
+# 取得驗證碼並驗證身分
 @router.get("/verify/{verification_code}")
-async def verify_user(verification_code:str, db: Session = Depends(get_db)):
+async def verify_user(verification_code: str, db: Session = Depends(get_db)):
     # 查詢驗證碼
     verification_entry = user_verify_db.get_verification_by_code(db, verification_code)
     if not verification_entry:
@@ -344,21 +380,29 @@ async def verify_user(verification_code:str, db: Session = Depends(get_db)):
     updated_user = user_db.update_user(db, verification_entry.uid, {"identity": "user"})
     if not updated_user:
         raise HTTPException(status_code=500, detail="Failed to update user identity")
-    
+
     # 刪除該用戶的所有驗證碼
     user_verify_db.delete_all_verifications_for_user(db, verification_entry.uid)
 
     return {"detail": "User verified successfully"}
 
+
 # 查看用戶資料
 @router.get("/profile")
-async def get_user_profile(token_data: dict = Depends(verify_token)):
-    user = {
-        "email": token_data["email"],
-        "username": token_data["username"],
-        "sex": token_data["sex"],
+async def get_user_profile(
+    token_data: dict = Depends(verify_token), db: Session = Depends(get_db)
+):
+    existing_user = user_db.get_user_by_uid(db, token_data["uid"])
+    return {
+        "uid": existing_user.uid,
+        "email": existing_user.email,
+        "username": existing_user.username,
+        "sex": existing_user.sex,
+        "birth_date": existing_user.birth_date,
+        "mbti": existing_user.mbti,
+        "phone": existing_user.phone,
+        "address": existing_user.address,
     }
-    return user
 
 
 # 修改會員資料
@@ -374,9 +418,9 @@ async def update_user_profile(
     existing_user = user_db.get_user_by_uid(db, uid)
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
-
     update_data = updates.dict(exclude_unset=True)  # 僅更新提供的字段
     updated_user = user_db.update_user(db, user_id=uid, updates=update_data)
+    print(updated_user.username)
     if not updated_user:
         raise HTTPException(status_code=500, detail="Failed to update user")
     return updated_user
@@ -414,7 +458,8 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     existing_user = user_db.get_user_by_email(db, user.email)
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
-
+    
+    
     # 檢查密碼
     if not checkpw(
         user.password.encode("utf-8"), existing_user.password.encode("utf-8")
@@ -422,7 +467,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
     response = loginFunction(existing_user)
-
+    
     return response
 
 

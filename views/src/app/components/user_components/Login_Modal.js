@@ -30,7 +30,17 @@ export default function LoginModal({ show, handleClose }) {
       });
 
       const responseData = response.data.detail
-      const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin }
+      const userInfo = {
+        "uid": responseData.uid,
+        "email": responseData.email,
+        "username": responseData.username,
+        "sex": responseData.sex,
+        "birth_date": responseData.birth_date,
+        "mbti": responseData.mbti,
+        "phone": responseData.phone,
+        "address": responseData.address,
+        "isAdmin": responseData.isAdmin
+      }
       const token = responseData.token;
       dispatch(login({ userInfo, token }));
 
@@ -60,7 +70,18 @@ export default function LoginModal({ show, handleClose }) {
     try {
       const response = await axios.post(`${endpoint}/frontstage/v1/login`, form);
       const responseData = response.data.detail
-      const userInfo = { "uid": responseData.uid, "email": responseData.email, "username": responseData.username, "sex": responseData.sex, "isAdmin": responseData.isAdmin }
+      const userInfo = {
+        "uid": responseData.uid,
+        "email": responseData.email,
+        "username": responseData.username,
+        "sex": responseData.sex,
+        "birth_date": responseData.birth_date,
+        "mbti": responseData.mbti,
+        "phone": responseData.phone,
+        "address": responseData.address,
+        "isAdmin": responseData.isAdmin
+      }
+      
       const token = responseData.token;
       dispatch(login({ userInfo, token }));
 
@@ -85,12 +106,12 @@ export default function LoginModal({ show, handleClose }) {
 
       if (response.data.detail === "Email is already registered") {
         setMessage("此 Email 已經註冊過了！");
+      } else if (response.data.detail === "Please check Email") {
+        setMessage("註冊碼已發出，請檢察您的電子郵件");
       } else {
         setMessage("請前往電子郵件，查看驗證信件");
-        handleClose();
       }
     } catch (err) {
-      console.log(err)
       setMessage("註冊失敗，請確認資料是否正確");
     } finally {
       setRegisterLoading(false); // 停止註冊按鈕的 loading 狀態

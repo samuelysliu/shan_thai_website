@@ -34,10 +34,19 @@ const Product_Grid = ({ initialProducts }) => {
     );
   }
 
+  // 立即購買的邏輯
+  const handleBuyNow = async (product) => {
+    if (await handleAddCart(product)) {
+      router.push(`/order/buy`)
+      return;
+    }
+  };
+
+  // 加入購物車的邏輯
   const handleAddCart = async (product) => {
     if (userInfo === null) {
       handleSuccess("請先登入會員");
-      return;
+      return false;
     }
 
     try {
@@ -50,7 +59,7 @@ const Product_Grid = ({ initialProducts }) => {
 
       if (checkNum >= productCheck.remain) {
         handleError(`超出庫存限制，剩餘數量僅有 ${product.remain}`);
-        return;
+        return false;
       }
 
       let cartObject = {
@@ -69,10 +78,11 @@ const Product_Grid = ({ initialProducts }) => {
 
       // 更新 Redux 中的購物車
       dispatch(addToCart(cartObject));
-      handleSuccess("加入成功！")
+      handleSuccess("加入成功！");
+      return true;
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
-      // 在這裡可以選擇設計錯誤處理，例如恢復 Redux 的購物車數據或顯示錯誤提示
+      return false;
     }
   };
 
@@ -105,7 +115,7 @@ const Product_Grid = ({ initialProducts }) => {
                   {product.title_cn}
                 </Card.Title>
                 <Card.Text>NT. {product.price}</Card.Text>
-                <Button variant="outline-dark" size="sm">購買</Button>
+                <Button variant="outline-dark" size="sm" onClick={() => handleBuyNow(product)}>購買</Button>
                 <Button variant="outline-dark" size="sm" onClick={() => handleAddCart(product)}>加入購物車</Button>
               </Card.Body>
             </Card>

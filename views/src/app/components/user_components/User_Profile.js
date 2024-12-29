@@ -7,8 +7,9 @@ import axios from "axios";
 import config from "../../config";
 import { useSelector, useDispatch } from "react-redux";
 import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
-import { logout } from "@/app/redux/slices/userSlice";
+import { logout, updateUserInfo } from "@/app/redux/slices/userSlice";
 import { clearCart } from '@/app/redux/slices/cartSlice';
+import Select from "react-select";
 
 import { showToast } from "@/app/redux/slices/toastSlice";
 
@@ -22,6 +23,10 @@ export default function UserProfile() {
     const [userData, setUserData] = useState({
         username: "",
         email: "",
+        birth_date: "",
+        mbti: "",
+        phone: "",
+        address: "",
     });
 
     const [loading, setLoading] = useState(true);
@@ -30,8 +35,31 @@ export default function UserProfile() {
     const [updatedData, setUpdatedData] = useState({
         username: "",
         email: "",
-        sex: ""
+        sex: "",
+        birth_date: "",
+        mbti: "",
+        phone: "",
+        address: "",
     });
+
+    const mbtiOptions = [
+        { value: "INTJ", label: "INTJ" },
+        { value: "INTP", label: "INTP" },
+        { value: "ENTJ", label: "ENTJ" },
+        { value: "ENTP", label: "ENTP" },
+        { value: "INFJ", label: "INFJ" },
+        { value: "INFP", label: "INFP" },
+        { value: "ENFJ", label: "ENFJ" },
+        { value: "ENFP", label: "ENFP" },
+        { value: "ISTJ", label: "ISTJ" },
+        { value: "ISFJ", label: "ISFJ" },
+        { value: "ESTJ", label: "ESTJ" },
+        { value: "ESFJ", label: "ESFJ" },
+        { value: "ISTP", label: "ISTP" },
+        { value: "ISFP", label: "ISFP" },
+        { value: "ESTP", label: "ESTP" },
+        { value: "ESFP", label: "ESFP" },
+    ];
 
     // 密碼相關狀態
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -47,6 +75,7 @@ export default function UserProfile() {
 
     // 獲取用戶資料
     const fetchUserData = async () => {
+        console.log(userInfo)
         setLoading(true);
         try {
             const response = await axios.get(`${endpoint}/frontstage/v1/profile`, {
@@ -74,6 +103,16 @@ export default function UserProfile() {
             );
             setUserData(response.data);
             setEditing(false);
+
+            const userInfo = {
+                "username": response.data.username,
+                "sex": response.data.sex,
+                "birth_date": response.data.birth_date,
+                "mbti": response.data.mbti,
+                "phone": response.data.phone,
+                "address": response.data.address,
+            }
+            dispatch(updateUserInfo({ userInfo }));
         } catch (error) {
             console.error("無法更新用戶資料：", error);
         } finally {
@@ -181,12 +220,79 @@ export default function UserProfile() {
                                                 value={updatedData.sex}
                                                 onChange={handleInputChange}
                                             >
+                                                <option value=""></option>
                                                 <option value="男">男</option>
                                                 <option value="女">女</option>
                                                 <option value="其他">其他</option>
                                             </Form.Select>
                                         ) : (
                                             userData.sex
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>出生年月日</strong></td>
+                                    <td>
+                                        {userData.birth_date ? (
+                                            userData.birth_date
+                                        ) : (
+                                            <Form.Control
+                                                type="date"
+                                                name="birth_date"
+                                                value={updatedData.birth_date || ""}
+                                                onChange={handleInputChange}
+                                                disabled={!!userData.birth_date} // 一旦填寫完成後禁用
+                                            />
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>MBTI</strong></td>
+                                    <td>
+                                        {editing ? (
+                                            <Select
+                                                options={mbtiOptions}
+                                                value={mbtiOptions.find(option => option.value === updatedData.mbti || "")}
+                                                onChange={(selectedOption) =>
+                                                    setUpdatedData({ ...updatedData, mbti: selectedOption.value })
+                                                }
+                                                placeholder="選擇 MBTI"
+                                                isSearchable
+                                            />
+                                        ) : (
+                                            userData.mbti
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>聯絡電話</strong></td>
+                                    <td>
+                                        {editing ? (
+                                            <Form.Control
+                                                type="text"
+                                                name="phone"
+                                                value={updatedData.phone}
+                                                onChange={handleInputChange}
+                                                placeholder="輸入聯絡電話"
+                                            />
+                                        ) : (
+                                            userData.phone
+                                        )}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>常用地址</strong></td>
+                                    <td>
+                                        {editing ? (
+                                            <Form.Control
+                                                as="textarea"
+                                                name="address"
+                                                value={updatedData.address}
+                                                onChange={handleInputChange}
+                                                placeholder="輸入常用地址"
+                                            />
+                                        ) : (
+                                            userData.address
                                         )}
                                     </td>
                                 </tr>
