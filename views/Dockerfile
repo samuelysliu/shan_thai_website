@@ -1,26 +1,45 @@
-# 使用 Node.js 作為基礎鏡像
-FROM node:18-alpine
+# 使用 Node.js 官方 LTS 版本作為基礎映像
+FROM node:18-alpine AS builder
+
+# 添加系統依賴
+RUN apk add --no-cache python3 make g++ bash
 
 # 設置工作目錄
-WORKDIR /views
+WORKDIR /app
 
-# 複製依賴文件
-COPY package.json package-lock.json ./
+# 複製 package.json 和 yarn.lock
+COPY package.json yarn.lock ./
 
-# 安裝生產依賴
-RUN npm install --production
+# 安裝依賴
+RUN yarn install --frozen-lockfile
 
-# 複製應用程式代碼到容器
+# 複製應用代碼
 COPY . .
 
 # 構建 Next.js 應用
-RUN npm run build
+RUN yarn build
 
-# 移除開發依賴（減小鏡像大小）
-RUN npm prune --production
+# -----
+# 生產環境
+# -----
+FROM node:18-alpine AS runner
 
-# 暴露應用埠
+# 設置工作目錄
+WORKDIR /app
+
+
+# 複製必要的文件和構建結果
+COPY package.json yarn.lock ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/next.config.mjs ./
+COPY --from=builder /app/node_modules ./node_modules
+
+# 安裝僅生產依賴項
+RUN yarn install --production --frozen-lockfile
+
+# 暴露端口
 EXPOSE 3000
 
-# 運行應用
-CMD ["node", "server.js"]
+# 啟動應用
+CMD ["yarn", "start"]
