@@ -2,7 +2,7 @@
 FROM node:18-alpine
 
 # 設置工作目錄
-WORKDIR /app
+WORKDIR /views
 
 # 複製依賴文件
 COPY package.json package-lock.json ./
@@ -23,4 +23,4 @@ RUN npm prune --production
 EXPOSE 3000
 
 # 運行應用
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
