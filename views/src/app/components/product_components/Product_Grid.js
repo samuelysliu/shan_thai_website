@@ -107,7 +107,7 @@ const Product_Grid = ({ initialProducts }) => {
                 src={product.productImageUrl}
                 alt={product.title_cn}
                 onClick={() => router.push(`/product/${product.pid}`)}
-                style={{ cursor: "pointer" }} />
+                style={{ cursor: "pointer", height: "200px" }} />
               <Card.Body>
                 <Card.Title
                   onClick={() => router.push(`/product/${product.pid}`)}

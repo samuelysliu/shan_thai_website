@@ -50,7 +50,7 @@ const HomePageClient = ({ products, productTags }) => {
                 {/* Menu */}
                 <Product_Menu productTags={productTags} onTagSelect={handleTagSelect} />
                 {/* Product Grid */}
-                <Product_Grid initialProducts={filteredProducts} />
+                <Product_Grid initialProducts={paginatedProducts} />
                 <Pagination_Component
                     totalProducts={totalProducts}
                     productsPerPage={productsPerPage}
