@@ -135,9 +135,9 @@ const OrderHistory = () => {
                     <strong>訂單狀態:</strong>{" "}
                     <Badge
                       bg={
-                        order.status === "已完成"
+                        order.status === "已出貨"
                           ? "success"
-                          : order.status === "送貨中"
+                          : order.status === "待確認"
                             ? "warning"
                             : order.status === "待出貨"
                               ? "primary"
