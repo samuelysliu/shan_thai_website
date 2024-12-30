@@ -19,7 +19,8 @@ export default function LoginModal({ show, handleClose }) {
   const [loading, setLoading] = useState(false); // 新增 loading 狀態
   const [registerLoading, setRegisterLoading] = useState(false); // 註冊按鈕的 loading 狀態
 
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  // const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const googleClientId = 979016396209-meutophgongc1r1rkp8kh6a5jq0l0gqc.apps.googleusercontent.com;
 
   // 處理Google 登入、註冊
   const handleGoogleSuccess = async (credentialResponse) => {
