@@ -27,6 +27,10 @@ FROM node:18-alpine AS runner
 # 設置工作目錄
 WORKDIR /app
 
+ENV NEXT_PUBLIC_APP_ENV=
+ENV NEXT_PUBLIC_GA_ID=
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+
 
 # 複製必要的文件和構建結果
 COPY package.json yarn.lock ./
