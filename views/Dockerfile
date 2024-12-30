@@ -27,9 +27,9 @@ FROM node:18-alpine AS runner
 # 設置工作目錄
 WORKDIR /app
 
-ENV NEXT_PUBLIC_APP_ENV=
-ENV NEXT_PUBLIC_GA_ID=
-ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=
+ENV NEXT_PUBLIC_APP_ENV=production
+ENV NEXT_PUBLIC_GA_ID=G-SE5TV10X0K
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=979016396209-meutophgongc1r1rkp8kh6a5jq0l0gqc.apps.googleusercontent.com
 
 
 # 複製必要的文件和構建結果
