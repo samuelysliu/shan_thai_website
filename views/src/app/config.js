@@ -1,5 +1,5 @@
 const api_url = {
-  production: "",
+  production: "https://yielding-dove-samuelysliu-ce6a81f4.koyeb.app",
   uat: "https://classical-trish-samuelysliu-dbbd4671.koyeb.app",
   local: "http://localhost:8000"
 }
