@@ -2,15 +2,8 @@
 import React from "react";
 import HomePageClient from "./components/Homepage";
 import ClientProvider from "./components/Client_Provider";
-import getConfig from "./fetchConfig";
+import config from "./config";
 import Head from "next/head";
-
-// 動態獲取 API 基礎 URL 的邏輯
-async function getApiBaseUrl(searchParams) {
-  const hostname = searchParams.hostname || "localhost";
-  const config = getConfig(hostname);
-  return config.apiBaseUrl;
-}
 
 // 提前讀取產品清單，以利SEO
 const fetchProducts = async (endpoint) => {
@@ -42,8 +35,8 @@ async function fetchProductTags(endpoint) {
 }
 
 
-const HomePage = async ({ searchParams  }) => {
-  const endpoint = await getApiBaseUrl(searchParams ); // 根據網域動態獲取 API URL
+const HomePage = async () => {
+  const endpoint = config.apiBaseUrl;
   const products = await fetchProducts(endpoint); // 伺服器端獲取產品數據
   const productTags = await fetchProductTags(endpoint); // 伺服器端獲取產品標籤數據
 

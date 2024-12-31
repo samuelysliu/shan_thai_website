@@ -4,24 +4,22 @@ const api_url = {
   local: "http://localhost:8000"
 }
 
-let env = "local";
-let gaId = "G-7362PCKYH6";
-let googleClientId = "979016396209-tiqj9l71t819ueh8f4blrsoklr5daije.apps.googleusercontent.com";
-if (typeof window !== "undefined") {
-  if (window.location.hostname === "shan-thai-website.vercel.app") {
-    env = "uat";
-    gaId = "G-7362PCKYH6";
-    googleClientId = "979016396209-tiqj9l71t819ueh8f4blrsoklr5daije.apps.googleusercontent.com";
-  } else if (window.location.hostname === "www.shan-thai-team.com") {
-    env = "production";
-    gaId = "G-SE5TV10X0K";
-    googleClientId = "979016396209-meutophgongc1r1kpskh6a5jq0l0gqc.apps.googleusercontent.com";
-  }
+const gaId = {
+  production: "G-SE5TV10X0K",
+  uat: "G-7362PCKYH6",
+  local: "G-7362PCKYH6"
 }
+
+const googleClientId = {
+  production: "979016396209-meutophgongc1r1kpskh6a5jq0l0gqc.apps.googleusercontent.com",
+  uat: "979016396209-tiqj9l71t819ueh8f4blrsoklr5daije.apps.googleusercontent.com",
+  local: "979016396209-tiqj9l71t819ueh8f4blrsoklr5daije.apps.googleusercontent.com"
+}
+
 const config = {
-  apiBaseUrl: api_url[env],
-  gaId: gaId,
-  googleClientId: googleClientId
+  apiBaseUrl: api_url[process.env.NEXT_PUBLIC_ENV],
+  gaId: gaId[process.env.NEXT_PUBLIC_ENV],
+  googleClientId: googleClientId[process.env.NEXT_PUBLIC_ENV]
 };
 
 export default config;
