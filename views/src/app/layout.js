@@ -3,6 +3,7 @@ import "./globals.css";
 import "./backstage.css"
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import config from "./config";
 
 
 const geistSans = localFont({
@@ -16,7 +17,7 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-const gaId = process.env.NEXT_PUBLIC_GA_ID;
+const gaId = config.gaId;
 
 export const metadata = {
   title: "善泰團隊 - 南傳聖物請供",
@@ -38,7 +39,7 @@ export default function RootLayout({ children }) {
           `}
         </script>
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}` } >
+      <body className={`${geistSans.variable} ${geistMono.variable}`} >
         {children}
       </body>
     </html>
