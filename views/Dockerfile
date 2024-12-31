@@ -28,7 +28,7 @@ FROM node:18-alpine AS runner
 WORKDIR /app
 
 ARG NEXT_PUBLIC_ENV=production
-ENV NEXT_PUBLIC_ENV=$NEXT_PUBLIC_ENV
+ENV NEXT_PUBLIC_ENV=production
 
 # 複製必要的文件和構建結果
 COPY package.json yarn.lock ./

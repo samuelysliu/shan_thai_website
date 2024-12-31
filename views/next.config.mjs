@@ -4,7 +4,7 @@ const nextConfig = {
 
     // 將環境變數暴露給應用程序
     env: {
-        NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV || "production", // 默認值為 "local"
+        NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV || "production", // 默認值為 "production"
     },
 };
 
