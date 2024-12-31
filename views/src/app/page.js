@@ -2,13 +2,18 @@
 import React from "react";
 import HomePageClient from "./components/Homepage";
 import ClientProvider from "./components/Client_Provider";
-import config from './config';
+import getConfig from "./fetchConfig";
 import Head from "next/head";
 
+// 動態獲取 API 基礎 URL 的邏輯
+async function getApiBaseUrl(searchParams) {
+  const hostname = searchParams.hostname || "localhost";
+  const config = getConfig(hostname);
+  return config.apiBaseUrl;
+}
 
 // 提前讀取產品清單，以利SEO
-const fetchProducts = async () => {
-  const endpoint = config.apiBaseUrl;
+const fetchProducts = async (endpoint) => {
   try {
     const response = await fetch(`${endpoint}/frontstage/v1/product`, { cache: 'no-store' });
     if (!response.ok) {
@@ -22,8 +27,7 @@ const fetchProducts = async () => {
 }
 
 // 伺服器端獲取產品標籤列表
-async function fetchProductTags() {
-  const endpoint = config.apiBaseUrl;
+async function fetchProductTags(endpoint) {
   let productTags = [];
   try {
     const response = await fetch(endpoint + "/frontstage/v1/product_tag", { cache: 'no-store' });
@@ -38,9 +42,10 @@ async function fetchProductTags() {
 }
 
 
-const HomePage = async () => {
-  const products = await fetchProducts(); // 伺服器端獲取產品數據
-  const productTags = await fetchProductTags(); // 伺服器端獲取產品標籤數據
+const HomePage = async ({ searchParams  }) => {
+  const endpoint = await getApiBaseUrl(searchParams ); // 根據網域動態獲取 API URL
+  const products = await fetchProducts(endpoint); // 伺服器端獲取產品數據
+  const productTags = await fetchProductTags(endpoint); // 伺服器端獲取產品標籤數據
 
   return (
     <>
