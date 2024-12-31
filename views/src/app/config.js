@@ -9,13 +9,13 @@ let gaId = "";
 let googleClientId = "";
 
 if (typeof window !== "undefined") {
-  if (window.location.hostname === "https://shan-thai-website.vercel.app") {
+  if (window.location.hostname === "shan-thai-website.vercel.app") {
     hostname = "uat";
     gaId = "G-7362PCKYH6";
     googleClientId = "979016396209-tiqj9l71t819ueh8f4blrsoklr5daije.apps.googleusercontent.com";
   }
 
-  else if (window.location.hostname === "https://www.shan-thai-team.com") {
+  else if (window.location.hostname === "www.shan-thai-team.com") {
     hostname = "production";
     gaId = "G-SE5TV10X0K";
     googleClientId = "979016396209-meutophgongc1r1rkp8kh6a5jq0l0gqc.apps.googleusercontent.com";
