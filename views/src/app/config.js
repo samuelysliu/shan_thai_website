@@ -11,7 +11,7 @@ const gaId = {
 }
 
 const googleClientId = {
-  production: "979016396209-meutophgongc1r1kpskh6a5jq0l0gqc.apps.googleusercontent.com",
+  production: "979016396209-meutophgongc1r1rkp8kh6a5jq0l0gqc.apps.googleusercontent.com",
   uat: "979016396209-tiqj9l71t819ueh8f4blrsoklr5daije.apps.googleusercontent.com",
   local: "979016396209-tiqj9l71t819ueh8f4blrsoklr5daije.apps.googleusercontent.com"
 }
@@ -21,5 +21,5 @@ const config = {
   gaId: gaId[process.env.NEXT_PUBLIC_ENV],
   googleClientId: googleClientId[process.env.NEXT_PUBLIC_ENV]
 };
-console.log(process.env.NEXT_PUBLIC_ENV)
+
 export default config;
