@@ -7,6 +7,7 @@ controls/frontstage/__pycache__
 modules/__pycache__
 migrations/__pycache__
 migrations/versions/local
+migrations/versions/__pycache__
 
 # frontend
 /views/node_modules
