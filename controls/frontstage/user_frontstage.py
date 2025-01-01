@@ -10,7 +10,6 @@ import jwt
 from datetime import datetime, timedelta, date
 from controls.tools import (
     verify_token,
-    userAuthorizationCheck,
     send_email,
     generate_verification_code,
 )
@@ -158,6 +157,7 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
             email=user.email,
             username=user.username,
             password=hashed_password,
+            referral_code=generate_verification_code(8),
             identity="unauth",
         )
 
@@ -165,7 +165,7 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
             raise HTTPException(status_code=500, detail="Failed to create user")
         user_object = new_user
 
-    verification_code = generate_verification_code()
+    verification_code = generate_verification_code(6)
 
     # 將驗證碼存入資料庫
     verification_entry = user_verify_db.create_verification_code(
@@ -394,14 +394,15 @@ async def get_user_profile(
 ):
     existing_user = user_db.get_user_by_uid(db, token_data["uid"])
     return {
-        "uid": existing_user.uid,
-        "email": existing_user.email,
-        "username": existing_user.username,
-        "sex": existing_user.sex,
-        "birth_date": existing_user.birth_date,
-        "mbti": existing_user.mbti,
-        "phone": existing_user.phone,
-        "address": existing_user.address,
+        "uid": existing_user["uid"],
+        "email": existing_user["email"],
+        "username": existing_user["username"],
+        "sex": existing_user["sex"],
+        "birth_date": existing_user["birth_date"],
+        "mbti": existing_user["mbti"],
+        "phone": existing_user["phone"],
+        "address": existing_user["address"],
+        "token": existing_user["token"],
     }
 
 
@@ -522,6 +523,7 @@ async def google_login(user: GoogleUserBase, db: Session = Depends(get_db)):
                 email=email,
                 username=name,
                 password="google_user",  # 第三方登入不需要密碼
+                referral_code=generate_verification_code(8),
                 identity="user",
             )
             if not new_user:

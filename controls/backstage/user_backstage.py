@@ -41,7 +41,7 @@ class UserUpdate(BaseModel):
 # 獲取所有用戶
 @router.get("/users")
 async def get_users(db: Session = Depends(get_db)):
-    users = user_db.get_all_users(db)
+    users = user_db.get_all_users_with_tokens(db)
     if not users:
         raise HTTPException(status_code=404, detail="No users found")
     return users

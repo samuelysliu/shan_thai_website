@@ -106,6 +106,7 @@ class User(Base):
     mbti = Column(String(4), nullable=True)  # 新增 MBTI 欄位
     phone = Column(String(20), nullable=True)  # 新增聯絡電話欄位
     address = Column(Text, nullable=True)  # 新增常用地址欄位
+    referral_code = Column(String(20), unique=True, nullable=True)  # 推薦碼欄位
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
@@ -113,6 +114,14 @@ class User(Base):
     carts = relationship("Cart", back_populates="users")
     orders = relationship("Order", back_populates="users")
     user_verifications = relationship("UserVerify", back_populates="user")  # 新增與 UserVerify 的關聯
+    shan_thai_tokens = relationship("ShanThaiToken", back_populates="user", cascade="all, delete-orphan")
+    
+    referrals_as_referrer = relationship(
+        "UserReferral", foreign_keys="[UserReferral.referrer_uid]", back_populates="referrer", cascade="all, delete-orphan"
+    )
+    referrals_as_referred = relationship(
+        "UserReferral", foreign_keys="[UserReferral.referred_uid]", back_populates="referred", cascade="all, delete-orphan"
+    )
 
 
 class UserVerify(Base):
@@ -125,6 +134,33 @@ class UserVerify(Base):
 
     # 建立與 User 的反向關聯
     user = relationship("User", back_populates="user_verifications")
+    
+# 用戶關聯表
+class UserReferral(Base):
+    __tablename__ = "user_referrals"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    referrer_uid = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
+    referred_uid = Column(Integer, ForeignKey("users.uid", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=func.now())
+
+    # 關聯到 User
+    referrer = relationship("User", foreign_keys=[referrer_uid], back_populates="referrals_as_referrer")
+    referred = relationship("User", foreign_keys=[referred_uid], back_populates="referrals_as_referred")
+
+    
+
+class ShanThaiToken(Base):
+    __tablename__ = "shan_thai_token"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)  # 主鍵
+    uid = Column(Integer, ForeignKey("users.uid"), nullable=False)  # 關聯用戶表
+    balance = Column(Integer, default=0, nullable=False)  # 用戶紅利點數餘額
+    created_at = Column(DateTime, default=func.now())  # 建立時間
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())  # 更新時間
+
+    # 建立與 User 的反向關聯
+    user = relationship("User", back_populates="shan_thai_tokens")
 
 class Order(Base):
     __tablename__ = "orders"

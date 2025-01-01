@@ -38,5 +38,6 @@ async def get_products_by_tag(ptid: int, db: Session = Depends(get_db)):
 async def get_product_tag(db: Session = Depends(get_db)):
     product_tag = product_db.get_all_product_tags(db)
     if not product_tag:
-        raise HTTPException(status_code=404, detail="Product tag not found")
+        print("Product tag not found")
+        return []
     return product_tag

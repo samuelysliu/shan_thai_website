@@ -95,5 +95,5 @@ def send_email(to_email: str, subject: str, html_content: str):
         raise HTTPException(status_code=500, detail=f"Email sending failed: {str(e)}")
 
 # 生成隨機驗證碼
-def generate_verification_code(length=6):
+def generate_verification_code(length):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))

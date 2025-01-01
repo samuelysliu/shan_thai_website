@@ -21,5 +21,4 @@ const config = {
   gaId: gaId[process.env.NEXT_PUBLIC_ENV],
   googleClientId: googleClientId[process.env.NEXT_PUBLIC_ENV]
 };
-
 export default config;

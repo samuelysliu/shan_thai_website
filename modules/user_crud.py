@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from modules.dbInit import User
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -13,9 +13,34 @@ def user_exists(db: Session, email: str) -> bool:
 
 
 # 獲取所有用戶
-def get_all_users(db: Session):
+def get_all_users_with_tokens(db: Session):
     try:
-        return db.query(User).all()
+        users = db.query(User).options(joinedload(User.shan_thai_tokens)).all()
+        result = []
+        for user in users:
+            token_balance = (
+                user.shan_thai_tokens[0].balance if user.shan_thai_tokens else 0
+            )
+            result.append(
+                {
+                    "uid": user.uid,
+                    "email": user.email,
+                    "username": user.username,
+                    "sex": user.sex,
+                    "star": user.star,
+                    "identity": user.identity,
+                    "note": user.note,
+                    "birth_date": user.birth_date,
+                    "mbti": user.mbti,
+                    "phone": user.phone,
+                    "address": user.address,
+                    "referral_code": user.referral_code,
+                    "created_at": user.created_at,
+                    "updated_at": user.updated_at,
+                    "token": token_balance,
+                }
+            )
+        return result
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return None
@@ -36,7 +61,35 @@ def get_user_list(db: Session):
 # 根據 UID 獲取用戶
 def get_user_by_uid(db: Session, uid: int):
     try:
-        return db.query(User).filter(User.uid == uid).first()
+        # 查詢 User 並加入 ShanThaiToken 關聯
+        user = (
+            db.query(User)
+            .options(joinedload(User.shan_thai_tokens))  # 加載關聯數據
+            .filter(User.uid == uid)
+            .first()
+        )
+
+        if user:
+            # 提取紅利餘額（假設每個用戶最多有一條紅利記錄）
+            token_balance = (
+                user.shan_thai_tokens[0].balance if user.shan_thai_tokens else 0
+            )
+            return {
+                "uid": user.uid,
+                "email": user.email,
+                "username": user.username,
+                "sex": user.sex,
+                "star": user.star,
+                "identity": user.identity,
+                "note": user.note,
+                "birth_date": user.birth_date,
+                "mbti": user.mbti,
+                "phone": user.phone,
+                "address": user.address,
+                "referral_code": user.referral_code,
+                "token": token_balance,
+            }
+        return None
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return None
@@ -58,13 +111,14 @@ def create_user(
     username: str,
     password: str,
     identity: str,
+    referral_code: str,
     sex: str = None,
     star: int = 0,
     note: str = None,
-    birth_date = None,
-    mbti = None,
-    phone = None,
-    address = None,
+    birth_date=None,
+    mbti=None,
+    phone=None,
+    address=None,
 ):
     try:
         new_user = User(
@@ -78,7 +132,8 @@ def create_user(
             birth_date=birth_date,
             mbti=mbti,
             phone=phone,
-            address=address
+            address=address,
+            referral_code=referral_code
         )
         db.add(new_user)
         db.commit()
@@ -95,7 +150,17 @@ def update_user(db: Session, user_id: int, updates: dict):
         user = db.query(User).filter(User.uid == user_id).first()
         if user:
             for key, value in updates.items():
-                if key in {"username", "sex", "star", "note", "identity", "birth_date", "mbti", "phone", "address"}:
+                if key in {
+                    "username",
+                    "sex",
+                    "star",
+                    "note",
+                    "identity",
+                    "birth_date",
+                    "mbti",
+                    "phone",
+                    "address",
+                }:
                     setattr(user, key, value)
             db.commit()
             db.refresh(user)

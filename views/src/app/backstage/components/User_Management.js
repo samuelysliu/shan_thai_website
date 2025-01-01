@@ -34,7 +34,8 @@ export default function UserManagement() {
         birth_date: "",
         mbti: "",
         phone: "",
-        address: ""
+        address: "",
+        token: 0,
     });
 
     const mbtiOptions = [
@@ -99,13 +100,30 @@ export default function UserManagement() {
     const updateUser = async () => {
         setLoading(true);
         try {
-            const response = await axios.patch(`${endpoint}/backstage/v1/users/${currentUser.uid}`, currentUser, {
+            const userResponse = await axios.patch(`${endpoint}/backstage/v1/users/${currentUser.uid}`, currentUser, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
+
+            // 更新用戶 token
+            const tokenResponse = await axios.post(
+                `${endpoint}/backstage/v1/tokens/${currentUser.uid}`,
+                { balance: currentUser.token },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                }
+            );
+
+
             setUsers((prevUsers) =>
-                prevUsers.map((user) => (user.uid === response.data.uid ? response.data : user))
+                prevUsers.map((user) =>
+                    user.uid === userResponse.data.uid
+                        ? { ...userResponse.data, token: tokenResponse.data.balance }
+                        : user
+                )
             ); // 更新成功後更新列表
             handleCloseModal();
         } catch (error) {
@@ -157,7 +175,8 @@ export default function UserManagement() {
                 birth_date: "",
                 mbti: "",
                 phone: "",
-                address: ""
+                address: "",
+                token: 0
             });
         }
         setShowModal(true);
@@ -176,7 +195,8 @@ export default function UserManagement() {
             birth_date: "",
             mbti: "",
             phone: "",
-            address: ""
+            address: "",
+            token: 0
         });
     };
 
@@ -224,6 +244,7 @@ export default function UserManagement() {
                                     <th>生日</th>
                                     <th>MBTI</th>
                                     <th>電話</th>
+                                    <th>善泰幣</th>
                                     <th>身份</th>
                                     <th>操作</th>
                                 </tr>
@@ -239,6 +260,7 @@ export default function UserManagement() {
                                         <td>{user.birth_date}</td>
                                         <td>{user.mbti}</td>
                                         <td>{user.phone}</td>
+                                        <td>{user.token}</td>
                                         <td>{user.identity || "未指定"}</td>
                                         <td>
                                             <Button
@@ -351,6 +373,14 @@ export default function UserManagement() {
                                 name="address"
                                 value={currentUser.address}
                                 onChange={(e) => setCurrentUser({ ...currentUser, address: e.target.value })}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>紅利點數</Form.Label>
+                            <Form.Control
+                                type="number"
+                                value={currentUser.token}
+                                onChange={(e) => setCurrentUser({ ...currentUser, token: e.target.value })}
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">

@@ -27,6 +27,7 @@ export default function UserProfile() {
         mbti: "",
         phone: "",
         address: "",
+        token: 0,
     });
 
     const [loading, setLoading] = useState(true);
@@ -111,6 +112,7 @@ export default function UserProfile() {
                 "mbti": response.data.mbti,
                 "phone": response.data.phone,
                 "address": response.data.address,
+
             }
             dispatch(updateUserInfo({ userInfo }));
         } catch (error) {
@@ -296,6 +298,28 @@ export default function UserProfile() {
                                         )}
                                     </td>
                                 </tr>
+                                {!editing ?
+                                    <tr>
+                                        <td><strong>
+                                            <img
+                                                src="shan_thai_token.png"
+                                                alt="善泰幣"
+                                                style={{
+                                                    width: "20px",
+                                                    height: "20px",
+                                                    borderRadius: "50%",
+                                                    marginRight: "8px",
+                                                    verticalAlign: "middle"
+                                                }}
+                                            />
+                                            善泰幣
+                                        </strong></td>
+                                        <td>
+                                            {userData.token}
+                                        </td>
+                                    </tr>
+                                    : ""}
+
                             </tbody>
                         </Table>
                     )}
