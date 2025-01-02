@@ -165,7 +165,7 @@ class ShanThaiToken(Base):
 class Order(Base):
     __tablename__ = "orders"
     
-    oid = Column(Integer, primary_key=True, autoincrement=True)  # 訂單 ID
+    oid = Column(String(10), primary_key=True)  # 訂單 ID
     uid = Column(Integer, ForeignKey("users.uid"), nullable=False)  # 用戶 ID
     totalAmount = Column(Integer, default=0)  # 訂單總金額
     discountPrice = Column(Integer, default=0)  # 訂單優惠價
@@ -184,12 +184,13 @@ class Order(Base):
     # 關聯其他資料庫
     users = relationship("User", back_populates="orders")
     order_details = relationship("OrderDetail", back_populates="order", cascade="all, delete-orphan")  # 關聯訂單明細表
-
+    payment_callbacks = relationship("PaymentCallback", back_populates="order", cascade="all, delete-orphan")
+    
 class OrderDetail(Base):
     __tablename__ = "order_details"
     
     odid = Column(Integer, primary_key=True, autoincrement=True)  # 訂單明細 ID
-    oid = Column(Integer, ForeignKey("orders.oid"), nullable=False)  # 訂單 ID
+    oid = Column(String(10), ForeignKey("orders.oid"), nullable=False)  # 訂單 ID
     pid = Column(Integer, ForeignKey("product.pid"), nullable=False)  # 商品 ID
     productNumber = Column(Integer, default=1)  # 商品數量
     price = Column(Integer, nullable=False)  # 單價（記錄當前價格，避免後續商品價格變更影響訂單）
@@ -199,6 +200,31 @@ class OrderDetail(Base):
     order = relationship("Order", back_populates="order_details")  # 關聯訂單主表
     product = relationship("Product", back_populates="order_details")  # 關聯商品表
 
+class PaymentCallback(Base):
+    __tablename__ = "payment_callbacks"
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)  # 主鍵，自增 ID
+    merchant_id = Column(String(50), nullable=False)  # 特店編號
+    merchant_trade_no = Column(String(10), ForeignKey("orders.oid", ondelete="CASCADE"), nullable=False)  # 特店交易編號
+    store_id = Column(String(50), nullable=True)  # 特店旗下店舖代號
+    rtn_code = Column(Integer, nullable=False)  # 交易狀態
+    rtn_msg = Column(String(255), nullable=False)  # 交易訊息
+    trade_no = Column(String(50), nullable=False)  # 綠界交易編號
+    trade_amt = Column(Integer, nullable=False)  # 交易金額
+    payment_date = Column(DateTime, nullable=True)  # 付款時間
+    payment_type = Column(String(50), nullable=False)  # 付款方式
+    payment_type_charge_fee = Column(Integer, default=0)  # 交易手續費
+    platform_id = Column(String(50), nullable=True)  # 特約合作平台商代號
+    trade_date = Column(DateTime, nullable=False)  # 訂單成立時間
+    simulate_paid = Column(Integer, default=1)  # 是否模擬付款
+    check_mac_value = Column(String(255), nullable=False)  # 檢查碼
+    bank_code = Column(String(50), nullable=True)  # 繳費銀行代碼
+    v_account = Column(String(50), nullable=True)  # 繳費虛擬帳號
+    expire_date = Column(DateTime, nullable=True)  # 繳費期限
+    created_at = Column(DateTime, default=func.now())  # 記錄建立時間
+    
+    order = relationship("Order", back_populates="payment_callbacks")
+    
 
 class Term(Base):
     __tablename__ = "terms"

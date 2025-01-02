@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Form
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
@@ -6,9 +6,17 @@ import modules.dbConnect as db_connect
 import modules.order_crud as order_db
 import modules.product_crud as product_db
 import modules.cart_crud as cart_db
+import modules.payment_callback_curd as payment_callback_db
 from controls.tools import format_to_utc8 as timeformat
-from controls.tools import verify_token, userAuthorizationCheck, get_now_time
+from controls.tools import (
+    verify_token,
+    userAuthorizationCheck,
+    get_now_time,
+    generate_verification_code,
+    send_email,
+)
 from controls.cash_flow import create_cash_flow_order
+from datetime import datetime
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -37,37 +45,18 @@ class OrderBase(BaseModel):
 
 
 class OrderResponse(OrderBase):
-    oid: int
+    oid: str
+    created_at: datetime
 
     class Config:
         from_attributes = True
+
 
 # **更新訂單用的 Model**
 class OrderUpdate(BaseModel):
     paymentMethod: str | None = None
     status: str | None = None
-    
 
-class CashFlowOrder(BaseModel):
-    MerchantID: str    #特店編號
-    MerchantTradeNo: str  #特店交易編號
-    StoreID: str   #特店旗下店舖代號
-    RtnCode: int  #交易狀態，若回傳值為1時，為付款成功，若RtnCode為”10300066″ 時，代表交易付款結果待確認中。ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
-    RtnMsg: str #交易訊息
-    TradeNo:str    #綠界的交易編號
-    TradeAmt: int   #交易金額
-    PaymentDate: str = None    #付款時間，格式為yyyy/MM/dd HH:mm:ss
-    PaymentType: str #特店選擇的付款方式
-    PaymentTypeChargeFee: int = 0   #交易手續費金額
-    PlatformID: str = None #特約合作平台商代號
-    TradeDate: str  #訂單成立時間，格式為yyyy/MM/dd HH:mm:ss
-    PlatformID: str = None #特約合作平台商代號
-    SimulatePaid: int = 1 #是否為模擬付款，0：代表此交易非模擬付款。1：代表此交易為模擬付款。
-    CheckMacValue: str #檢查碼
-    BankCode: str = None    #繳費銀行代碼
-    vAccount: str = None    #繳費虛擬帳號
-    ExpireDate:str = None   #繳費期限，格式為yyyy/MM/dd
-    
 
 # **檢視用戶自己的歷史訂單**
 @router.get("/orders")
@@ -139,11 +128,11 @@ async def create_user_order(
                 status_code=500,
                 detail=f"Failed to update product remain for Product ID {detail['pid']}",
             )
-    order_status = "待付款"
 
     # 創建訂單
     new_order = order_db.create_order(
         db,
+        oid=generate_verification_code(10),
         uid=order.uid,
         totalAmount=total_amount,  # 使用後端計算的總金額
         discountPrice=0,
@@ -155,20 +144,26 @@ async def create_user_order(
         transportationMethod=order.transportationMethod,
         paymentMethod=order.paymentMethod,
         orderNote=order.orderNote,
-        status=order_status,
+        status="待確認",
         order_details=order_details,  # 使用後端生成的明細
     )
-    
-    if order.paymentMethod == "匯款":
-        create_cash_flow_order("ATM",)
-    else:
-        order_status = "待出貨"
-    
 
     if not new_order:
         print("Error Message: Failed to create order")
-        return []
-
+        raise HTTPException(
+            status_code=400,
+            detail=f"Somethins wrong, please try again later.",
+        )
+    """
+    if order.paymentMethod == "信用卡":
+        create_cash_flow_order(
+            "Credit", new_order.oid, get_now_time("third party"), total_amount
+        )
+    elif order.paymentMethod == "匯款":
+        create_cash_flow_order(
+            "Credit", new_order.oid, get_now_time("third party"), total_amount
+        )
+    """
     # 清空購物車中對應的項目
     selected_cart_items = cart_db.get_carts_by_user(db, order.uid)
     for cart_item in selected_cart_items:
@@ -186,50 +181,50 @@ async def cancel_user_order(
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
-    #try:
-        # 1. 檢查該訂單是否屬於當前用戶
-        order = order_db.get_order_by_oid(db, oid)
-        if not order or order["uid"] != token_data.get("uid"):
+    # try:
+    # 1. 檢查該訂單是否屬於當前用戶
+    order = order_db.get_order_by_oid(db, oid)
+    if not order or order["uid"] != token_data.get("uid"):
+        raise HTTPException(status_code=403, detail="Order not found or access denied")
+    # 檢查訂單狀態是否已取消，避免重複操作
+    if order["status"] == "已取消":
+        raise HTTPException(status_code=400, detail="Order is already cancelled")
+
+    # 2. 將庫存數量加回
+    order_details = order_db.get_order_details_by_oid(db, oid)
+    for order_detail in order_details:
+        product = product_db.get_product_by_id(db, order_detail.pid)
+        if not product:
             raise HTTPException(
-                status_code=403, detail="Order not found or access denied"
+                status_code=404,
+                detail=f"Product ID {order_detail.pid} not found for restocking",
             )
-        # 檢查訂單狀態是否已取消，避免重複操作
-        if order["status"] == "已取消":
-            raise HTTPException(status_code=400, detail="Order is already cancelled")
 
-        # 2. 將庫存數量加回
-        order_details = order_db.get_order_details_by_oid(db, oid)
-        for order_detail in order_details:
-            product = product_db.get_product_by_id(db, order_detail.pid)
-            if not product:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Product ID {order_detail.pid} not found for restocking",
-                )
-
-            # 更新庫存
-            update_data = {"remain": product.remain + order_detail.productNumber}
-            product_updated = product_db.update_partial_product(
-                db, order_detail.pid, update_data
+        # 更新庫存
+        update_data = {"remain": product.remain + order_detail.productNumber}
+        product_updated = product_db.update_partial_product(
+            db, order_detail.pid, update_data
+        )
+        if not product_updated:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to update product remain for Product ID {order_detail.pid}",
             )
-            if not product_updated:
-                raise HTTPException(
-                    status_code=500,
-                    detail=f"Failed to update product remain for Product ID {order_detail.pid}",
-                )
 
-        # 3. 更新訂單狀態成為取消
-        update_data = {"status": "已取消"}
-        if not update_data:
-            raise HTTPException(status_code=400, detail="No fields to update")
+    # 3. 更新訂單狀態成為取消
+    update_data = {"status": "已取消"}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
 
-        updated_order = order_db.update_order(db, oid=oid, updates=update_data)
-        if not updated_order:
-            raise HTTPException(status_code=404, detail="Order not found")
-        return updated_order
-    
-    #except:
-        #raise HTTPException(status_code=500, detail="Failed to cancel the order")
+    updated_order = order_db.update_order(db, oid=oid, updates=update_data)
+    if not updated_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return updated_order
+
+
+# except:
+# raise HTTPException(status_code=500, detail="Failed to cancel the order")
+
 
 # 更新訂單
 @router.put("/orders/{oid}")
@@ -267,12 +262,100 @@ async def update_order_status(
     except:
         raise HTTPException(status_code=500, detail="Failed to update the order")
 
+
 @router.post("/cash_flow_order")
-async def received_cash_flow_response(order = CashFlowOrder,token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
-    
-    if order.PaymentType == "Credit" and order.RtnCode == 1:
-        return {"detail": "success"}
-    elif order.PaymentType == "ATM" and order.RtnCode == 2:
-        return {"detail": "success"}
-    else:
-        return {"detail": "failed"}
+async def received_cash_flow_response(
+    MerchantID: str = Form(...),  # 特店編號
+    MerchantTradeNo: str = Form(...),  # 特店交易編號
+    StoreID: str = Form(...),  # 特店旗下店舖代號
+    RtnCode: int = Form(
+        ...
+    ),  # 交易狀態，若回傳值為1時，為付款成功，若RtnCode為”10300066″ 時，代表交易付款結果待確認中。ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
+    RtnMsg: str = Form(...),  # 交易訊息
+    TradeNo: str = Form(...),  # 綠界的交易編號
+    TradeAmt: int = Form(...),  # 交易金額
+    PaymentDate: str = Form(None),  # 付款時間，格式為yyyy/MM/dd HH:mm:ss
+    PaymentType: str = Form(...),  # 特店選擇的付款方式
+    PaymentTypeChargeFee: int = Form(0),  # 交易手續費金額
+    PlatformID: str = Form(None),  # 特約合作平台商代號
+    TradeDate: str = Form(...),  # 訂單成立時間，格式為yyyy/MM/dd HH:mm:ss
+    SimulatePaid: int = Form(
+        1
+    ),  # 是否為模擬付款，0：代表此交易非模擬付款。1：代表此交易為模擬付款。
+    CheckMacValue: str = Form(...),  # 檢查碼
+    BankCode: str = Form(None),  # 繳費銀行代碼
+    vAccount: str = Form(None),  # 繳費虛擬帳號
+    ExpireDate: str = Form(None),  # 繳費期限，格式為yyyy/MM/dd
+    db: Session = Depends(get_db),
+):
+    try:
+        new_record = payment_callback_db.create_payment_callback(
+            db=db,
+            merchant_id=MerchantID,
+            merchant_trade_no=MerchantTradeNo,
+            store_id=StoreID,
+            rtn_code=RtnCode,
+            rtn_msg=RtnMsg,
+            trade_no=TradeNo,
+            trade_amt=TradeAmt,
+            payment_date=PaymentDate,
+            payment_type=PaymentType,
+            payment_type_charge_fee=PaymentTypeChargeFee,
+            platform_id=PlatformID,
+            trade_date=TradeDate,
+            simulate_paid=SimulatePaid,
+            check_mac_value=CheckMacValue,
+            bank_code=BankCode,
+            v_account=vAccount,
+            expire_date=ExpireDate,
+        )
+
+        if not new_record:
+            print("Failed to create payment callback record")
+    except:
+        print("Failed to create payment callback record")
+
+    try:
+        if (PaymentType == "Credit" and RtnCode == 1) or (
+            PaymentType == "ATM" and RtnCode == 2
+        ):
+            update_data = {"status": "待出貨"}
+        else:
+            order_details = order_db.get_order_details_by_oid(db, oid=MerchantTradeNo)
+            for order_detail in order_details:
+                product = product_db.get_product_by_id(db, order_detail.pid)
+                if not product:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Product ID {order_detail.pid} not found for restocking",
+                    )
+
+                # 更新庫存
+                update_data = {"remain": product.remain + order_detail.productNumber}
+                product_updated = product_db.update_partial_product(
+                    db, order_detail.pid, update_data
+                )
+                if not product_updated:
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"Failed to update product remain for Product ID {order_detail.pid}",
+                    )
+            update_data = {"status": "已取消"}
+
+        updated_order = order_db.update_order(
+            db, oid=MerchantTradeNo, updates=update_data
+        )
+
+        if not updated_order:
+            send_email(
+                "shanthaiteam@gmail.com",
+                f"更新訂單{MerchantTradeNo}失敗，請手動更新",
+                f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
+            )
+        return "1|OK"
+    except:
+        send_email(
+            "shanthaiteam@gmail.com",
+            f"更新訂單{MerchantTradeNo}失敗，請手動更新",
+            f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
+        )

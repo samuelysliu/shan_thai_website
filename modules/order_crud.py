@@ -161,6 +161,7 @@ def get_order_join_user_product(db: Session):
 # 新增訂單
 def create_order(
     db: Session,
+    oid: str,
     uid: int,
     totalAmount: int,
     discountPrice: int,
@@ -177,6 +178,7 @@ def create_order(
 ) -> Order:
     try:
         new_order = Order(
+            oid=oid,
             uid=uid,
             totalAmount=totalAmount,
             discountPrice=discountPrice,
