@@ -7,7 +7,8 @@ import modules.order_crud as order_db
 import modules.product_crud as product_db
 import modules.cart_crud as cart_db
 from controls.tools import format_to_utc8 as timeformat
-from controls.tools import verify_token, userAuthorizationCheck
+from controls.tools import verify_token, userAuthorizationCheck, get_now_time
+from controls.cash_flow import create_cash_flow_order
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -41,12 +42,32 @@ class OrderResponse(OrderBase):
     class Config:
         from_attributes = True
 
-
 # **更新訂單用的 Model**
 class OrderUpdate(BaseModel):
     paymentMethod: str | None = None
     status: str | None = None
+    
 
+class CashFlowOrder(BaseModel):
+    MerchantID: str    #特店編號
+    MerchantTradeNo: str  #特店交易編號
+    StoreID: str   #特店旗下店舖代號
+    RtnCode: int  #交易狀態，若回傳值為1時，為付款成功，若RtnCode為”10300066″ 時，代表交易付款結果待確認中。ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
+    RtnMsg: str #交易訊息
+    TradeNo:str    #綠界的交易編號
+    TradeAmt: int   #交易金額
+    PaymentDate: str = None    #付款時間，格式為yyyy/MM/dd HH:mm:ss
+    PaymentType: str #特店選擇的付款方式
+    PaymentTypeChargeFee: int = 0   #交易手續費金額
+    PlatformID: str = None #特約合作平台商代號
+    TradeDate: str  #訂單成立時間，格式為yyyy/MM/dd HH:mm:ss
+    PlatformID: str = None #特約合作平台商代號
+    SimulatePaid: int = 1 #是否為模擬付款，0：代表此交易非模擬付款。1：代表此交易為模擬付款。
+    CheckMacValue: str #檢查碼
+    BankCode: str = None    #繳費銀行代碼
+    vAccount: str = None    #繳費虛擬帳號
+    ExpireDate:str = None   #繳費期限，格式為yyyy/MM/dd
+    
 
 # **檢視用戶自己的歷史訂單**
 @router.get("/orders")
@@ -118,11 +139,7 @@ async def create_user_order(
                 status_code=500,
                 detail=f"Failed to update product remain for Product ID {detail['pid']}",
             )
-
-    if order.paymentMethod == "匯款":
-        order_status = "待匯款"
-    else:
-        order_status = "待出貨"
+    order_status = "待付款"
 
     # 創建訂單
     new_order = order_db.create_order(
@@ -141,6 +158,12 @@ async def create_user_order(
         status=order_status,
         order_details=order_details,  # 使用後端生成的明細
     )
+    
+    if order.paymentMethod == "匯款":
+        create_cash_flow_order("ATM",)
+    else:
+        order_status = "待出貨"
+    
 
     if not new_order:
         print("Error Message: Failed to create order")
@@ -243,3 +266,13 @@ async def update_order_status(
         return updated_order
     except:
         raise HTTPException(status_code=500, detail="Failed to update the order")
+
+@router.post("/cash_flow_order")
+async def received_cash_flow_response(order = CashFlowOrder,token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    
+    if order.PaymentType == "Credit" and order.RtnCode == 1:
+        return {"detail": "success"}
+    elif order.PaymentType == "ATM" and order.RtnCode == 2:
+        return {"detail": "success"}
+    else:
+        return {"detail": "failed"}
