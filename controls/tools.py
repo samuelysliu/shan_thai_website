@@ -97,3 +97,17 @@ def send_email(to_email: str, subject: str, html_content: str):
 # 生成隨機驗證碼
 def generate_verification_code(length):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+
+# 取得現在UTC+8的時間
+def get_now_time(type: str):
+    # 設置 GMT+8 時區
+    timezone = pytz.timezone("Asia/Taipei")
+    # 取得當前時間並設置時區
+    now = datetime.now(timezone)
+    if type == "unix":
+        # 轉換為 Unix 時間戳
+        return int(now.timestamp())
+    elif type == "third party":
+        return now.strftime("%Y/%m/%d %H:%M:%S")
+    else:
+        return now
