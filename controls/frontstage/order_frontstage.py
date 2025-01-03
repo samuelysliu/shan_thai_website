@@ -6,16 +6,15 @@ import modules.dbConnect as db_connect
 import modules.order_crud as order_db
 import modules.product_crud as product_db
 import modules.cart_crud as cart_db
-import modules.payment_callback_curd as payment_callback_db
+from controls.cash_flow import create_payment_callback_record
+
 from controls.tools import format_to_utc8 as timeformat
 from controls.tools import (
     verify_token,
     userAuthorizationCheck,
-    get_now_time,
     generate_verification_code,
     send_email,
 )
-from controls.cash_flow import create_cash_flow_order
 from datetime import datetime
 
 router = APIRouter()
@@ -154,16 +153,6 @@ async def create_user_order(
             status_code=400,
             detail=f"Somethins wrong, please try again later.",
         )
-    """
-    if order.paymentMethod == "信用卡":
-        create_cash_flow_order(
-            "Credit", new_order.oid, get_now_time("third party"), total_amount
-        )
-    elif order.paymentMethod == "匯款":
-        create_cash_flow_order(
-            "Credit", new_order.oid, get_now_time("third party"), total_amount
-        )
-    """
     # 清空購物車中對應的項目
     selected_cart_items = cart_db.get_carts_by_user(db, order.uid)
     for cart_item in selected_cart_items:
@@ -222,10 +211,6 @@ async def cancel_user_order(
     return updated_order
 
 
-# except:
-# raise HTTPException(status_code=500, detail="Failed to cancel the order")
-
-
 # 更新訂單
 @router.put("/orders/{oid}")
 async def update_order_status(
@@ -262,12 +247,12 @@ async def update_order_status(
     except:
         raise HTTPException(status_code=500, detail="Failed to update the order")
 
-
+# 接受金流主動回拋訂單資訊
 @router.post("/cash_flow_order")
 async def received_cash_flow_response(
     MerchantID: str = Form(...),  # 特店編號
     MerchantTradeNo: str = Form(...),  # 特店交易編號
-    StoreID: str = Form(...),  # 特店旗下店舖代號
+    StoreID: str = Form(None),  # 特店旗下店舖代號
     RtnCode: int = Form(
         ...
     ),  # 交易狀態，若回傳值為1時，為付款成功，若RtnCode為”10300066″ 時，代表交易付款結果待確認中。ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
@@ -289,7 +274,7 @@ async def received_cash_flow_response(
     db: Session = Depends(get_db),
 ):
     try:
-        new_record = payment_callback_db.create_payment_callback(
+        new_record = create_payment_callback_record(
             db=db,
             merchant_id=MerchantID,
             merchant_trade_no=MerchantTradeNo,
@@ -316,11 +301,11 @@ async def received_cash_flow_response(
         print("Failed to create payment callback record")
 
     try:
-        if (PaymentType == "Credit" and RtnCode == 1) or (
-            PaymentType == "ATM" and RtnCode == 2
+        if (PaymentType.__contains__("Credit") and RtnCode == 1) or (
+            PaymentType.__contains__("ATM") and RtnCode == 2
         ):
             update_data = {"status": "待出貨"}
-        else:
+        else:   #如果訂單被取消，要恢復庫存
             order_details = order_db.get_order_details_by_oid(db, oid=MerchantTradeNo)
             for order_detail in order_details:
                 product = product_db.get_product_by_id(db, order_detail.pid)
@@ -359,3 +344,5 @@ async def received_cash_flow_response(
             f"更新訂單{MerchantTradeNo}失敗，請手動更新",
             f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
         )
+
+# 主動呼叫金流

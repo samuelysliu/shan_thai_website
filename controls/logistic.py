@@ -18,7 +18,7 @@ if (environment== "production"):
     server_url = ""
 else:
     temp_logistic_endpoint = "https://logistics-stage.ecpay.com.tw/Express/v2/RedirectToLogisticsSelection"
-    formal_logistic_endpoint = "https://logistics-stage.ecpay.com.tw/Express/v2/CreateByTempTrade"
+    formal_logistic_endpoint = "https://logistics-stage.ecpay.com.tw/Express/v2/CreateByTempTrade"ㄕㄛ
     merchant_id = "2000933"
     hash_key = "XBERn1YOvpM9nfZc"
     hash_iv = "h1ONHk4P4yqbl5LK"

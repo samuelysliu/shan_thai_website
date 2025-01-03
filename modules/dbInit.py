@@ -204,20 +204,20 @@ class PaymentCallback(Base):
     __tablename__ = "payment_callbacks"
     
     id = Column(Integer, primary_key=True, autoincrement=True)  # 主鍵，自增 ID
-    merchant_id = Column(String(50), nullable=False)  # 特店編號
+    merchant_id = Column(String(50), nullable=True)  # 特店編號
     merchant_trade_no = Column(String(10), ForeignKey("orders.oid", ondelete="CASCADE"), nullable=False)  # 特店交易編號
     store_id = Column(String(50), nullable=True)  # 特店旗下店舖代號
-    rtn_code = Column(Integer, nullable=False)  # 交易狀態
-    rtn_msg = Column(String(255), nullable=False)  # 交易訊息
+    rtn_code = Column(Integer, nullable=True)  # 交易狀態
+    rtn_msg = Column(String(255), nullable=True)  # 交易訊息
     trade_no = Column(String(50), nullable=False)  # 綠界交易編號
-    trade_amt = Column(Integer, nullable=False)  # 交易金額
+    trade_amt = Column(Integer, nullable=True)  # 交易金額
     payment_date = Column(DateTime, nullable=True)  # 付款時間
-    payment_type = Column(String(50), nullable=False)  # 付款方式
+    payment_type = Column(String(50), nullable=True)  # 付款方式
     payment_type_charge_fee = Column(Integer, default=0)  # 交易手續費
     platform_id = Column(String(50), nullable=True)  # 特約合作平台商代號
-    trade_date = Column(DateTime, nullable=False)  # 訂單成立時間
+    trade_date = Column(DateTime, nullable=True)  # 訂單成立時間
     simulate_paid = Column(Integer, default=1)  # 是否模擬付款
-    check_mac_value = Column(String(255), nullable=False)  # 檢查碼
+    check_mac_value = Column(String(255), nullable=True)  # 檢查碼
     bank_code = Column(String(50), nullable=True)  # 繳費銀行代碼
     v_account = Column(String(50), nullable=True)  # 繳費虛擬帳號
     expire_date = Column(DateTime, nullable=True)  # 繳費期限

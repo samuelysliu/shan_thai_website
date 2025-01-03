@@ -111,3 +111,11 @@ def get_now_time(type: str):
         return now.strftime("%Y/%m/%d %H:%M:%S")
     else:
         return now
+
+def string_to_postgreSQL_time(some_str):
+    if not some_str or some_str.strip() == "":
+        return None
+    try:
+        return datetime.strptime(some_str, "%Y/%m/%d %H:%M:%S")
+    except ValueError:
+        return None

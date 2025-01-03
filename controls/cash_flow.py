@@ -1,68 +1,112 @@
-from controls.tools import format_to_utc8 as timeformat
+from controls.tools import get_now_time, string_to_postgreSQL_time
 import os
 from dotenv import load_dotenv
-import jwt
+import hashlib
+import urllib.parse
+import modules.payment_callback_curd as payment_callback_db
 import requests
 
 load_dotenv()
-environment= os.getenv("ENVIRONMENT")
+environment = os.getenv("ENVIRONMENT")
 endpoint = os.getenv("WEBSITE_URL")
 
 if environment == "production":
-    cash_flow_endpoint = "https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5"
+    order_check_endpoint = "https://payment.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
     merchant_id = "3002599"
     hash_key = "spPjZn66i0OhqJsQ"
     hash_iv = "hT5OJckN45isQTTs"
 else:
-    cash_flow_endpoint = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
+    order_check_endpoint = (
+        "https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
+    )
     merchant_id = "3002599"
     hash_key = "spPjZn66i0OhqJsQ"
     hash_iv = "hT5OJckN45isQTTs"
-    server_url = "http://192.168.1.110"
 
 
-# 建立金流訂單
-def create_cash_flow_order(payment_methods: str, order_id: str, order_date: str, order_amount: int):
-    MerchantID = merchant_id    # 特店編號
-    MerchantTradeNo = order_id  # 特店訂單編號  
-    MerchantTradeDate = order_date  #yyyy/MM/dd HH:mm:ss
-    PaymentType = "aio"
-    TotalAmount = order_amount  #交易金額
-    TradeDesc = "善泰團隊聖物" #交易描述
-    ItemName = "善泰團隊聖物"  #商品名稱，如果商品名稱有多筆，需在金流選擇頁一行一行顯示商品名稱的話，商品名稱請以符號#分隔
-    ReturnURL = f"{server_url}/frontstage/v1/cash_flow_order"    #付款完成通知回傳網址
-    ChoosePayment = payment_methods #Credit：信用卡及銀聯卡、ATM：自動櫃員機
-    EncryptType = 1 #固定填入1，使用SHA256加密
-    ClientBackURL = f"{endpoint}/order/history" 
-    CheckMacValue = create_checkMacValue(MerchantID, MerchantTradeNo, MerchantTradeDate, TotalAmount, TradeDesc, ItemName, ReturnURL, ChoosePayment, ClientBackURL)    #檢查碼
+def create_checkMacValue(params: dict):
+    # 1. 按字母順序對參數進行排序
+    sorted_params = "&".join(f"{key}={params[key]}" for key in sorted(params.keys()))
 
-    form_data = {
-        "MerchantID": MerchantID,
-        "MerchantTradeNo": MerchantTradeNo,
-        "MerchantTradeDate": MerchantTradeDate,
-        "PaymentType": PaymentType,
-        "TotalAmount":TotalAmount,
-        "TradeDesc": TradeDesc,
-        "ItemName": ItemName,
-        "ReturnURL": ReturnURL,
-        "ChoosePayment": ChoosePayment,
-        "CheckMacValue": CheckMacValue,
-        "EncryptType": EncryptType,
-        "ClientBackURL": ClientBackURL,   
-    }
-    
-    requests.post(cash_flow_endpoint, data=form_data)
-    
-    
-def create_checkMacValue(MerchantID, MerchantTradeNo, MerchantTradeDate, TotalAmount, TradeDesc, ItemName, ReturnURL, ChoosePayment, ClientBackURL):
-    SECRET_KEY = "shan_thai_project"
-    ALGORITHM = "SHA256"
-    
-    to_encode = (
-        f"HashKey={hash_key}&MerchantID={MerchantID}&MerchantTradeNo={MerchantTradeNo}" 
-        f"&MerchantTradeDate={MerchantTradeDate}&PaymentType=aio&TotalAmount={TotalAmount}&TradeDesc={TradeDesc}" 
-        f"ItemName={ItemName}&ReturnURL={ReturnURL}&ChoosePayment={ChoosePayment}&ClientBackURL={ClientBackURL}"
-        f"&EncryptType=1&HashIV={hash_iv}"
+    # 2. 在參數前后添加 HashKey 和 HashIV
+    to_encode = f"HashKey={hash_key}&{sorted_params}&HashIV={hash_iv}"
+
+    # 3. URL Encode 並替換空格為 '+'
+    url_encoded_string = (
+        urllib.parse.quote(to_encode, safe="").replace("%20", "+").lower()
     )
+
+    # 4. 使用 SHA256 進行加密
+    hashed_value = hashlib.sha256(url_encoded_string.encode("utf-8")).hexdigest()
+
+    # 5. 將加密結果轉為大寫
+    return hashed_value.upper()
+
+
+def check_order(order_id):
+    params = dict(
+        {
+            "MerchantID": merchant_id,  # 特店編號(由綠界提供
+            "MerchantTradeNo": order_id,  # 特店交易編號
+            "TimeStamp": get_now_time("unix"),
+        }
+    )
+    chcek_mac_value = create_checkMacValue(params)
+    params["CheckMacValue"] = chcek_mac_value
+
+    response = requests.post(order_check_endpoint, data=params)
+    return response.json()
     
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    
+
+def create_payment_callback_record(
+    db,
+    MerchantID,
+    MerchantTradeNo,
+    StoreID,
+    RtnCode,
+    RtnMsg,
+    TradeNo,
+    TradeAmt,
+    PaymentDate,
+    PaymentType,
+    PaymentTypeChargeFee,
+    PlatformID,
+    TradeDate,
+    SimulatePaid,
+    CheckMacValue,
+    BankCode,
+    vAccount,
+    ExpireDate
+):
+    try:
+        PaymentDate = string_to_postgreSQL_time(PaymentDate)
+        TradeDate = string_to_postgreSQL_time(TradeDate)
+        ExpireDate = string_to_postgreSQL_time(ExpireDate)
+
+        new_record = payment_callback_db.create_payment_callback(
+            db=db,
+            merchant_id=MerchantID,
+            merchant_trade_no=MerchantTradeNo,
+            store_id=StoreID,
+            rtn_code=RtnCode,
+            rtn_msg=RtnMsg,
+            trade_no=TradeNo,
+            trade_amt=TradeAmt,
+            payment_date=PaymentDate,
+            payment_type=PaymentType,
+            payment_type_charge_fee=PaymentTypeChargeFee,
+            platform_id=PlatformID,
+            trade_date=TradeDate,
+            simulate_paid=SimulatePaid,
+            check_mac_value=CheckMacValue,
+            bank_code=BankCode,
+            v_account=vAccount,
+            expire_date=ExpireDate,
+        )
+
+        if not new_record:
+            print("Failed to create payment callback record")
+
+    except:
+        print("Failed to create payment callback record")

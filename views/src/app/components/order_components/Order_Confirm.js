@@ -96,16 +96,43 @@ const OrderConfirm = () => {
                 },
             });
             console.log(response)
+            /*
+            // 檢查是否成功返回
+            if (response.status === 200) {
+                // 創建隱藏的表單並提交
+                const newForm = document.createElement("form");
+                newForm.method = "POST";
+                newForm.action = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5";
+                newForm.target = "_blank"; // 在新分頁打開
+
+                // 將返回的表單數據轉為元素
+                Object.entries(orderData).forEach(([key, value]) => {
+                    const input = document.createElement("input");
+                    input.type = "hidden";
+                    input.name = key;
+                    input.value = value;
+                    newForm.appendChild(input);
+                });
+
+                document.body.appendChild(newForm);
+                newForm.submit();
+                document.body.removeChild(newForm);
+            } else {
+                console.error("金流商頁面載入失敗", response.status);
+            }
+            */
+
             const date = new Date(response.data.created_at);
             const formatedCreatedAt = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ` +
                 `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
-
             if (paymentMethod === "匯款")
                 createCashFlowOrder("ATM", response.data.oid, formatedCreatedAt, response.data.totalAmount)
             else if ((paymentMethod === "信用卡"))
                 createCashFlowOrder("Credit", response.data.oid, formatedCreatedAt, response.data.totalAmount)
-            //handleSuccess("訂單已提交成功！");
-            //router.push("/order/history");
+
+            
+            handleSuccess("訂單已提交成功，正在確認付款資訊！");
+            router.push("/order/history");
         } catch (error) {
             console.error("提交訂單失敗：", error);
             handleError("提交訂單失敗，請重試。");
@@ -115,87 +142,78 @@ const OrderConfirm = () => {
     };
 
     // 生成 CheckMacValue 函數
-    const createCheckMacValue = (
-        MerchantID,
-        MerchantTradeNo,
-        MerchantTradeDate,
-        TotalAmount,
-        TradeDesc,
-        ItemName,
-        ReturnURL,
-        ChoosePayment,
-        ClientBackURL
-    ) => {
+    const createCheckMacValue = (params) => {
         const hashKey = config.hashKey;
         const hashIv = config.hashIv;
 
-        const toEncode = `HashKey=${hashKey}&MerchantID=${MerchantID}&MerchantTradeNo=${MerchantTradeNo}` +
-            `&MerchantTradeDate=${MerchantTradeDate}&PaymentType=aio&TotalAmount=${TotalAmount}&TradeDesc=${TradeDesc}` +
-            `&ItemName=${ItemName}&ReturnURL=${ReturnURL}&ChoosePayment=${ChoosePayment}&EncryptType=1` +
-            `&ClientBackURL=${ClientBackURL}&HashIV=${hashIv}`;
+        // 1. 將傳入的參數按字母順序排序
+        const sortedParams = Object.keys(params)
+            .sort()
+            .map((key) => `${key}=${params[key]}`)
+            .join("&");
 
-        // 1. URL Encode 字串
-        const urlEncodedString = encodeURIComponent(toEncode);
+        // 2. 在參數前后添加 HashKey 和 HashIV
+        const toEncode = `HashKey=${hashKey}&${sortedParams}&HashIV=${hashIv}`;
 
-        // 2. 將字串轉為小寫
-        const lowerCaseString = urlEncodedString.toLowerCase();
+        // 3. URL Encode 並替換空格為 '+'
+        const urlEncodedString = encodeURIComponent(toEncode)
+            .replace(/%20/g, "+")
+            .toLowerCase();
 
-        // 3. 使用 SHA256 進行加密
+        // 4. 使用 SHA256 進行加密
+        const crypto = require("crypto");
         const hash = crypto.createHash("sha256");
-        hash.update(lowerCaseString);
+        hash.update(urlEncodedString);
         const hashedValue = hash.digest("hex");
 
-        // 4. 將加密結果轉為大寫
-        const checkMacValue = hashedValue.toUpperCase();
-
-        return checkMacValue;
+        // 5. 將加密結果轉為大寫
+        return hashedValue.toUpperCase();
     };
 
     // 呼叫金流服務
     const createCashFlowOrder = async (paymentMethods, orderId, orderDate, orderAmount) => {
-        const MerchantID = config.merchantId; // 特店編號
-        const MerchantTradeNo = orderId; // 特店訂單編號
-        const MerchantTradeDate = orderDate; // yyyy/MM/dd HH:mm:ss
-        const PaymentType = "aio";
-        const TotalAmount = orderAmount; // 交易金額
-        const TradeDesc = "善泰團隊聖物"; // 交易描述
-        const ItemName = "善泰團隊聖物"; // 商品名稱
-        const ReturnURL = `${endpoint}/frontstage/v1/cash_flow_order`; // 付款完成通知回傳網址
-        const ChoosePayment = paymentMethods; // Credit 或 ATM
-        const EncryptType = 1; // 固定為 1
-        const ClientBackURL = location.host;
-        // 生成 CheckMacValue
-        const CheckMacValue = createCheckMacValue(
-            MerchantID,
-            MerchantTradeNo,
-            MerchantTradeDate,
-            TotalAmount,
-            TradeDesc,
-            ItemName,
-            ReturnURL,
-            ChoosePayment,
-            ClientBackURL
-        );
-        const cashFlowEndpoint = config.cashFlowEndpoint
-        // 表單數據
-        const formData = {
-            MerchantID,
-            MerchantTradeNo,
-            MerchantTradeDate,
-            PaymentType,
-            TotalAmount,
-            TradeDesc,
-            ItemName,
-            ReturnURL,
-            ChoosePayment,
-            CheckMacValue,
-            EncryptType,
-            ClientBackURL,
+        const params = {
+            MerchantID: config.merchantId, // 特店編號
+            MerchantTradeNo: orderId, // 特店交易編號
+            MerchantTradeDate: orderDate, // yyyy/MM/dd HH:mm:ss
+            PaymentType: "aio",
+            TotalAmount: orderAmount, // 交易金額
+            TradeDesc: "善泰團隊聖物", // 交易描述
+            ItemName: "善泰團隊聖物", // 商品名稱
+            ReturnURL: `${endpoint}/frontstage/v1/cash_flow_order`, // 回調地址
+            ChoosePayment: paymentMethods, // Credit 或 ATM
+            EncryptType: 1, // 固定為 1
+            ClientBackURL: `http://${location.host}`
         };
-        // 發送 POST 請求
-        axios.post(cashFlowEndpoint, formData, {
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+
+        // 生成 CheckMacValue
+        const CheckMacValue = createCheckMacValue(params);
+
+        // 添加 CheckMacValue 到表單數據
+        params.CheckMacValue = CheckMacValue;
+        console.log(params)
+
+        const cashFlowEndpoint = config.cashFlowEndpoint
+
+        // 建立隱藏的表單
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = cashFlowEndpoint;
+        form.target = "_blank"; // 在新分頁開啟
+
+        // 將參數加入表單
+        Object.entries(params).forEach(([key, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
         });
+
+        // 提交表單
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form); // 提交後刪除表單
     }
 
     // 控制彈出視窗訊息區
