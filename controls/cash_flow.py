@@ -5,6 +5,9 @@ import hashlib
 import urllib.parse
 import modules.payment_callback_curd as payment_callback_db
 import requests
+import modules.dbConnect as db_connect
+import modules.order_crud as order_db
+from urllib.parse import parse_qs
 
 load_dotenv()
 environment = os.getenv("ENVIRONMENT")
@@ -43,21 +46,94 @@ def create_checkMacValue(params: dict):
     return hashed_value.upper()
 
 
-def check_order(order_id):
-    params = dict(
-        {
-            "MerchantID": merchant_id,  # 特店編號(由綠界提供
-            "MerchantTradeNo": order_id,  # 特店交易編號
-            "TimeStamp": get_now_time("unix"),
-        }
-    )
-    chcek_mac_value = create_checkMacValue(params)
-    params["CheckMacValue"] = chcek_mac_value
+def check_order():
+    db = db_connect.SessionLocal()
+    try:
+        order_list = order_db.get_order_by_status(db, "待確認")
 
-    response = requests.post(order_check_endpoint, data=params)
-    return response.json()
-    
-    
+        # 逐一將沒有確認付款資訊的訂單去呼叫 API
+        for order in order_list:
+            params = dict(
+                {
+                    "MerchantID": merchant_id,  # 特店編號(由綠界提供
+                    "MerchantTradeNo": order["oid"],  # 特店交易編號
+                    "TimeStamp": get_now_time("unix"),
+                }
+            )
+            chcek_mac_value = create_checkMacValue(params)
+            params["CheckMacValue"] = chcek_mac_value
+            
+            # API 回傳為字串，需要做解析轉成 dict
+            response = requests.post(order_check_endpoint, data=params)
+            # 解析字串為字典
+            parsed_data = {
+                key: value[0] for key, value in parse_qs(response.text).items()
+            }
+            
+
+            # 儲存金流回傳的紀錄
+            table_column = [
+                "MerchantID",
+                "MerchantTradeNo",
+                "StoreID",
+                "RtnCode",
+                "RtnMsg"
+                "TradeNo",
+                "TradeAmt",
+                "PaymentDate",
+                "PaymentType",
+                "PaymentTypeChargeFee",
+                "PlatformID",
+                "TradeDate",
+                "SimulatePaid",
+                "CheckMacValue",
+                "BankCode",
+                "vAccount",
+                "ExpireDate"
+            ]
+            
+            for column in table_column:
+                if column not in parsed_data:
+                    parsed_data[column] = None
+
+            if parsed_data.get("TradeStatus") == "1" or parsed_data.get("TradeStatus") == "10200095":
+                create_payment_callback_record(
+                    db=db,
+                    MerchantID=parsed_data.get("MerchantID"),
+                    MerchantTradeNo=parsed_data.get("MerchantTradeNo"),
+                    StoreID=parsed_data.get("StoreID"),
+                    RtnCode=parsed_data.get("TradeStatus"),
+                    RtnMsg=parsed_data.get("RtnMsg"),
+                    TradeNo=parsed_data.get("TradeNo"),
+                    TradeAmt=parsed_data.get("TradeAmt"),
+                    PaymentDate=parsed_data.get("PaymentDate"),
+                    PaymentType=parsed_data.get("PaymentType"),
+                    PaymentTypeChargeFee=parsed_data.get("PaymentTypeChargeFee"),
+                    PlatformID=None,
+                    TradeDate=parsed_data.get("TradeDate"),
+                    SimulatePaid=1,
+                    CheckMacValue=parsed_data.get("CheckMacValue"),
+                    BankCode=parsed_data.get("BankCode"),
+                    vAccount=parsed_data.get("vAccount"),
+                    ExpireDate=parsed_data.get("ExpireDate"),
+                )
+                
+                # 更改訂單狀態
+                if parsed_data.get("TradeStatus") == "1":
+                    update_data = {"status": "待出貨"}
+                elif parsed_data.get("TradeStatus") == "10200095":
+                    update_data = {"status": "已取消"}
+
+                updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
+                if not updated_order:
+                    print("訂單更新失敗")
+                
+                    
+    except Exception as e:
+        print(e)
+    finally:
+        db.close()
+
 
 def create_payment_callback_record(
     db,
@@ -77,7 +153,7 @@ def create_payment_callback_record(
     CheckMacValue,
     BankCode,
     vAccount,
-    ExpireDate
+    ExpireDate,
 ):
     try:
         PaymentDate = string_to_postgreSQL_time(PaymentDate)
@@ -104,6 +180,7 @@ def create_payment_callback_record(
             v_account=vAccount,
             expire_date=ExpireDate,
         )
+        
 
         if not new_record:
             print("Failed to create payment callback record")

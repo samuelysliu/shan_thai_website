@@ -185,6 +185,7 @@ class Order(Base):
     users = relationship("User", back_populates="orders")
     order_details = relationship("OrderDetail", back_populates="order", cascade="all, delete-orphan")  # 關聯訂單明細表
     payment_callbacks = relationship("PaymentCallback", back_populates="order", cascade="all, delete-orphan")
+    logistics_orders = relationship("LogisticsOrder", back_populates="order", cascade="all, delete-orphan")  # 關聯物流訂單
     
 class OrderDetail(Base):
     __tablename__ = "order_details"
@@ -224,7 +225,31 @@ class PaymentCallback(Base):
     created_at = Column(DateTime, default=func.now())  # 記錄建立時間
     
     order = relationship("Order", back_populates="payment_callbacks")
+
+# 物流單DB
+class LogisticsOrder(Base):
+    __tablename__ = "logistics_orders"
     
+    id = Column(Integer, primary_key=True, autoincrement=True)  # 主鍵
+    merchant_trade_no = Column(String(20), ForeignKey("orders.oid", ondelete="CASCADE"), nullable=False)  # 對應訂單號碼
+    rtn_code = Column(Integer, nullable=False)  # 物流狀態
+    rtn_msg = Column(Text, nullable=True)  # 物流狀態說明
+    allpay_logistics_id = Column(String(50), nullable=False)  # 綠界物流交易編號
+    logistics_type = Column(String(20), nullable=True)  # 物流類型
+    logistics_sub_type = Column(String(20), nullable=True)  # 物流子類型
+    goods_amount = Column(Integer, nullable=True)  # 商品金額
+    update_status_date = Column(DateTime, nullable=True)  # 物流狀態更新時間
+    receiver_name = Column(String(50), nullable=True)  # 收件人姓名
+    receiver_cell_phone = Column(String(20), nullable=True)  # 收件人手機
+    receiver_email = Column(String(100), nullable=True)  # 收件人 Email
+    receiver_address = Column(String(255), nullable=True)  # 收件人地址
+    cvs_payment_no = Column(String(50), nullable=True)  # 寄貨編號
+    cvs_validation_no = Column(String(50), nullable=True)  # 驗證碼
+    booking_note = Column(String(100), nullable=True)  # 托運單號
+    created_at = Column(DateTime, default=func.now(), nullable=False)  # 記錄建立時間
+
+    # 與訂單的關聯
+    order = relationship("Order", back_populates="logistics_orders")
 
 class Term(Base):
     __tablename__ = "terms"
@@ -261,5 +286,17 @@ class ProductTag(Base):
     
     # 關聯其他資料庫
     product = relationship("Product", back_populates="product_tag")
+    
+class StoreSelection(Base):
+    __tablename__ = "store_selection"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)  # 自增 ID
+    merchant_trade_no = Column(String(50), unique=True, nullable=False)  # 唯一碼
+    logistics_sub_type = Column(String(50), nullable=False)  # 物流子類型
+    cvs_store_id = Column(String(50), nullable=False)  # 超商店舖編號
+    cvs_store_name = Column(String(255), nullable=False)  # 超商店舖名稱
+    cvs_address = Column(String(255), nullable=False)  # 超商店舖地址
+    created_at = Column(DateTime, default=func.now())  # 記錄建立時間
+
 
 Base.metadata.create_all(bind=engine)

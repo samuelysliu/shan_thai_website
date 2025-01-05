@@ -104,6 +104,39 @@ def get_order_by_oid(db: Session, oid: int) -> dict:
         print(f"Error while fetching order OID {oid}: {e}")
         return None
 
+def get_order_by_status(db: Session, status: str) -> List[dict]:
+    try:
+        orders = (
+            db.query(Order)
+            .filter(Order.status == status)
+            .order_by(Order.created_at.desc())
+            .all()
+        )
+
+        formatted_orders = [
+            {
+                "oid": order.oid,
+                "totalAmount": order.totalAmount,
+                "discountPrice": order.discountPrice,
+                "useDiscount": order.useDiscount,
+                "address": order.address,
+                "recipientName": order.recipientName,
+                "recipientPhone": order.recipientPhone,
+                "recipientEmail": order.recipientEmail,
+                "transportationMethod": order.transportationMethod,
+                "paymentMethod": order.paymentMethod,
+                "status": order.status,
+                "orderNote": order.orderNote,
+                "created_at": order.created_at,
+                "updated_at": order.updated_at,
+            }
+            for order in orders
+        ]
+        return formatted_orders
+    except SQLAlchemyError as e:
+        print(f"Error while fetching orders for status {status}: {e}")
+        return []
+
 
 # **取得所有訂單及其明細，跨 user 和 product 表**
 def get_order_join_user_product(db: Session):

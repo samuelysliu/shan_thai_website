@@ -6,7 +6,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { Container, Row, Col, Table, Button, Form } from "react-bootstrap";
 import axios from "axios";
 import config from "@/app/config";
-import crypto from "crypto";
+import { generateRandomString, createCheckMacValue, userDevice } from "../Tools"
+
 
 import { showToast } from "@/app/redux/slices/toastSlice";
 
@@ -23,6 +24,7 @@ const OrderConfirm = () => {
     const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
     const [orderNote, setOrderNote] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [merchantTradeNo, setMerchantTradeNo] = useState("");
     const endpoint = config.apiBaseUrl;
 
     const dispatch = useDispatch();
@@ -95,33 +97,6 @@ const OrderConfirm = () => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            console.log(response)
-            /*
-            // 檢查是否成功返回
-            if (response.status === 200) {
-                // 創建隱藏的表單並提交
-                const newForm = document.createElement("form");
-                newForm.method = "POST";
-                newForm.action = "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5";
-                newForm.target = "_blank"; // 在新分頁打開
-
-                // 將返回的表單數據轉為元素
-                Object.entries(orderData).forEach(([key, value]) => {
-                    const input = document.createElement("input");
-                    input.type = "hidden";
-                    input.name = key;
-                    input.value = value;
-                    newForm.appendChild(input);
-                });
-
-                document.body.appendChild(newForm);
-                newForm.submit();
-                document.body.removeChild(newForm);
-            } else {
-                console.error("金流商頁面載入失敗", response.status);
-            }
-            */
-
             const date = new Date(response.data.created_at);
             const formatedCreatedAt = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ` +
                 `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
@@ -130,7 +105,7 @@ const OrderConfirm = () => {
             else if ((paymentMethod === "信用卡"))
                 createCashFlowOrder("Credit", response.data.oid, formatedCreatedAt, response.data.totalAmount)
 
-            
+
             handleSuccess("訂單已提交成功，正在確認付款資訊！");
             router.push("/order/history");
         } catch (error) {
@@ -139,35 +114,6 @@ const OrderConfirm = () => {
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    // 生成 CheckMacValue 函數
-    const createCheckMacValue = (params) => {
-        const hashKey = config.hashKey;
-        const hashIv = config.hashIv;
-
-        // 1. 將傳入的參數按字母順序排序
-        const sortedParams = Object.keys(params)
-            .sort()
-            .map((key) => `${key}=${params[key]}`)
-            .join("&");
-
-        // 2. 在參數前后添加 HashKey 和 HashIV
-        const toEncode = `HashKey=${hashKey}&${sortedParams}&HashIV=${hashIv}`;
-
-        // 3. URL Encode 並替換空格為 '+'
-        const urlEncodedString = encodeURIComponent(toEncode)
-            .replace(/%20/g, "+")
-            .toLowerCase();
-
-        // 4. 使用 SHA256 進行加密
-        const crypto = require("crypto");
-        const hash = crypto.createHash("sha256");
-        hash.update(urlEncodedString);
-        const hashedValue = hash.digest("hex");
-
-        // 5. 將加密結果轉為大寫
-        return hashedValue.toUpperCase();
     };
 
     // 呼叫金流服務
@@ -183,7 +129,7 @@ const OrderConfirm = () => {
             ReturnURL: `${endpoint}/frontstage/v1/cash_flow_order`, // 回調地址
             ChoosePayment: paymentMethods, // Credit 或 ATM
             EncryptType: 1, // 固定為 1
-            ClientBackURL: `http://${location.host}`
+            ClientBackURL: window.location.origin
         };
 
         // 生成 CheckMacValue
@@ -214,6 +160,74 @@ const OrderConfirm = () => {
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form); // 提交後刪除表單
+    }
+
+    // 取得超商地圖
+    const getStoreMap = (logisticsSubType) => {
+        setMerchantTradeNo(generateRandomString());
+
+        const params = {
+            MerchantID: config.merchantId, // 特店編號
+            MerchantTradeNo: merchantTradeNo, // 特店交易編號
+            LogisticsType: "CVS", // 物流類型
+            LogisticsSubType: logisticsSubType, // 物流子類型，FAMIC2C：全家店到店；UNIMARTC2C：7-ELEVEN超商交貨便；HILIFEC2C：萊爾富店到店；OKMARTC2C：OK超商店到店
+            IsCollection: paymentMethod === "貨到付款" ? "Y" : "N", // 是否代收貨款，N：不代收貨款; Y：代收貨款
+            ServerReplyURL: `${endpoint}/frontstage/v1/store_selection`, // 使用當前頁面的回調
+            Device: userDevice === "mobile" ? 1 : 0
+        };
+
+        const storeMapEndpoint = config.storeMapEndpoint;
+
+        const popupWindow = window.open("", "storeMapWindow", "width=800,height=600,scrollbars=no,resizable=no");
+        // 建立隱藏的表單
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = storeMapEndpoint;
+        form.target = "storeMapWindow";
+        //form.target = "hiddenIframe";
+
+        // 將參數加入表單
+        Object.entries(params).forEach(([key, value]) => {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = value;
+            form.appendChild(input);
+        });
+
+        // 提交表單
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form); // 提交後刪除表單
+
+        // 定期檢查分頁是否被關閉
+        const checkWindowClosed = setInterval(() => {
+            if (popupWindow.closed) {
+                clearInterval(checkWindowClosed); // 停止檢查
+                console.log("分頁已關閉，開始獲取門市資訊...");
+                getStoreData(); // 呼叫後端 API
+            }
+        }, 500);
+
+    }
+
+    // 處理寄送方式的邏輯
+    const transportationLogic = (transport) => {
+        setTransportationMethod(transport);
+        if (transport === "seven")
+            getStoreMap("UNIMARTC2C")
+        else if (transport === "family")
+            getStoreMap("FAMIC2C")
+    }
+
+    // 跟後端要使用者選擇的超商資訊
+    const getStoreData = async () => {
+        try {
+            const response = await axios.get(`${endpoint}/frontstage/v1/store_selection/${merchantTradeNo}`);
+            setAddress(response.data.cvs_store_name);
+        } catch (err) {
+            console.error(err);
+        }
     }
 
     // 控制彈出視窗訊息區
@@ -296,7 +310,7 @@ const OrderConfirm = () => {
                         <Form.Label>寄送方式</Form.Label>
                         <Form.Select
                             value={transportationMethod}
-                            onChange={(e) => setTransportationMethod(e.target.value)}
+                            onChange={(e) => transportationLogic(e.target.value)}
                         >
                             <option value="delivery">宅配</option>
                             <option value="seven">Seven 自取</option>
@@ -311,6 +325,7 @@ const OrderConfirm = () => {
                             placeholder={`請輸入${transportationMethod === "delivery" ? "送貨地址" : "超商門市名稱"}`}
                             value={address || ""}
                             onChange={(e) => setAddress(e.target.value)}
+                            disabled={transportationMethod !== "delivery"}
                         />
                     </Form.Group>
 
@@ -350,6 +365,7 @@ const OrderConfirm = () => {
                     </Button>
                 </Col>
             </Row>
+
         </Container>
     );
 };

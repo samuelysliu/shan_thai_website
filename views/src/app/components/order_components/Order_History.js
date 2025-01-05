@@ -135,11 +135,11 @@ const OrderHistory = () => {
                     <strong>訂單狀態:</strong>{" "}
                     <Badge
                       bg={
-                        order.status === "已出貨"
+                        order.status === "已完成"
                           ? "success"
                           : order.status === "待確認"
                             ? "warning"
-                            : order.status === "待出貨"
+                            : order.status === "已出貨"
                               ? "primary"
                               : order.status === "取消"
                                 ? "secondary"
@@ -187,20 +187,12 @@ const OrderHistory = () => {
                 }
 
                 <div className="d-flex justify-content-between align-items-center">
-                  <div>
+                  <Col xs={6} md={4} lg={2}>
                     <strong>總價:</strong> NT. {order.totalAmount}
-                  </div>
-
-                  {/* 如果狀態是 "待出貨"、"待確認"，顯示 X 按鈕 */}
-                  {(order.status === "待出貨" || order.status === "待匯款") && (
-                    <Button
-                      variant="link"
-                      className="text-danger"
-                      onClick={() => handleShowModal(order.oid)}
-                    >
-                      取消訂單
-                    </Button>
-                  )}
+                  </Col>
+                  <Col xs={6} md={8} lg={10}>
+                  <strong>付款方式:</strong> {order.paymentMethod}
+                  </Col>
                 </div>
 
               </Card.Body>

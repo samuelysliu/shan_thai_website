@@ -1,7 +1,7 @@
 const api_url = {
   production: "https://yielding-dove-samuelysliu-ce6a81f4.koyeb.app",
   uat: "https://classical-trish-samuelysliu-dbbd4671.koyeb.app",
-  local: "http://10.103.178.9:8000"
+  local: "http://localhost:8000"
 }
 
 const gaId = {
@@ -20,6 +20,12 @@ const cashFlowEndpoint = {
   production: "https://payment.ecpay.com.tw/Cashier/AioCheckOut/V5",
   uat: "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5",
   local: "https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5"
+}
+
+const storeMapEndpoint = {
+  production: "https://logistics.ecpay.com.tw/Express/map",
+  uat: "https://logistics-stage.ecpay.com.tw/Express/map",
+  local: "https://logistics-stage.ecpay.com.tw/Express/map"
 }
 
 const merchantId = {
@@ -48,6 +54,7 @@ const config = {
   cashFlowEndpoint: cashFlowEndpoint[process.env.NEXT_PUBLIC_ENV],
   merchantId: merchantId[process.env.NEXT_PUBLIC_ENV],
   hashKey: hashKey[process.env.NEXT_PUBLIC_ENV],
-  hashIv: hashIv[process.env.NEXT_PUBLIC_ENV]
+  hashIv: hashIv[process.env.NEXT_PUBLIC_ENV],
+  storeMapEndpoint: storeMapEndpoint[process.env.NEXT_PUBLIC_ENV],
 };
 export default config;

@@ -1,4 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, Form
+from fastapi.responses import HTMLResponse
+from urllib.parse import parse_qs, unquote
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
@@ -6,7 +8,9 @@ import modules.dbConnect as db_connect
 import modules.order_crud as order_db
 import modules.product_crud as product_db
 import modules.cart_crud as cart_db
+import modules.store_selection_crud as store_selection_db
 from controls.cash_flow import create_payment_callback_record
+from controls.logistic import create_store_logistic_order
 
 from controls.tools import format_to_utc8 as timeformat
 from controls.tools import (
@@ -128,6 +132,19 @@ async def create_user_order(
                 detail=f"Failed to update product remain for Product ID {detail['pid']}",
             )
 
+    # 處理訂單狀態
+    if order.transportationMethod == "貨到付款":
+        status = "待出貨"
+    else:
+        status = "待確認"
+        
+    # 防止惡意訂單，貨到付款不可大於兩萬元
+    if order.transportationMethod == "貨到付款" and total_amount > 20000:
+        raise HTTPException(
+            status_code=500,
+            detail=f"error requests",
+        )
+    
     # 創建訂單
     new_order = order_db.create_order(
         db,
@@ -143,7 +160,7 @@ async def create_user_order(
         transportationMethod=order.transportationMethod,
         paymentMethod=order.paymentMethod,
         orderNote=order.orderNote,
-        status="待確認",
+        status=status,
         order_details=order_details,  # 使用後端生成的明細
     )
 
@@ -159,6 +176,21 @@ async def create_user_order(
         for detail in order_details:
             if cart_item["pid"] == detail["pid"]:
                 cart_db.remove_cart_item(db, cart_item["cart_id"])
+                
+    # 建立物流單
+    if order.transportationMethod == "貨到付款":
+        create_store_logistic_order(
+            oid = new_order.oid, 
+            trade_date = new_order.created_at, 
+            store_type=new_order.transportationMethod,
+            order_amount=new_order.totalAmount,
+            isCollection="Y",
+            product="善泰團隊聖物",
+            user_name=new_order.recipientName,
+            user_phone=new_order.recipientPhone,
+            user_email=new_order.recipientEmail,
+            store_id=new_order.address
+        )
 
     return new_order
 
@@ -247,6 +279,7 @@ async def update_order_status(
     except:
         raise HTTPException(status_code=500, detail="Failed to update the order")
 
+
 # 接受金流主動回拋訂單資訊
 @router.post("/cash_flow_order")
 async def received_cash_flow_response(
@@ -305,7 +338,7 @@ async def received_cash_flow_response(
             PaymentType.__contains__("ATM") and RtnCode == 2
         ):
             update_data = {"status": "待出貨"}
-        else:   #如果訂單被取消，要恢復庫存
+        else:  # 如果訂單被取消，要恢復庫存
             order_details = order_db.get_order_details_by_oid(db, oid=MerchantTradeNo)
             for order_detail in order_details:
                 product = product_db.get_product_by_id(db, order_detail.pid)
@@ -345,4 +378,97 @@ async def received_cash_flow_response(
             f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
         )
 
-# 主動呼叫金流
+
+# 接收物流商回傳使用者選擇的超商
+@router.post("/store_selection")
+async def add_store_selection(
+    MerchantID: str = Form(...),
+    MerchantTradeNo: str = Form(...),
+    LogisticsSubType: str = Form(...),
+    CVSStoreID: str = Form(...),
+    CVSStoreName: str = Form(...),
+    CVSAddress: str = Form(...),
+    CVSTelephone: str = Form(None),  # 可選欄位
+    CVSOutSide: str = Form(None),  # 可選欄位
+    ExtraData: str = Form(None),  # 可選欄位
+    db: Session = Depends(get_db),
+):
+    try:
+        """
+        新增超商選擇記錄
+        """
+        new_record = store_selection_db.create_store_selection(
+            db=db,
+            merchant_trade_no=MerchantTradeNo,
+            logistics_sub_type=LogisticsSubType,
+            cvs_store_id=CVSStoreID,
+            cvs_store_name=CVSStoreName,
+            cvs_address=CVSAddress,
+        )
+
+        if not new_record:
+            raise HTTPException(
+                status_code=500, detail="Failed to create store selection record"
+            )
+
+        # 返回 HTML，讓前端執行關閉分頁操作
+        html_content = f"""
+        <html>
+            <body>
+                <script>
+                    // 關閉分頁
+                    window.close();
+                </script>
+                <p>Store selection processed successfully. This page will close automatically.</p>
+            </body>
+        </html>
+        """
+        return HTMLResponse(content=html_content)
+    except Exception as e:
+        raise HTTPException(
+            status_code=400, detail=f"Error processing store selection: {str(e)}"
+        )
+
+# 前端頁面詢問使用者選了哪家超商
+@router.get("/store_selection/{merchant_trade_no}")
+async def get_store_selection(merchant_trade_no: str, db: Session = Depends(get_db)):
+    """
+    根據 merchant_trade_no 查詢超商選擇記錄
+    """
+    record = store_selection_db.get_store_selection_by_trade_no(db, merchant_trade_no)
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Store selection record not found")
+
+    return {
+        "merchant_trade_no": record.merchant_trade_no,
+        "logistics_sub_type": record.logistics_sub_type,
+        "cvs_store_id": record.cvs_store_id,
+        "cvs_store_name": record.cvs_store_name,
+        "cvs_address": record.cvs_address,
+    }
+
+#接收物流商回傳的物流狀態
+@router.post("/store_logistic_order")
+async def received_logistic_response():
+    """
+    ## 物流代號對應表 ##
+    
+    商品已送至物流中心
+    7-ELEVEN C2C - 2030
+    全家 C2C - 3024
+    
+    商品已送達門市
+    7-ELEVEN C2C - 2073
+    全家 C2C - 3018
+    
+    消費者成功取件
+    7-ELEVEN C2C - 2067
+    全家 C2C - 3022
+    
+    消費者七天未取件
+    7-ELEVEN C2C - 2074
+    全家 C2C - 3020
+    """
+    
+    
