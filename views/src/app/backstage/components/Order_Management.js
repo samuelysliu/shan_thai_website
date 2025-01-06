@@ -1,3 +1,4 @@
+// src/app/components/Order_Management.js
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -193,10 +194,10 @@ export default function OrderManagement() {
             <Col md={4}>
               <Form.Select value={filter} onChange={handleFilterChange}>
                 <option value="all">所有狀態</option>
-                <option value="待匯款">待匯款</option>
                 <option value="待確認">待確認</option>
                 <option value="待出貨">待出貨</option>
                 <option value="已出貨">已出貨</option>
+                <option value="已完成">已完成</option>
                 <option value="已取消">已取消</option>
               </Form.Select>
             </Col>
@@ -211,15 +212,11 @@ export default function OrderManagement() {
                   <th>總金額</th>
                   <th>優惠價</th>
                   <th>收件人姓名</th>
-                  <th>電話</th>
-                  <th>地址</th>
-                  <th>Email</th>
                   <th>運輸方式</th>
-                  <th>備註</th>
                   <th>狀態</th>
                   <th>成立時間</th>
                   <th>展開</th>
-                  <th>操作</th>
+                  <th>編輯</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,14 +227,10 @@ export default function OrderManagement() {
                       <td>NT. {order.totalAmount}</td>
                       <td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無優惠價"}</td>
                       <td>{order.recipientName}</td>
-                      <td>{order.recipientPhone}</td>
-                      <td>{order.address}</td>
-                      <td>{order.recipientEmail}</td>
                       <td>{
                         order.transportationMethod == "delivery" ? "宅配"
                           : (order.transportationMethod == "seven" ? "Seven 自取" : "全家自取")
                       }</td>
-                      <td>{order.orderNote || "無"}</td>
                       <td>{order.status}</td>
                       <td>{order.created_at}</td>
                       <td>

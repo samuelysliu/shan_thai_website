@@ -260,38 +260,6 @@ a {
   font-size: 0.9rem;
 }
 
-
-/* 以下是後臺管理系統的樣式 */
-
-/* 側邊欄樣式 */
-.sidebar {
-  background-color: var(--primary-color);
-  color: var(--light-text-color);
-}
-
-.sidebar ul li button {
-  color: var(--light-text-color);
-}
-
-.sidebar ul li button:hover {
-  color: var(--light-hover-color);
-}
-
-/* 表格樣式 */
-.table thead {
-  background-color: var(--primary-color);
-  color: var(--light-text-color);
-}
-
-.table tbody tr:hover {
-  background-color: var(--light-hover-color);
-}
-
-.table td,
-.table th {
-  border-color: var(--border-color);
-}
-
 /* FAQ 頁面樣式 */
 
 .accordion-item {

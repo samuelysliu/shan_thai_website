@@ -20,6 +20,7 @@ const OrderConfirm = () => {
     const [recipientPhone, setRecipientPhone] = useState(userInfo.phone);
     const [recipientEmail, setRecipientEmail] = useState(userInfo.email);
     const [address, setAddress] = useState(userInfo.address);
+    const [storeId, setStoreId] = useState("");
     const [transportationMethod, setTransportationMethod] = useState("delivery");
     const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
     const [orderNote, setOrderNote] = useState("");
@@ -77,11 +78,17 @@ const OrderConfirm = () => {
 
             const totalAmount = orderDetails.reduce((sum, item) => sum + item.subtotal, 0);
 
+            let postAddress = ""
+            if (transportationMethod === "delivery")
+                postAddress = address
+            else postAddress = storeId
+
+
             // 組合訂單資料
             const orderData = {
                 uid: userInfo.uid,
                 totalAmount: totalAmount,
-                address: address,
+                address: postAddress,
                 recipientName: recipientName,
                 recipientPhone: recipientPhone,
                 recipientEmail: recipientEmail,
@@ -172,7 +179,7 @@ const OrderConfirm = () => {
             LogisticsType: "CVS", // 物流類型
             LogisticsSubType: logisticsSubType, // 物流子類型，FAMIC2C：全家店到店；UNIMARTC2C：7-ELEVEN超商交貨便；HILIFEC2C：萊爾富店到店；OKMARTC2C：OK超商店到店
             IsCollection: paymentMethod === "貨到付款" ? "Y" : "N", // 是否代收貨款，N：不代收貨款; Y：代收貨款
-            ServerReplyURL: `${endpoint}/frontstage/v1/store_selection`, // 使用當前頁面的回調
+            ServerReplyURL: `${endpoint}/frontstage/v1/store_selection`,
             Device: userDevice === "mobile" ? 1 : 0
         };
 
@@ -200,6 +207,7 @@ const OrderConfirm = () => {
         form.submit();
         document.body.removeChild(form); // 提交後刪除表單
 
+        setAddress("等待選擇中...");
         // 定期檢查分頁是否被關閉
         const checkWindowClosed = setInterval(() => {
             if (popupWindow.closed) {
@@ -207,7 +215,7 @@ const OrderConfirm = () => {
                 console.log("分頁已關閉，開始獲取門市資訊...");
                 getStoreData(); // 呼叫後端 API
             }
-        }, 500);
+        }, 3000);
 
     }
 
@@ -218,6 +226,7 @@ const OrderConfirm = () => {
             getStoreMap("UNIMARTC2C")
         else if (transport === "family")
             getStoreMap("FAMIC2C")
+        else setAddress("");
     }
 
     // 跟後端要使用者選擇的超商資訊
@@ -225,6 +234,7 @@ const OrderConfirm = () => {
         try {
             const response = await axios.get(`${endpoint}/frontstage/v1/store_selection/${merchantTradeNo}`);
             setAddress(response.data.cvs_store_name);
+            setStoreId(response.data.cvs_store_id)
         } catch (err) {
             console.error(err);
         }
@@ -312,7 +322,7 @@ const OrderConfirm = () => {
                             value={transportationMethod}
                             onChange={(e) => transportationLogic(e.target.value)}
                         >
-                            <option value="delivery">宅配</option>
+                            <option value="delivery">宅配(中華郵政)</option>
                             <option value="seven">Seven 自取</option>
                             <option value="family">Family 自取</option>
                         </Form.Select>
@@ -337,19 +347,12 @@ const OrderConfirm = () => {
                         >
                             <option value="匯款">匯款</option>
                             <option value="信用卡">信用卡</option>
-                            <option value="貨到付款">貨到付款</option>
+                            {
+                                transportationMethod !== "delivery"
+                                    ? <option value="貨到付款">貨到付款</option>
+                                    : ""
+                            }
                         </Form.Select>
-                    </Form.Group>
-
-                    <Form.Group controlId="formNote" className="mb-3">
-                        <Form.Label>訂單備註</Form.Label>
-                        <Form.Control
-                            as="textarea"
-                            rows={3}
-                            placeholder="請輸入訂單備註（選填）"
-                            value={orderNote}
-                            onChange={(e) => setOrderNote(e.target.value)}
-                        />
                     </Form.Group>
                 </Col>
 

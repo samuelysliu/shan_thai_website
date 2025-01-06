@@ -22,3 +22,79 @@
   color: blue;
   text-decoration: underline;
 }
+
+/* 後臺側欄樣式 */
+
+.sidebar {
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+  min-height: 100vh;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 60px; /* 收束後的寬度 */
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.sidebar-header h4 {
+  margin: 0;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar ul li {
+  padding: 0.5rem 1rem;
+}
+
+.sidebar.collapsed ul {
+  display: none; /* 隱藏選單內容 */
+}
+
+.sidebar button {
+  color: var(--light-text-color);
+  text-decoration: none;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.sidebar button:hover {
+  text-decoration: underline;
+}
+
+.toggle-btn {
+  color: var(--light-text-color);
+  font-size: 1.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+
+
+
+/* 表格樣式 */
+.table thead {
+  background-color: var(--primary-color);
+  color: var(--light-text-color);
+}
+
+.table tbody tr:hover {
+  background-color: var(--light-hover-color);
+}
+
+.table td,
+.table th {
+  border-color: var(--border-color);
+}

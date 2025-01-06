@@ -1,3 +1,5 @@
+import config from "../config";
+
 // 生成英數字混合長度為10的字串
 export const generateRandomString = (length = 10) => {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
