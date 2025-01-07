@@ -28,6 +28,24 @@ const storeMapEndpoint = {
   local: "https://logistics-stage.ecpay.com.tw/Express/map"
 }
 
+const sevenPrintEndpoint = {
+  production: "https://logistics.ecpay.com.tw/Express/PrintUniMartC2COrderInfo",
+  uat: "https://logistics-stage.ecpay.com.tw/Express/PrintUniMartC2COrderInfo",
+  local: "https://logistics-stage.ecpay.com.tw/Express/PrintUniMartC2COrderInfo"
+}
+
+const familyPrintEndpoint = {
+  production: "https://logistics.ecpay.com.tw/Express/PrintFAMIC2COrderInfo",
+  uat: "https://logistics-stage.ecpay.com.tw/Express/PrintFAMIC2COrderInfo",
+  local: "https://logistics-stage.ecpay.com.tw/Express/PrintFAMIC2COrderInfo"
+}
+
+const deliveryPrintEndpoint = {
+  production: "https://logistics.ecpay.com.tw/helper/printTradeDocument",
+  uat: "https://logistics-stage.ecpay.com.tw/helper/printTradeDocument",
+  local: "https://logistics-stage.ecpay.com.tw/helper/printTradeDocument"
+}
+
 const merchantId = {
   production: "",
   uat: "3002599",
@@ -46,6 +64,17 @@ const hashIv = {
   local: "hT5OJckN45isQTTs"
 }
 
+const logisticHashKey = {
+  production: "",
+  uat: "XBERn1YOvpM9nfZc",
+  local: "XBERn1YOvpM9nfZc"
+}
+
+const logisticHashIv = {
+  production: "",
+  uat: "h1ONHk4P4yqbl5LK",
+  local: "h1ONHk4P4yqbl5LK"
+}
 
 const config = {
   apiBaseUrl: api_url[process.env.NEXT_PUBLIC_ENV],
@@ -56,5 +85,10 @@ const config = {
   hashKey: hashKey[process.env.NEXT_PUBLIC_ENV],
   hashIv: hashIv[process.env.NEXT_PUBLIC_ENV],
   storeMapEndpoint: storeMapEndpoint[process.env.NEXT_PUBLIC_ENV],
+  sevenPrintEndpoint: sevenPrintEndpoint[process.env.NEXT_PUBLIC_ENV],
+  familyPrintEndpoint: familyPrintEndpoint[process.env.NEXT_PUBLIC_ENV],
+  deliveryPrintEndpoint: deliveryPrintEndpoint[process.env.NEXT_PUBLIC_ENV],
+  logisticHashKey: logisticHashKey[process.env.NEXT_PUBLIC_ENV],
+  logisticHashIv: logisticHashIv[process.env.NEXT_PUBLIC_ENV]
 };
 export default config;

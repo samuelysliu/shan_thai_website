@@ -23,7 +23,6 @@ const OrderConfirm = () => {
     const [storeId, setStoreId] = useState("");
     const [transportationMethod, setTransportationMethod] = useState("delivery");
     const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
-    const [orderNote, setOrderNote] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [merchantTradeNo, setMerchantTradeNo] = useState("");
     const endpoint = config.apiBaseUrl;
@@ -94,7 +93,7 @@ const OrderConfirm = () => {
                 recipientEmail: recipientEmail,
                 transportationMethod,
                 paymentMethod, // 付款方式
-                orderNote: orderNote,
+                orderNote: "",
                 order_details: orderDetails,
             };
 
@@ -144,7 +143,6 @@ const OrderConfirm = () => {
 
         // 添加 CheckMacValue 到表單數據
         params.CheckMacValue = CheckMacValue;
-        console.log(params)
 
         const cashFlowEndpoint = config.cashFlowEndpoint
 
@@ -171,15 +169,16 @@ const OrderConfirm = () => {
 
     // 取得超商地圖
     const getStoreMap = (logisticsSubType) => {
-        setMerchantTradeNo(generateRandomString());
+        const randomString = generateRandomString();
+        setMerchantTradeNo(randomString);
 
         const params = {
             MerchantID: config.merchantId, // 特店編號
-            MerchantTradeNo: merchantTradeNo, // 特店交易編號
+            MerchantTradeNo: randomString, // 特店交易編號
             LogisticsType: "CVS", // 物流類型
             LogisticsSubType: logisticsSubType, // 物流子類型，FAMIC2C：全家店到店；UNIMARTC2C：7-ELEVEN超商交貨便；HILIFEC2C：萊爾富店到店；OKMARTC2C：OK超商店到店
             IsCollection: paymentMethod === "貨到付款" ? "Y" : "N", // 是否代收貨款，N：不代收貨款; Y：代收貨款
-            ServerReplyURL: `${endpoint}/frontstage/v1/store_selection`,
+            ServerReplyURL: `${endpoint}/frontstage/v1/store_callback`,
             Device: userDevice === "mobile" ? 1 : 0
         };
 
@@ -213,9 +212,9 @@ const OrderConfirm = () => {
             if (popupWindow.closed) {
                 clearInterval(checkWindowClosed); // 停止檢查
                 console.log("分頁已關閉，開始獲取門市資訊...");
-                getStoreData(); // 呼叫後端 API
+                getStoreData(randomString); // 呼叫後端 API
             }
-        }, 3000);
+        }, 5000);
 
     }
 
@@ -230,9 +229,9 @@ const OrderConfirm = () => {
     }
 
     // 跟後端要使用者選擇的超商資訊
-    const getStoreData = async () => {
+    const getStoreData = async (tradeNo) => {
         try {
-            const response = await axios.get(`${endpoint}/frontstage/v1/store_selection/${merchantTradeNo}`);
+            const response = await axios.get(`${endpoint}/frontstage/v1/store_selection/${tradeNo}`);
             setAddress(response.data.cvs_store_name);
             setStoreId(response.data.cvs_store_id)
         } catch (err) {
@@ -348,7 +347,7 @@ const OrderConfirm = () => {
                             <option value="匯款">匯款</option>
                             <option value="信用卡">信用卡</option>
                             {
-                                transportationMethod !== "delivery"
+                                (transportationMethod !== "delivery" && calculateTotal() <= 20000)
                                     ? <option value="貨到付款">貨到付款</option>
                                     : ""
                             }
@@ -366,6 +365,7 @@ const OrderConfirm = () => {
                     >
                         {isSubmitting ? "提交中..." : "確認購買"}
                     </Button>
+                    <p>提醒您，因應物流公司規定，選擇宅配或是總金額超過兩萬塊，無法貨到付款，造成您的不便，敬請見諒！</p>
                 </Col>
             </Row>
 

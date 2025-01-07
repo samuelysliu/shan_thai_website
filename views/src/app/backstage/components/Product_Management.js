@@ -6,6 +6,7 @@ import { Container, Row, Col, Table, Button, Form, InputGroup, Modal } from "rea
 import Sidebar from "./Sidebar";
 import AddTagModal from "./Add_Tag_Modal";
 import config from "../../config";
+import TextEditor from "./Text_Editor";
 
 import { useSelector, useDispatch } from 'react-redux';
 import { showToast } from "@/app/redux/slices/toastSlice";
@@ -367,15 +368,13 @@ export default function ProductManagement() {
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>產品說明</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={3}
+                            <TextEditor
                                 value={currentProduct.content_cn}
-                                name="content_cn"
-                                onChange={(e) =>
-                                    setCurrentProduct({ ...currentProduct, content_cn: e.target.value })
+                                onChange={(content) =>
+                                    setCurrentProduct({ ...currentProduct, content_cn: content })
                                 }
                             />
+                            
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>價格</Form.Label>

@@ -1,11 +1,9 @@
 from logging.config import fileConfig
 from modules.dbConnect import engine, Base
+import modules.dbInit
 from alembic import context
 
 config = context.config
-
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
@@ -26,12 +24,6 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
     connectable = engine
     with connectable.connect() as connection:
         context.configure(

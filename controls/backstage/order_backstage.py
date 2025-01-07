@@ -1,11 +1,15 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Form
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import modules.order_crud as order_db
 import modules.product_crud as product_db
+import modules.logistics_order_crud as logistics_order_db
 import modules.dbConnect as db_connect
 from controls.tools import format_to_utc8 as timeformat
 from controls.tools import verify_token, adminAutorizationCheck
+from controls.logistic import create_checkMacValue
+import controls.logistic as logistic
+from datetime import datetime
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -217,3 +221,135 @@ async def delete_order(
     if not success:
         raise HTTPException(status_code=404, detail="Order not found")
     return {"detail": "Order deleted successfully"}
+
+
+# 接收物流商回傳的物流狀態
+@router.post("/logistics_callback")
+async def received_logistic_response(
+    MerchantID: str = Form(...),  # 廠商編號
+    MerchantTradeNo: str = Form(...),  # 廠商交易編號
+    RtnCode: int = Form(...),  # 物流狀態
+    RtnMsg: str = Form(...),  # 物流狀態說明
+    AllPayLogisticsID: str = Form(...),  # 綠界物流交易編號
+    LogisticsType: str = Form(None),  # 物流類型
+    LogisticsSubType: str = Form(None),  # 物流子類型
+    GoodsAmount: int = Form(None),  # 商品金額
+    UpdateStatusDate: str = Form(None),  # 物流狀態更新時間
+    ReceiverName: str = Form(None),  # 收件人姓名
+    ReceiverCellPhone: str = Form(None),  # 收件人手機
+    ReceiverEmail: str = Form(None),  # 收件人 Email
+    ReceiverAddress: str = Form(None),  # 收件人地址
+    CVSPaymentNo: str = Form(None),  # 寄貨編號
+    CVSValidationNo: str = Form(None),  # 驗證碼
+    BookingNote: str = Form(None),  # 托運單號
+    CheckMacValue: str = Form(...),  # 檢查碼
+    db: Session = Depends(get_db),
+):
+    """
+    ## 物流代號對應表 ##
+
+    商品已送至物流中心
+    7-ELEVEN C2C - 2030
+    全家 C2C - 3024
+
+    商品已送達門市
+    7-ELEVEN C2C - 2073
+    全家 C2C - 3018
+
+    消費者成功取件
+    7-ELEVEN C2C - 2067
+    全家 C2C - 3022
+
+    消費者七天未取件
+    7-ELEVEN C2C - 2074
+    全家 C2C - 3020
+    """
+    # 整理回傳的參數
+    form_data = {
+        "MerchantID": MerchantID,
+        "MerchantTradeNo": MerchantTradeNo,
+        "RtnCode": RtnCode,
+        "RtnMsg": RtnMsg,
+        "AllPayLogisticsID": AllPayLogisticsID,
+        "LogisticsType": LogisticsType,
+        "LogisticsSubType": LogisticsSubType,
+        "GoodsAmount": GoodsAmount,
+        "UpdateStatusDate": UpdateStatusDate,
+        "ReceiverName": ReceiverName,
+        "ReceiverCellPhone": ReceiverCellPhone,
+        "ReceiverEmail": ReceiverEmail,
+        "ReceiverAddress": ReceiverAddress,
+        "CVSPaymentNo": CVSPaymentNo,
+        "CVSValidationNo": CVSValidationNo,
+        "BookingNote": BookingNote,
+    }
+
+    # 檢查 CheckMacValue 是否正確
+    calculated_mac = create_checkMacValue(form_data)
+    if calculated_mac != CheckMacValue:
+        raise HTTPException(status_code=400, detail="Invalid CheckMacValue")
+
+    # 轉換 UpdateStatusDate 格式
+    try:
+        if UpdateStatusDate:
+            form_data["UpdateStatusDate"] = datetime.strptime(
+                UpdateStatusDate, "%Y/%m/%d %H:%M:%S"
+            )
+    except ValueError:
+        form_data["UpdateStatusDate"] = None
+
+    # 儲存資料至資料庫
+    try:
+        logistic_record = logistics_order_db.get_logistics_order_by_trade_no(
+            db=db, merchant_trade_no=MerchantTradeNo
+        )
+        if not logistic_record:
+            new_record = logistics_order_db.create_logistics_order(
+                db=db,
+                merchant_trade_no=MerchantTradeNo,
+                rtn_code=RtnCode,
+                rtn_msg=RtnMsg,
+                allpay_logistics_id=AllPayLogisticsID,
+                logistics_type=LogisticsType,
+                logistics_sub_type=LogisticsSubType,
+                goods_amount=GoodsAmount,
+                update_status_date=form_data["UpdateStatusDate"],
+                receiver_name=ReceiverName,
+                receiver_cell_phone=ReceiverCellPhone,
+                receiver_email=ReceiverEmail,
+                receiver_address=ReceiverAddress,
+                cvs_payment_no=CVSPaymentNo,
+                cvs_validation_no=CVSValidationNo,
+                booking_note=BookingNote,
+            )
+        else:
+            updates = {"RtnCode": RtnCode, "RtnMsg": RtnMsg}
+            new_record = logistics_order_db.update_logistics_order_by_trade_no(
+                db=db, merchant_trade_no=MerchantTradeNo, updates=updates
+            )
+            
+        if not new_record:
+            raise HTTPException(
+                status_code=500, detail="Failed to save logistics order"
+            )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    return "1|OK"
+
+# 回傳託運單所需資料
+@router.get("/logistic_print/{oid}")
+async def get_logistic_order(oid: str, token_data: dict = Depends(verify_token), db: Session = Depends(get_db),):
+    # 確認是否是管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+    
+    logistic_order = logistics_order_db.get_logistics_order_by_trade_no(db=db, merchant_trade_no=oid)
+    response_dict = {
+        "MerchantID": logistic.merchant_id,
+        "AllPayLogisticsID": logistic_order.allpay_logistics_id,
+        "CVSPaymentNo": logistic_order.cvs_payment_no,
+        "CVSValidationNo": logistic_order.cvs_validation_no
+    }
+    response_dict["CheckMacValue"] = create_checkMacValue(response_dict)
+    
+    return response_dict

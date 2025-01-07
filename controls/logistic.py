@@ -13,25 +13,13 @@ environment = os.getenv("ENVIRONMENT")
 endpoint = os.getenv("WEBSITE_URL")
 
 if environment == "production":
-    temp_logistic_endpoint = (
-        "https://logistics.ecpay.com.tw/Express/v2/RedirectToLogisticsSelection"
-    )
-    formal_logistic_endpoint = (
-        "https://logistics.ecpay.com.tw/Express/v2/CreateByTempTrade"
-    )
-    store_logistic_endpoint = "https://logistics.ecpay.com.tw/Express/Create"
+    logistic_endpoint = "https://logistics.ecpay.com.tw/Express/Create"
     merchant_id = "2000933"
     hash_key = "XBERn1YOvpM9nfZc"
     hash_iv = "h1ONHk4P4yqbl5LK"
     server_url = ""
 else:
-    temp_logistic_endpoint = (
-        "https://logistics-stage.ecpay.com.tw/Express/v2/RedirectToLogisticsSelection"
-    )
-    formal_logistic_endpoint = (
-        "https://logistics-stage.ecpay.com.tw/Express/v2/CreateByTempTrade"
-    )
-    store_logistic_endpoint = "https://logistics-stage.ecpay.com.tw/Express/Create"
+    logistic_endpoint = "https://logistics-stage.ecpay.com.tw/Express/Create"
     merchant_id = "2000933"
     hash_key = "XBERn1YOvpM9nfZc"
     hash_iv = "h1ONHk4P4yqbl5LK"
@@ -56,7 +44,7 @@ def create_checkMacValue(params: dict):
     # 5. 將加密結果轉為大寫
     return hashed_value.upper()
 
-
+# 建立超商領貨的物流單
 def create_store_logistic_order(
     oid: str,
     trade_date: str,
@@ -93,7 +81,7 @@ def create_store_logistic_order(
         "MerchantID": merchant_id,
         "MerchantTradeNo": oid,  # 廠商交易編號
         "MerchantTradeDate": trade_date,  # 廠商交易時間
-        "LogisticsType": "CSV",  # 物流類型，CVS：超商取貨
+        "LogisticsType": "CVS",  # 物流類型，CVS：超商取貨
         "LogisticsSubType": logisticsSubType,  # 物流子類型，FAMIC2C：全家店到店；UNIMARTC2C：7-ELEVEN超商交貨便
         "GoodsAmount": order_amount,  # 商品金額
         "CollectionAmount": collect_amount,  # 代收金額
@@ -104,16 +92,15 @@ def create_store_logistic_order(
         "ReceiverName": user_name,  # 收件人姓名
         "ReceiverCellPhone": user_phone,  # 收件人手機
         "ReceiverEmail": user_email,  # 收件人email
-        "ServerReplyURL": f"{endpoint}/frontstage/v1/store_logistic_order",  # Server端回覆網址
+        "ServerReplyURL": f"{endpoint}/backstage/v1/logistics_callback",  # Server端回覆網址
         "ReceiverStoreID": store_id,  # 收件人門市代號
     }
 
-    form_data["CheckMacValu"] = create_checkMacValue(form_data)
-
+    form_data["CheckMacValue"] = create_checkMacValue(form_data)
     db = db_connect.SessionLocal()
     try:
         # 發送 POST 請求至物流商 API
-        response = requests.post(store_logistic_endpoint, data=form_data)
+        response = requests.post(logistic_endpoint, data=form_data)
         response_content = response.text
 
         if response_content.startswith("1|"):
@@ -156,69 +143,72 @@ def create_store_logistic_order(
         print(f"An error occurred: {str(e)}")
         return "failed"
 
-
-def create_temp_logistic_order(
+# 建立宅配的物流單
+def create_home_logistic_order(
+    oid: str,
+    trade_date: str,
     order_amount: int,
-    is_collection: str,
     product: str,
-    remark: str,
-    user_phone: str,
+    product_weight: int,
     user_name: str,
-):
-    if order_amount > 20000:
-        order_amount = 20000
-    elif order_amount < 1:
-        order_amount = 1
-
-    MerchantID = merchant_id  # 特店編號
-    RqHeader = {
-        "Timestamp": get_now_time(
-            "unix"
-        )  # 為時間戳(GMT+8)，綠界會利用此參數將當下的時間轉為Unix TimeStamp來驗證此次介接的時間區間
-    }
-    Data = {
-        "TempLogisticsID": 0,  # 新建暫存物流訂單時，此參數請帶0
-        "GoodsAmount": order_amount,  # 商品金額範圍為1~20000元
-        "IsCollection": is_collection,  # 是否代收貨款，N：不代收貨款，為預設值。Y：代收貨款，帶入Y則物流選擇頁將不會出現宅配選項。
+    user_phone:str,
+    zip_code: str,
+    address: str,
+    user_email:str,
+):  
+    form_data = {
+        "MerchantID": merchant_id,
+        "MerchantTradeNo": oid,  # 廠商交易編號
+        "MerchantTradeDate": trade_date,  # 廠商交易時間
+        "LogisticsType": "HOME",  # 物流類型，CVS：超商取貨； HOME:宅配
+        "LogisticsSubType": "POST",  # 物流子類型，TCAT:黑貓；POST:中華郵政
+        "GoodsAmount": order_amount,  # 商品金額
         "GoodsName": product,  # 商品名稱
-        "SenderName": "康敬豪",
-        "SenderZipCode": "242",
-        "SenderAddress": "新北市新莊區龍安路487巷2弄7號4樓",
-        "Remark": remark,  # 備註
-        "ServerReplyURL": "",  # Server端回覆網址
-        "ClientReplyURL": "",  # Client端回覆網址
-        "Specification": "",  # 規格，0001: 60cm (預設值)；0002: 90cm；0003: 120cm；0004: 150cm
-        "ScheduledPickupTime": "4",  # 預定取件時段
-        "ReceiverCellPhone": user_phone,
-        "ReceiverName": user_name,
+        "GoodsWeight": product_weight,
+        "SenderName": "康敬豪",  # 寄件人姓名
+        "SenderCellPhone": "0965105947",  # 寄件人手機
+        "SenderZipCode": "242",  # 寄件人郵遞區號
+        "SenderAddress": "新北市新莊區龍安路487巷2弄7號4樓",   #寄件人地址
+        "ReceiverName": user_name,  # 收件人姓名
+        "ReceiverCellPhone": user_phone,  # 收件人手機
+        "ReceiverZipCode": zip_code,    # 收件人郵遞區號
+        "ReceiverAddress": address, # 收件人地址
+        "ReceiverEmail": user_email,    # 收件人email,
+        "Temperature": "0001",
+        "ServerReplyURL": f"{endpoint}/backstage/v1/logistics_callback",  # Server端回覆網址
     }
 
-    json_data = {"MerchantID": MerchantID, "RqHeader": RqHeader, "Data": Data}
+    form_data["CheckMacValu"] = create_checkMacValue(form_data)
 
-    response = requests.post(url=temp_logistic_endpoint, json=json_data)
-    response = response.json()
+    db = db_connect.SessionLocal()
+    try:
+        # 發送 POST 請求至物流商 API
+        response = requests.post(logistic_endpoint, data=form_data)
+        response_content = response.text
 
-    if response["ResultData"]["Data"]["RtnCode"] == 1:
-        return True
-    else:
-        return False
+        if response_content.startswith("1|"):
+            # 處理正確的回應
+            _, data_string = response_content.split("|", 1)
+            response_data = dict(item.split("=") for item in data_string.split("&"))
 
+            # 儲存物流訂單記錄
+            new_record = logistics_order_db.create_logistics_order(
+                db=db,
+                
+            )
 
-def create_formal_logistic_order(TempLogisticsID: str, order_id: str):
-    MerchantID = merchant_id  # 特店編號
-    RqHeader = {
-        "Timestamp": get_now_time(
-            "unix"
-        )  # 為時間戳(GMT+8)，綠界會利用此參數將當下的時間轉為Unix TimeStamp來驗證此次介接的時間區間
-    }
-    Data = {"TempLogisticsID": TempLogisticsID, "MerchantTradeNo": order_id}
+            if not new_record:
+                return "failed"
 
-    json_data = {"MerchantID": MerchantID, "RqHeader": RqHeader, "Data": Data}
+            return "success"
 
-    response = requests.post(url=formal_logistic_endpoint, json=json_data)
-    response = response.json()
+        else:
+            # 處理錯誤的回應
+            error_message = response_content.split("|", 1)[1]
+            print(f"Logistics API error: {error_message}")
+            return "failed"
 
-    if response["Data"]["RtnCode"] == 1:
-        return True
-    else:
-        return False
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return "failed"
+    

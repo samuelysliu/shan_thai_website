@@ -10,6 +10,8 @@ import config from "../../config";
 
 import { useSelector } from 'react-redux';
 
+import { createLogisticCheckMacValue } from "../../components/Tools";
+
 export default function OrderManagement() {
   const endpoint = config.apiBaseUrl;
 
@@ -175,6 +177,74 @@ export default function OrderManagement() {
     );
   });
 
+  // 列印託運單功能
+  const printLogistic = async (order) => {
+    const logisticOrder = await axios.get(`${endpoint}/backstage/v1/logistic_print/${order.oid}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      }
+    });
+
+    let params = {};
+    let printEndpoint = ""
+
+    // 處理 seven 的託運單
+    if (order.transportationMethod === "seven") {
+      params = {
+        MerchantID: logisticOrder.data.MerchantID, // 特店編號
+        AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
+        CVSPaymentNo: logisticOrder.data.CVSPaymentNo, // 寄貨編號
+        CVSValidationNo: logisticOrder.data.CVSValidationNo // 驗證碼
+      };
+
+      printEndpoint = config.sevenPrintEndpoint;
+
+    } else if (order.transportationMethod === "family") { // 處理 family 的托運單
+      params = {
+        MerchantID: logisticOrder.data.MerchantID, // 特店編號
+        AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
+        CVSPaymentNo: logisticOrder.data.CVSPaymentNo, // 寄貨編號
+      };
+
+      printEndpoint = config.familyPrintEndpoint;
+
+    } else {
+      params = {
+        MerchantID: logisticOrder.data.MerchantID, // 特店編號
+        AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
+        PrintMode: 1  //列印模式， 1：使用一般模式(A4 大小)；2：使用熱感應標籤機模式(A6 大小)
+      };
+
+      printEndpoint = config.deliveryPrintEndpoint;
+
+    }
+    const CheckMacValue = createLogisticCheckMacValue(params)
+    // 添加 CheckMacValue 到表單數據
+    params.CheckMacValue = CheckMacValue;
+    console.log(params)
+
+    const popupWindow = window.open("", "printWindow", "width=800,height=600,scrollbars=no,resizable=no");
+    // 建立隱藏的表單
+    const form = document.createElement("form");
+    form.method = "POST";
+    form.action = printEndpoint;
+    form.target = "printWindow";
+
+    // 將參數加入表單
+    Object.entries(params).forEach(([key, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    // 提交表單
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form); // 提交後刪除表單
+  }
+
   return (
     <Container fluid>
       <Row>
@@ -213,10 +283,12 @@ export default function OrderManagement() {
                   <th>優惠價</th>
                   <th>收件人姓名</th>
                   <th>運輸方式</th>
+                  <th>付款方式</th>
                   <th>狀態</th>
                   <th>成立時間</th>
                   <th>展開</th>
                   <th>編輯</th>
+                  <th>出貨單</th>
                 </tr>
               </thead>
               <tbody>
@@ -225,12 +297,13 @@ export default function OrderManagement() {
                     <tr>
                       <td>{order.oid}</td>
                       <td>NT. {order.totalAmount}</td>
-                      <td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無優惠價"}</td>
+                      <td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無"}</td>
                       <td>{order.recipientName}</td>
                       <td>{
                         order.transportationMethod == "delivery" ? "宅配"
                           : (order.transportationMethod == "seven" ? "Seven 自取" : "全家自取")
                       }</td>
+                      <td>{order.paymentMethod}</td>
                       <td>{order.status}</td>
                       <td>{order.created_at}</td>
                       <td>
@@ -254,6 +327,19 @@ export default function OrderManagement() {
                         >
                           編輯
                         </Button>
+                      </td>
+                      <td>
+                        {
+                          order.status === "待出貨"
+                            ? <Button
+                              variant="link"
+                              style={{ color: "var(--accent-color)" }}
+                              onClick={() => printLogistic(order)}
+                            >
+                              列印
+                            </Button>
+                            : ""}
+
                       </td>
                     </tr>
 

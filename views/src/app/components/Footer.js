@@ -20,7 +20,7 @@ export default function Footer() {
         </Col>
         <Col xs={12} sm={6} md={4} className="footer-col">
           <h5>聯絡我們</h5>
-          <a href="https://line.me/ti/p/CLPegVk16k" target="_blank" rel="noopener noreferrer">
+          <a href="https://lin.ee/iAjM92l" target="_blank" rel="noopener noreferrer">
             <Image
               src="/line_icon.svg" // 確保圖片位於 public 資料夾內
               alt="Line Icon"
@@ -28,7 +28,7 @@ export default function Footer() {
               height={20}
               className="me-2"
             />
-            加入 Line 群
+            加官方 Line
           </a>
           <br />
           <a href="mailto:shanthaiteam@gmail.com" target="_blank" rel="noopener noreferrer">

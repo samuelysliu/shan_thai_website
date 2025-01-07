@@ -40,6 +40,34 @@ export const createCheckMacValue = (params) => {
     return hashedValue.toUpperCase();
 };
 
+// 生成物流商需要的 CheckMacValue 函數
+export const createLogisticCheckMacValue = (params) => {
+    const hashKey = config.logisticHashKey;
+    const hashIv = config.logisticHashIv;
+
+    // 1. 將傳入的參數按字母順序排序
+    const sortedParams = Object.keys(params)
+        .sort()
+        .map((key) => `${key}=${params[key]}`)
+        .join("&");
+
+    // 2. 在參數前后添加 HashKey 和 HashIV
+    const toEncode = `HashKey=${hashKey}&${sortedParams}&HashIV=${hashIv}`;
+
+    // 3. URL Encode 並替換空格為 '+'
+    const urlEncodedString = encodeURIComponent(toEncode)
+        .replace(/%20/g, "+")
+        .toLowerCase();
+
+    // 4. 使用 SHA256 進行加密
+    const crypto = require("crypto");
+    const hash = crypto.createHash("md5");
+    hash.update(urlEncodedString);
+    const hashedValue = hash.digest("hex");
+
+    // 5. 將加密結果轉為大寫
+    return hashedValue.toUpperCase();
+};
 
 // 取得使用者裝置類型
 export const userDevice = () => {
