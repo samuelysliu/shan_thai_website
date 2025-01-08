@@ -197,7 +197,7 @@ async def create_user_order(
 # **取消訂單**
 @router.delete("/orders/{oid}")
 async def cancel_user_order(
-    oid: int,
+    oid: str,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
@@ -245,7 +245,7 @@ async def cancel_user_order(
 # 更新訂單
 @router.put("/orders/{oid}")
 async def update_order_status(
-    oid: int,
+    oid: str,
     order: OrderUpdate,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),

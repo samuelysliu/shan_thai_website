@@ -280,7 +280,6 @@ export default function OrderManagement() {
                 <tr>
                   <th>訂單編號</th>
                   <th>總金額</th>
-                  <th>優惠價</th>
                   <th>收件人姓名</th>
                   <th>運輸方式</th>
                   <th>付款方式</th>
@@ -297,7 +296,7 @@ export default function OrderManagement() {
                     <tr>
                       <td>{order.oid}</td>
                       <td>NT. {order.totalAmount}</td>
-                      <td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無"}</td>
+                      {/*<td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無"}</td>*/}
                       <td>{order.recipientName}</td>
                       <td>{
                         order.transportationMethod == "delivery" ? "宅配"
@@ -457,7 +456,7 @@ export default function OrderManagement() {
               </Form.Select>
             </Form.Group>
 
-            {/* 優惠價功能 */}
+            {/* 優惠價功能 
             <Form.Group className="mb-3">
               <Form.Check
                 type="checkbox"
@@ -484,6 +483,7 @@ export default function OrderManagement() {
                 />
               )}
             </Form.Group>
+            */}
 
             <Form.Group className="mb-3">
               <Form.Label>備註</Form.Label>
@@ -510,10 +510,10 @@ export default function OrderManagement() {
                   })
                 }
               >
-                <option value="待匯款">待匯款</option>
                 <option value="待確認">待確認</option>
                 <option value="待出貨">待出貨</option>
                 <option value="已出貨">已出貨</option>
+                <option value="已完成">已完成</option>
                 <option value="已取消">已取消</option>
               </Form.Select>
             </Form.Group>

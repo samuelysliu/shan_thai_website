@@ -144,7 +144,7 @@ const Product_Detail = ({ product }) => {
       <Row className="mt-5">
         <Col>
           <h3>產品說明</h3>
-          <p>{product.content_cn}</p>
+          <div dangerouslySetInnerHTML={{ __html: product.content_cn }}></div>
         </Col>
       </Row>
     </Container>

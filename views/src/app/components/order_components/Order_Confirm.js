@@ -135,7 +135,7 @@ const OrderConfirm = () => {
             ReturnURL: `${endpoint}/frontstage/v1/cash_flow_order`, // 回調地址
             ChoosePayment: paymentMethods, // Credit 或 ATM
             EncryptType: 1, // 固定為 1
-            ClientBackURL: window.location.origin
+            ClientBackURL: `${window.location.origin}/order/close`
         };
 
         // 生成 CheckMacValue
@@ -146,11 +146,12 @@ const OrderConfirm = () => {
 
         const cashFlowEndpoint = config.cashFlowEndpoint
 
+        const popupWindow = window.open("", "cashFlowWindow", "width=1200,height=600,scrollbars=no,resizable=no");
         // 建立隱藏的表單
         const form = document.createElement("form");
         form.method = "POST";
         form.action = cashFlowEndpoint;
-        form.target = "_blank"; // 在新分頁開啟
+        form.target = "cashFlowWindow"; // 在新分頁開啟
 
         // 將參數加入表單
         Object.entries(params).forEach(([key, value]) => {

@@ -185,15 +185,14 @@ async def create_order(
 # 更新訂單
 @router.patch("/orders/{oid}")
 async def update_order(
-    oid: int,
+    oid: str,
     order: OrderUpdate,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
-):
+):  
     try:
         # 確認是否是管理員
         adminAutorizationCheck(token_data.get("isAdmin"))
-
         # 構建要更新的資料
         update_data = order.dict(exclude_unset=True)  # 排除未設置的字段
         if not update_data:
@@ -210,7 +209,7 @@ async def update_order(
 # 刪除訂單
 @router.delete("/orders/{oid}")
 async def delete_order(
-    oid: int,
+    oid: str,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
