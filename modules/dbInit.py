@@ -299,4 +299,4 @@ class StoreSelection(Base):
     created_at = Column(DateTime, default=func.now())  # 記錄建立時間
 
 
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
