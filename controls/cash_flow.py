@@ -30,8 +30,8 @@ else:
 def create_checkMacValue(params: dict):
     # 1. 按字母順序對參數進行排序
     sorted_params = "&".join(
-    f"{key}={params[key]}" for key in sorted(params.keys(), key=lambda x: str(x))
-)
+        f"{key}={params[key]}" for key in sorted(params.keys(), key=lambda x: str(x))
+    )
 
     # 2. 在參數前后添加 HashKey 和 HashIV
     to_encode = f"HashKey={hash_key}&{sorted_params}&HashIV={hash_iv}"
@@ -64,14 +64,13 @@ def check_order():
             )
             chcek_mac_value = create_checkMacValue(params)
             params["CheckMacValue"] = chcek_mac_value
-            
+
             # API 回傳為字串，需要做解析轉成 dict
             response = requests.post(order_check_endpoint, data=params)
             # 解析字串為字典
             parsed_data = {
                 key: value[0] for key, value in parse_qs(response.text).items()
             }
-            
 
             # 儲存金流回傳的紀錄
             table_column = [
@@ -79,8 +78,7 @@ def check_order():
                 "MerchantTradeNo",
                 "StoreID",
                 "RtnCode",
-                "RtnMsg"
-                "TradeNo",
+                "RtnMsg" "TradeNo",
                 "TradeAmt",
                 "PaymentDate",
                 "PaymentType",
@@ -91,14 +89,17 @@ def check_order():
                 "CheckMacValue",
                 "BankCode",
                 "vAccount",
-                "ExpireDate"
+                "ExpireDate",
             ]
-            
+
             for column in table_column:
                 if column not in parsed_data:
                     parsed_data[column] = None
 
-            if parsed_data.get("TradeStatus") == "1" or parsed_data.get("TradeStatus") == "10200095":
+            if (
+                parsed_data.get("TradeStatus") == "1"
+                or parsed_data.get("TradeStatus") == "10200095"
+            ):
                 create_payment_callback_record(
                     db=db,
                     MerchantID=parsed_data.get("MerchantID"),
@@ -119,22 +120,42 @@ def check_order():
                     vAccount=parsed_data.get("vAccount"),
                     ExpireDate=parsed_data.get("ExpireDate"),
                 )
-                
+
                 # 更改訂單狀態
                 if parsed_data.get("TradeStatus") == "1":
                     update_data = {"status": "待出貨"}
                 elif parsed_data.get("TradeStatus") == "10200095":
                     update_data = {"status": "已取消"}
 
-                updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
+                updated_order = order_db.update_order(
+                    db, oid=order["oid"], updates=update_data
+                )
                 if not updated_order:
                     print("訂單更新失敗")
-                
-                    
+
     except Exception as e:
         print(e)
     finally:
         db.close()
+
+
+def check_order_id(MerchantTradeNo: str):
+    params = dict(
+        {
+            "MerchantID": merchant_id,  # 特店編號(由綠界提供
+            "MerchantTradeNo": MerchantTradeNo,  # 特店交易編號
+            "TimeStamp": get_now_time("unix"),
+        }
+    )
+
+    chcek_mac_value = create_checkMacValue(params)
+    params["CheckMacValue"] = chcek_mac_value
+
+    # API 回傳為字串，需要做解析轉成 dict
+    response = requests.post(order_check_endpoint, data=params)
+    # 解析字串為字典
+    parsed_data = {key: value[0] for key, value in parse_qs(response.text).items()}
+    return parsed_data
 
 
 def create_payment_callback_record(
@@ -156,13 +177,12 @@ def create_payment_callback_record(
     BankCode,
     vAccount,
     ExpireDate,
-):
+):  
     try:
         PaymentDate = string_to_postgreSQL_time(PaymentDate)
         TradeDate = string_to_postgreSQL_time(TradeDate)
         ExpireDate = string_to_postgreSQL_time(ExpireDate)
-
-        new_record = payment_callback_db.create_payment_callback(
+        payment_callback_db.create_payment_callback(
             db=db,
             merchant_id=MerchantID,
             merchant_trade_no=MerchantTradeNo,
@@ -182,10 +202,6 @@ def create_payment_callback_record(
             v_account=vAccount,
             expire_date=ExpireDate,
         )
-        
-
-        if not new_record:
-            print("Failed to create payment callback record")
 
     except:
         print("Failed to create payment callback record")
