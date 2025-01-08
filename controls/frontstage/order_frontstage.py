@@ -8,7 +8,7 @@ import modules.order_crud as order_db
 import modules.product_crud as product_db
 import modules.cart_crud as cart_db
 import modules.store_selection_crud as store_selection_db
-from controls.cash_flow import create_payment_callback_record
+from controls.cash_flow import create_payment_callback_record, create_checkMacValue
 from controls.logistic import create_store_logistic_order, create_home_logistic_order
 
 from controls.tools import format_to_utc8 as timeformat
@@ -305,6 +305,26 @@ async def received_cash_flow_response(
     ExpireDate: str = Form(None),  # 繳費期限，格式為yyyy/MM/dd
     db: Session = Depends(get_db),
 ):
+    params = {
+        MerchantID: MerchantID,
+        MerchantTradeNo: MerchantTradeNo,
+        StoreID: StoreID,
+        RtnCode: RtnCode,
+        RtnMsg: RtnMsg,
+        TradeNo: TradeNo,
+        TradeAmt: TradeAmt,
+        PaymentDate: PaymentDate,
+        PaymentType: PaymentType,
+        PaymentTypeChargeFee: PaymentTypeChargeFee,
+        PlatformID: PlatformID,
+        TradeDate: TradeDate,
+        SimulatePaid: SimulatePaid,
+    }
+    
+    if not CheckMacValue == create_checkMacValue(params):
+        raise HTTPException(
+            status_code=400, detail=f"Invalid Call"
+        )
     try:
         new_record = create_payment_callback_record(
             db=db,
