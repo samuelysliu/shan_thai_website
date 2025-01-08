@@ -306,19 +306,22 @@ async def received_cash_flow_response(
     db: Session = Depends(get_db),
 ):
     params = {
-        MerchantID: MerchantID,
-        MerchantTradeNo: MerchantTradeNo,
-        StoreID: StoreID,
-        RtnCode: RtnCode,
-        RtnMsg: RtnMsg,
-        TradeNo: TradeNo,
-        TradeAmt: TradeAmt,
-        PaymentDate: PaymentDate,
-        PaymentType: PaymentType,
-        PaymentTypeChargeFee: PaymentTypeChargeFee,
-        PlatformID: PlatformID,
-        TradeDate: TradeDate,
-        SimulatePaid: SimulatePaid,
+        "MerchantID": MerchantID,
+        "MerchantTradeNo": MerchantTradeNo,
+        "StoreID": StoreID,
+        "RtnCode": RtnCode,
+        "RtnMsg": RtnMsg,
+        "TradeNo": TradeNo,
+        "TradeAmt": TradeAmt,
+        "PaymentDate": PaymentDate,
+        "PaymentType": PaymentType,
+        "PaymentTypeChargeFee": PaymentTypeChargeFee,
+        "PlatformID": PlatformID,
+        "TradeDate": TradeDate,
+        "SimulatePaid": SimulatePaid,
+        "BankCode": BankCode,
+        "vAccount": vAccount,
+        "ExpireDate": ExpireDate
     }
     print(params)
     
