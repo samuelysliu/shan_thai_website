@@ -326,6 +326,8 @@ async def received_cash_flow_response(
     print(params)
     
     if not CheckMacValue == create_checkMacValue(params):
+        print(f"From third party: {CheckMacValue}")
+        print(f"System create: {create_checkMacValue(params)}")
         raise HTTPException(
             status_code=400, detail=f"Invalid Call"
         )
