@@ -306,6 +306,7 @@ async def received_cash_flow_response(
     db: Session = Depends(get_db),
 ):
     response = check_order_id(MerchantTradeNo)
+    print(response)
     try:
         create_payment_callback_record(
             db=db,
@@ -331,6 +332,9 @@ async def received_cash_flow_response(
         print("Failed to call create_payment_callback_record")
 
     try:
+        print(PaymentType)
+        print(RtnCode)
+        print(response.get("TradeStatus"))
         if (
             (PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM"))
             and RtnCode == 1
