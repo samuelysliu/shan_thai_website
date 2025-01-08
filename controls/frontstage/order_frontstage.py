@@ -320,6 +320,7 @@ async def received_cash_flow_response(
         TradeDate: TradeDate,
         SimulatePaid: SimulatePaid,
     }
+    print(params)
     
     if not CheckMacValue == create_checkMacValue(params):
         raise HTTPException(
