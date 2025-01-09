@@ -351,7 +351,7 @@ async def received_cash_flow_response(
 
     if CheckMacValue != create_checkMacValue(params):
         raise HTTPException(400, "Invaild call")
-
+    print(params)
     try:
         create_payment_callback_record(
             db=db,
@@ -389,7 +389,7 @@ async def received_cash_flow_response(
                 order["transportationMethod"] == "seven"
                 or order["transportationMethod"] == "family"
             ):
-                create_store_logistic_order(
+                result = create_store_logistic_order(
                     oid=MerchantTradeNo,
                     trade_date=TradeDate,
                     store_type=order["transportationMethod"],
@@ -412,7 +412,7 @@ async def received_cash_flow_response(
                 else:
                     zip_code = order["zipCode"]
 
-                create_home_logistic_order(
+                result = create_home_logistic_order(
                     oid=MerchantTradeNo,
                     trade_date=TradeDate,
                     order_amount=order["totalAmount"],
@@ -424,6 +424,13 @@ async def received_cash_flow_response(
                     address=order["address"],
                     user_email=order["recipientEmail"],
                 )
+            
+            if result == "failed":
+                send_email(
+                "shanthaiteam@gmail.com",
+                f"物流單{MerchantTradeNo}建立失敗，請手動建立",
+                f"<p>物流單{MerchantTradeNo}建立失敗，請手動建立</p>",
+            )
 
         else:  # 如果訂單被取消，要恢復庫存
             order_details = order_db.get_order_details_by_oid(
@@ -448,7 +455,7 @@ async def received_cash_flow_response(
                         detail=f"Failed to update product remain for Product ID {order_detail.pid}",
                     )
             update_data = {"status": "已取消"}
-
+        
         updated_order = order_db.update_order(
             db, oid=MerchantTradeNo, updates=update_data
         )
