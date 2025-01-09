@@ -309,7 +309,6 @@ async def received_cash_flow_response(
     # ExpireDate: str = Form(None),  # 繳費期限，格式為yyyy/MM/dd
     db: Session = Depends(get_db),
 ):
-    # 解析表單數據
     print(CheckMacValue)
     params = dict(
         {
@@ -317,6 +316,7 @@ async def received_cash_flow_response(
             "MerchantTradeNo": MerchantTradeNo,
             "StoreID": StoreID,
             "RtnCode": RtnCode,
+            "RtnMsg": RtnMsg,
             "TradeNo": TradeNo,
             "TradeAmt": TradeAmt,
             "PaymentDate": PaymentDate,
@@ -359,7 +359,7 @@ async def received_cash_flow_response(
     try:
         if (
             (PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM"))
-            and RtnCode == 1
+            and RtnCode == 1 and CheckMacValue==create_checkMacValue(params)
         ):
             update_data = {"status": "待出貨"}
 

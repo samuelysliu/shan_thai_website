@@ -2,7 +2,7 @@ from controls.tools import format_to_utc8 as timeformat
 import os
 from dotenv import load_dotenv
 import requests
-from controls.tools import get_now_time
+from controls.tools import get_now_time, string_to_postgreSQL_time
 import hashlib
 import urllib.parse
 import modules.dbConnect as db_connect
@@ -44,6 +44,7 @@ def create_checkMacValue(params: dict):
     # 5. 將加密結果轉為大寫
     return hashed_value.upper()
 
+
 # 建立超商領貨的物流單
 def create_store_logistic_order(
     oid: str,
@@ -68,14 +69,13 @@ def create_store_logistic_order(
         collect_amount = order_amount
     else:
         collect_amount = 0
-        
+
     if store_type == "seven":
         logisticsSubType = "UNIMARTC2C"
     elif store_type == "family":
         logisticsSubType = "FAMIC2C"
     else:
         return "failed"
-        
 
     form_data = {
         "MerchantID": merchant_id,
@@ -143,6 +143,7 @@ def create_store_logistic_order(
         print(f"An error occurred: {str(e)}")
         return "failed"
 
+
 # 建立宅配的物流單
 def create_home_logistic_order(
     oid: str,
@@ -151,11 +152,11 @@ def create_home_logistic_order(
     product: str,
     product_weight: int,
     user_name: str,
-    user_phone:str,
+    user_phone: str,
     zip_code: str,
     address: str,
-    user_email:str,
-):  
+    user_email: str,
+):
     form_data = {
         "MerchantID": merchant_id,
         "MerchantTradeNo": oid,  # 廠商交易編號
@@ -168,12 +169,12 @@ def create_home_logistic_order(
         "SenderName": "康敬豪",  # 寄件人姓名
         "SenderCellPhone": "0965105947",  # 寄件人手機
         "SenderZipCode": "242",  # 寄件人郵遞區號
-        "SenderAddress": "新北市新莊區龍安路487巷2弄7號4樓",   #寄件人地址
+        "SenderAddress": "新北市新莊區龍安路487巷2弄7號4樓",  # 寄件人地址
         "ReceiverName": user_name,  # 收件人姓名
         "ReceiverCellPhone": user_phone,  # 收件人手機
-        "ReceiverZipCode": zip_code,    # 收件人郵遞區號
-        "ReceiverAddress": address, # 收件人地址
-        "ReceiverEmail": user_email,    # 收件人email,
+        "ReceiverZipCode": zip_code,  # 收件人郵遞區號
+        "ReceiverAddress": address,  # 收件人地址
+        "ReceiverEmail": user_email,  # 收件人email,
         "Temperature": "0001",
         "ServerReplyURL": f"{endpoint}/backstage/v1/logistics_callback",  # Server端回覆網址
     }
@@ -194,7 +195,23 @@ def create_home_logistic_order(
             # 儲存物流訂單記錄
             new_record = logistics_order_db.create_logistics_order(
                 db=db,
-                
+                merchant_trade_no=oid,
+                rtn_code=response_data["RtnCode"],
+                allpay_logistics_id=response_data["AllPayLogisticsID"],
+                rtn_msg=response_data["RtnMs"],
+                logistics_type=response_data["LogisticsType"],
+                logistics_sub_type=response_data["LogisticsSubType"],
+                goods_amount=response_data["GoodsAmount"],
+                update_status_date=string_to_postgreSQL_time(
+                    response_data["UpdateStatusDate"]
+                ),
+                receiver_name=response_data["ReceiverName"],
+                receiver_cell_phone=response_data["ReceiverCellPhone"],
+                receiver_email=response_data["ReceiverEmail"],
+                receiver_address=response_data["ReceiverAddress"],
+                cvs_payment_no=response_data["CVSPaymentNo"],
+                cvs_validation_no=response_data["CVSValidationNo"],
+                booking_note=response_data["BookingNote"],
             )
 
             if not new_record:
@@ -211,4 +228,3 @@ def create_home_logistic_order(
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         return "failed"
-    
