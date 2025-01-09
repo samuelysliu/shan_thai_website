@@ -170,6 +170,7 @@ class Order(Base):
     totalAmount = Column(Integer, default=0)  # 訂單總金額
     discountPrice = Column(Integer, default=0)  # 訂單優惠價
     useDiscount = Column(Boolean, default=False) # 是否使用優惠價
+    zipCode = Column(String(10), nullable=True)
     address = Column(String, nullable=False)  # 收貨地址
     recipientName = Column(String, nullable=False)  # 收件人姓名
     recipientPhone = Column(String(15), nullable=False)  # 收件人電話
