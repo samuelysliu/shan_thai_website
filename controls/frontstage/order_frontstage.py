@@ -474,6 +474,7 @@ async def received_cash_flow_response(
             f"更新訂單{MerchantTradeNo}失敗，請手動更新",
             f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
         )
+        return "1|OK"
 
 
 # 接收物流商回傳使用者選擇的超商
