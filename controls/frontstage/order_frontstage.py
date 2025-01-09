@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Form
+from fastapi import APIRouter, HTTPException, Depends, Form, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -282,30 +282,39 @@ async def update_order_status(
 # 接受金流主動回拋訂單資訊
 @router.post("/cash_flow_order")
 async def received_cash_flow_response(
-    MerchantID: str = Form(...),  # 特店編號
-    MerchantTradeNo: str = Form(...),  # 特店交易編號
-    StoreID: str = Form(None),  # 特店旗下店舖代號
-    RtnCode: int = Form(
-        ...
-    ),  # 交易狀態，若回傳值為1時，為付款成功，若RtnCode為”10300066″ 時，代表交易付款結果待確認中。ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
-    RtnMsg: str = Form(...),  # 交易訊息
-    TradeNo: str = Form(...),  # 綠界的交易編號
-    TradeAmt: int = Form(...),  # 交易金額
-    PaymentDate: str = Form(None),  # 付款時間，格式為yyyy/MM/dd HH:mm:ss
-    PaymentType: str = Form(...),  # 特店選擇的付款方式
-    PaymentTypeChargeFee: int = Form(0),  # 交易手續費金額
-    PlatformID: str = Form(None),  # 特約合作平台商代號
-    TradeDate: str = Form(...),  # 訂單成立時間，格式為yyyy/MM/dd HH:mm:ss
-    SimulatePaid: int = Form(
-        1
-    ),  # 是否為模擬付款，0：代表此交易非模擬付款。1：代表此交易為模擬付款。
-    CheckMacValue: str = Form(...),  # 檢查碼
-    BankCode: str = Form(None),  # 繳費銀行代碼
-    vAccount: str = Form(None),  # 繳費虛擬帳號
-    ExpireDate: str = Form(None),  # 繳費期限，格式為yyyy/MM/dd
+    # MerchantID: str = Form(...),  # 特店編號
+    # MerchantTradeNo: str = Form(...),  # 特店交易編號
+    # StoreID: str = Form(None),  # 特店旗下店舖代號
+    # RtnCode: int = Form(
+    #    ...
+    # ),  # 交易狀態，若回傳值為1時，為付款成功，若RtnCode為”10300066″ 時，代表交易付款結果待確認中。ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
+    # RtnMsg: str = Form(...),  # 交易訊息
+    # TradeNo: str = Form(...),  # 綠界的交易編號
+    # TradeAmt: int = Form(...),  # 交易金額
+    # PaymentDate: str = Form(None),  # 付款時間，格式為yyyy/MM/dd HH:mm:ss
+    # PaymentType: str = Form(...),  # 特店選擇的付款方式
+    # PaymentTypeChargeFee: int = Form(0),  # 交易手續費金額
+    # PlatformID: str = Form(None),  # 特約合作平台商代號
+    # TradeDate: str = Form(...),  # 訂單成立時間，格式為yyyy/MM/dd HH:mm:ss
+    # SimulatePaid: int = Form(
+    #    1
+    # ),  # 是否為模擬付款，0：代表此交易非模擬付款。1：代表此交易為模擬付款。
+    # CheckMacValue: str = Form(...),  # 檢查碼
+    # BankCode: str = Form(None),  # 繳費銀行代碼
+    # vAccount: str = Form(None),  # 繳費虛擬帳號
+    # ExpireDate: str = Form(None),  # 繳費期限，格式為yyyy/MM/dd
+    request: Request,
     db: Session = Depends(get_db),
 ):
-    
+    # 解析表單數據
+    form_data = await request.form()
+    form_dict = {key: value for key, value in form_data.items()}
+
+    # 打印完整表單欄位
+    print("Received Form Data:", form_dict)
+    print(create_checkMacValue(form_dict))
+
+    """
     print(CheckMacValue)
     params = dict(
         {
@@ -350,9 +359,6 @@ async def received_cash_flow_response(
         print("Failed to call create_payment_callback_record")
 
     try:
-        print(PaymentType)
-        print(RtnCode)
-        print(response.get("TradeStatus"))
         if (
             (PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM"))
             and RtnCode == 1
@@ -433,6 +439,7 @@ async def received_cash_flow_response(
             f"更新訂單{MerchantTradeNo}失敗，請手動更新",
             f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
         )
+    """
 
 
 # 接收物流商回傳使用者選擇的超商
