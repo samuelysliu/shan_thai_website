@@ -37,9 +37,15 @@ def create_checkMacValue(params: dict):
     to_encode = f"HashKey={hash_key}&{sorted_params}&HashIV={hash_iv}"
 
     # 3. URL Encode 並替換空格為 '+'
-    url_encoded_string = (
-        urllib.parse.quote(to_encode, safe="").replace("%20", "+").lower()
-    )
+    url_encoded_string = urllib.parse.quote(to_encode, safe="").lower()
+    url_encoded_string = url_encoded_string.replace("%20", "+")
+    url_encoded_string = url_encoded_string.replace("%2d", "-")
+    url_encoded_string = url_encoded_string.replace("%5f", "_")
+    url_encoded_string = url_encoded_string.replace("%2e", ".")
+    url_encoded_string = url_encoded_string.replace("%21", "!")
+    url_encoded_string = url_encoded_string.replace("%2a", "*")
+    url_encoded_string = url_encoded_string.replace("%28", "(")
+    url_encoded_string = url_encoded_string.replace("%29", ")")
 
     # 4. 使用 SHA256 進行加密
     hashed_value = hashlib.sha256(url_encoded_string.encode("utf-8")).hexdigest()
@@ -177,7 +183,7 @@ def create_payment_callback_record(
     BankCode,
     vAccount,
     ExpireDate,
-):  
+):
     try:
         PaymentDate = string_to_postgreSQL_time(PaymentDate)
         TradeDate = string_to_postgreSQL_time(TradeDate)

@@ -332,6 +332,11 @@ async def received_cash_flow_response(
     )
     print(create_checkMacValue(params))
     
+    print(params)
+    
+    if CheckMacValue != create_checkMacValue(params):
+        raise HTTPException(400, "Invaild call")
+    
     try:
         create_payment_callback_record(
             db=db,
@@ -359,7 +364,7 @@ async def received_cash_flow_response(
     try:
         if (
             (PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM"))
-            and RtnCode == 1 and CheckMacValue==create_checkMacValue(params)
+            and RtnCode == 1
         ):
             update_data = {"status": "待出貨"}
 
