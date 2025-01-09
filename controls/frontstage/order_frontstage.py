@@ -19,6 +19,7 @@ from controls.tools import (
     send_email,
 )
 from datetime import datetime
+import re
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -286,7 +287,7 @@ async def received_cash_flow_response(
     MerchantTradeNo: str = Form(...),  # 特店交易編號
     StoreID: str = Form(None),  # 特店旗下店舖代號
     RtnCode: int = Form(
-       ...
+        ...
     ),  # 交易狀態，若回傳值為1時，為付款成功，若RtnCode為”10300066″ 時，代表交易付款結果待確認中。ATM 回傳值時為2時，交易狀態為取號成功，其餘為失敗。
     RtnMsg: str = Form(...),  # 交易訊息
     TradeNo: str = Form(...),  # 綠界的交易編號
@@ -297,7 +298,7 @@ async def received_cash_flow_response(
     # PlatformID: str = Form(None),  # 特約合作平台商代號
     TradeDate: str = Form(...),  # 訂單成立時間，格式為yyyy/MM/dd HH:mm:ss
     SimulatePaid: int = Form(
-       1
+        1
     ),  # 是否為模擬付款，0：代表此交易非模擬付款。1：代表此交易為模擬付款。
     CheckMacValue: str = Form(...),  # 檢查碼
     CustomField1: str = Form(None),
@@ -310,13 +311,28 @@ async def received_cash_flow_response(
     db: Session = Depends(get_db),
 ):
     print(CheckMacValue)
+
+    # 嘗試解碼為 UTF-8
+    try:
+        # 原始字節數據
+        raw_bytes = bytes(RtnMsg, "latin1")
+        # 移除不必要的轉義字符（如 \x78）
+        cleaned_bytes = re.sub(
+            b"\\\\x([0-9a-fA-F]{2})", lambda m: bytes([int(m.group(1), 16)]), raw_bytes
+        )
+        correct_str = cleaned_bytes.decode("utf-8")
+        print(correct_str)  # 應該輸出 "付款成功"
+    except:
+        correct_str = RtnMsg
+        print(f"解碼失敗")
+
     params = dict(
         {
             "MerchantID": MerchantID,
             "MerchantTradeNo": MerchantTradeNo,
             "StoreID": StoreID,
             "RtnCode": RtnCode,
-            "RtnMsg": RtnMsg,
+            "RtnMsg": correct_str,
             "TradeNo": TradeNo,
             "TradeAmt": TradeAmt,
             "PaymentDate": PaymentDate,
@@ -330,13 +346,12 @@ async def received_cash_flow_response(
             "CustomField4": CustomField4,
         }
     )
+    
     print(create_checkMacValue(params))
-    
-    print(params)
-    
+
     if CheckMacValue != create_checkMacValue(params):
         raise HTTPException(400, "Invaild call")
-    
+
     try:
         create_payment_callback_record(
             db=db,
@@ -363,13 +378,13 @@ async def received_cash_flow_response(
 
     try:
         if (
-            (PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM"))
-            and RtnCode == 1
-        ):
+            PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM")
+        ) and RtnCode == 1:
             update_data = {"status": "待出貨"}
 
             # 建立物流單
             order = order_db.get_order_by_oid(db=db, oid=MerchantTradeNo)
+            
             if (
                 order["transportationMethod"] == "seven"
                 or order["transportationMethod"] == "family"
@@ -387,15 +402,25 @@ async def received_cash_flow_response(
                     store_id=order["address"],
                 )
             else:
+                if order.get("productWeight") == None:
+                    product_weight = 5
+                else:
+                    product_weight = order["productWeight"]
+                    
+                if order.get("zipCode") == None:
+                    zip_code = "0"
+                else:
+                    zip_code = order["zipCode"]
+
                 create_home_logistic_order(
                     oid=MerchantTradeNo,
                     trade_date=TradeDate,
                     order_amount=order["totalAmount"],
                     product="善泰團隊聖物",
-                    product_weight=order["productWeight"],
+                    product_weight=product_weight,
                     user_name=order["recipientName"],
                     user_phone=order["recipientPhone"],
-                    zip_code=order["zipCode"],
+                    zip_code=zip_code,
                     address=order["address"],
                     user_email=order["recipientEmail"],
                 )

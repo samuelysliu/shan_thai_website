@@ -185,8 +185,7 @@ def create_home_logistic_order(
         "ServerReplyURL": f"{endpoint}/backstage/v1/logistics_callback",  # Server端回覆網址
     }
 
-    form_data["CheckMacValu"] = create_checkMacValue(form_data)
-
+    form_data["CheckMacValue"] = create_checkMacValue(form_data)
     db = db_connect.SessionLocal()
     try:
         # 發送 POST 請求至物流商 API
