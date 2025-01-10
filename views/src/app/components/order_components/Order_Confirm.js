@@ -19,6 +19,7 @@ const OrderConfirm = () => {
     const [recipientName, setRecipientName] = useState(userInfo.username);
     const [recipientPhone, setRecipientPhone] = useState(userInfo.phone);
     const [recipientEmail, setRecipientEmail] = useState(userInfo.email);
+    const [zipCode, setZipCode] = useState("");
     const [address, setAddress] = useState(userInfo.address);
     const [storeId, setStoreId] = useState("");
     const [transportationMethod, setTransportationMethod] = useState("delivery");
@@ -87,6 +88,7 @@ const OrderConfirm = () => {
             const orderData = {
                 uid: userInfo.uid,
                 totalAmount: totalAmount,
+                zipCode: zipCode,
                 address: postAddress,
                 recipientName: recipientName,
                 recipientPhone: recipientPhone,
@@ -328,11 +330,24 @@ const OrderConfirm = () => {
                         </Form.Select>
                     </Form.Group>
 
+                    {transportationMethod === "delivery" ?
+                        <Form.Group controlId="formZipCode" className="mb-3">
+                            <Form.Label>郵遞區號</Form.Label>
+                            <Form.Control
+                                type="text"
+                                placeholder="請輸入郵遞區號3碼"
+                                value={zipCode}
+                                onChange={(e) => setZipCode(e.target.value)}
+                                disabled={transportationMethod !== "delivery"}
+                            />
+                        </Form.Group>
+                        : ""}
+
                     <Form.Group controlId="formAddress" className="mb-3">
                         <Form.Label>{transportationMethod === "delivery" ? "送貨地址" : "超商門市"}</Form.Label>
                         <Form.Control
                             type="text"
-                            placeholder={`請輸入${transportationMethod === "delivery" ? "送貨地址" : "超商門市名稱"}`}
+                            placeholder="請輸入完整送貨地址"
                             value={address || ""}
                             onChange={(e) => setAddress(e.target.value)}
                             disabled={transportationMethod !== "delivery"}

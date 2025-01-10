@@ -37,6 +37,7 @@ class OrderDetailBase(BaseModel):
 class OrderBase(BaseModel):
     uid: int
     totalAmount: int
+    zipCode: str = None
     address: str
     recipientName: str
     recipientPhone: str
@@ -153,6 +154,7 @@ async def create_user_order(
         totalAmount=total_amount,  # 使用後端計算的總金額
         discountPrice=0,
         useDiscount=False,
+        zipCode=order.zipCode,
         address=order.address,
         recipientName=order.recipientName,
         recipientPhone=order.recipientPhone,

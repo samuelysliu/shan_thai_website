@@ -6,8 +6,12 @@ import modules.product_crud as product_db
 import modules.logistics_order_crud as logistics_order_db
 import modules.dbConnect as db_connect
 from controls.tools import format_to_utc8 as timeformat
-from controls.tools import verify_token, adminAutorizationCheck
-from controls.logistic import create_checkMacValue
+from controls.tools import verify_token, adminAutorizationCheck, get_now_time
+from controls.logistic import (
+    create_checkMacValue,
+    create_store_logistic_order,
+    create_home_logistic_order,
+)
 import controls.logistic as logistic
 from datetime import datetime
 
@@ -28,6 +32,7 @@ class OrderCreate(BaseModel):
     totalAmount: int
     discountPrice: int | None = None
     useDiscount: bool = False
+    zipCode: str = None
     address: str
     recipientName: str
     recipientPhone: str
@@ -44,6 +49,7 @@ class OrderUpdate(BaseModel):
     totalAmount: int | None = None
     discountPrice: int | None = None
     useDiscount: bool | None = None
+    zipCode: str | None = None
     address: str | None = None
     recipientName: str | None = None
     recipientPhone: str | None = None
@@ -73,45 +79,6 @@ async def get_all_orders(
         order["updated_at"] = timeformat(order["updated_at"].isoformat())
 
     return orders
-
-
-# **根據 OID 查詢單筆訂單**
-@router.get("/orders/{order_id}")
-async def get_order_by_oid(
-    order_id: int,
-    token_data: dict = Depends(verify_token),
-    db: Session = Depends(get_db),
-):
-    # 確認是否是管理員
-    adminAutorizationCheck(token_data.get("isAdmin"))
-
-    order = order_db.get_order_by_oid(db, oid=order_id)
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return {
-        "oid": order.oid,
-        "uid": order.uid,
-        "totalAmount": order.totalAmount,
-        "address": order.address,
-        "recipientName": order.recipientName,
-        "recipientPhone": order.recipientPhone,
-        "recipientEmail": order.recipientEmail,
-        "transportationMethod": order.transportationMethod,
-        "paymentMethod": order.paymentMethod,
-        "note": order.note,
-        "status": order.status,
-        "created_at": timeformat(order.created_at.isoformat()),
-        "updated_at": timeformat(order.updated_at.isoformat()),
-        "details": [
-            {
-                "pid": detail.pid,
-                "productNumber": detail.productNumber,
-                "price": detail.price,
-                "subtotal": detail.subtotal,
-            }
-            for detail in order.order_details
-        ],
-    }
 
 
 # 根據 UID 查詢用戶的所有訂單
@@ -167,6 +134,7 @@ async def create_order(
         totalAmount=order.totalAmount,
         discountPrice=order.discountPrice or 0,
         useDiscount=order.useDiscount,
+        zipCode=order.zipCode,
         address=order.address,
         recipientName=order.recipientName,
         recipientPhone=order.recipientPhone,
@@ -189,7 +157,7 @@ async def update_order(
     order: OrderUpdate,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
-):  
+):
     try:
         # 確認是否是管理員
         adminAutorizationCheck(token_data.get("isAdmin"))
@@ -201,6 +169,7 @@ async def update_order(
         updated_order = order_db.update_order(db, oid=oid, updates=update_data)
         if not updated_order:
             raise HTTPException(status_code=404, detail="Order not found")
+
         return updated_order
     except:
         raise HTTPException(status_code=500, detail="Failed to cancel the order")
@@ -326,7 +295,7 @@ async def received_logistic_response(
             new_record = logistics_order_db.update_logistics_order_by_trade_no(
                 db=db, merchant_trade_no=MerchantTradeNo, updates=updates
             )
-            
+
         if not new_record:
             raise HTTPException(
                 status_code=500, detail="Failed to save logistics order"
@@ -336,19 +305,84 @@ async def received_logistic_response(
 
     return "1|OK"
 
+
 # 回傳託運單所需資料
 @router.get("/logistic_print/{oid}")
-async def get_logistic_order(oid: str, token_data: dict = Depends(verify_token), db: Session = Depends(get_db),):
+async def get_logistic_order(
+    oid: str,
+    token_data: dict = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
     # 確認是否是管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
-    
-    logistic_order = logistics_order_db.get_logistics_order_by_trade_no(db=db, merchant_trade_no=oid)
+
+    logistic_order = logistics_order_db.get_logistics_order_by_trade_no(
+        db=db, merchant_trade_no=oid
+    )
     response_dict = {
         "MerchantID": logistic.merchant_id,
         "AllPayLogisticsID": logistic_order.allpay_logistics_id,
         "CVSPaymentNo": logistic_order.cvs_payment_no,
-        "CVSValidationNo": logistic_order.cvs_validation_no
+        "CVSValidationNo": logistic_order.cvs_validation_no,
     }
     response_dict["CheckMacValue"] = create_checkMacValue(response_dict)
-    
+
     return response_dict
+
+
+# 建立物流單
+@router.post("/logistics_callback/{oid}")
+def create_logistic_order(
+    oid: str,
+    token_data: dict = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
+    adminAutorizationCheck(token_data.get("isAdmin"))
+
+    order = order_db.get_order_by_oid(db, oid=oid)
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if (
+        order["transportationMethod"] == "seven"
+        or order["transportationMethod"] == "family"
+    ):
+        result = create_store_logistic_order(
+            oid=oid,
+            trade_date=get_now_time(""),
+            store_type=order["transportationMethod"],
+            order_amount=order["totalAmount"],
+            isCollection="N",
+            product="善泰團隊聖物",
+            user_name=order["recipientName"],
+            user_phone=order["recipientPhone"],
+            user_email=order["recipientEmail"],
+            store_id=order["address"],
+        )
+    else:
+        if order.get("productWeight") == None:
+            product_weight = 5
+        else:
+            product_weight = order["productWeight"]
+
+        if order.get("zipCode") == None:
+            zip_code = "0"
+        else:
+            zip_code = order["zipCode"]
+
+        result = create_home_logistic_order(
+            oid=oid,
+            trade_date=get_now_time(""),
+            order_amount=order["totalAmount"],
+            product="善泰團隊聖物",
+            product_weight=product_weight,
+            user_name=order["recipientName"],
+            user_phone=order["recipientPhone"],
+            zip_code=zip_code,
+            address=order["address"],
+            user_email=order["recipientEmail"],
+        )
+    
+    if result == "failed":
+        return {"detail": "failed"}
+    else:
+        return {"detail": "success"}
