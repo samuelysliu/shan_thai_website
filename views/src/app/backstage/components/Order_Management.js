@@ -8,9 +8,11 @@ import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import Sidebar from "./Sidebar";
 import config from "../../config";
 
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { createLogisticCheckMacValue } from "../../components/Tools";
+
+import { showToast } from "@/app/redux/slices/toastSlice";
 
 export default function OrderManagement() {
   const endpoint = config.apiBaseUrl;
@@ -26,6 +28,8 @@ export default function OrderManagement() {
 
   const [products, setProducts] = useState([]);
   const [customers, setCustomers] = useState([]);
+
+  const dispatch = useDispatch();
 
   // 控制彈出視窗顯示
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -177,73 +181,102 @@ export default function OrderManagement() {
     );
   });
 
+  // 建立物流訂單
+  const createLogistic = async (oid) => {
+    await axios.post(
+      `${endpoint}/backstage/v1/create_logistics/${oid}`, {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+  }
+
   // 列印託運單功能
   const printLogistic = async (order) => {
-    const logisticOrder = await axios.get(`${endpoint}/backstage/v1/logistic_print/${order.oid}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    try {
+      const logisticOrder = await axios.get(`${endpoint}/backstage/v1/logistic_print/${order.oid}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+
+      let params = {};
+      let printEndpoint = ""
+
+      // 處理 seven 的託運單
+      if (order.transportationMethod === "seven") {
+        params = {
+          MerchantID: logisticOrder.data.MerchantID, // 特店編號
+          AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
+          CVSPaymentNo: logisticOrder.data.CVSPaymentNo, // 寄貨編號
+          CVSValidationNo: logisticOrder.data.CVSValidationNo // 驗證碼
+        };
+
+        printEndpoint = config.sevenPrintEndpoint;
+
+      } else if (order.transportationMethod === "family") { // 處理 family 的托運單
+        params = {
+          MerchantID: logisticOrder.data.MerchantID, // 特店編號
+          AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
+          CVSPaymentNo: logisticOrder.data.CVSPaymentNo, // 寄貨編號
+        };
+
+        printEndpoint = config.familyPrintEndpoint;
+
+      } else {
+        params = {
+          MerchantID: logisticOrder.data.MerchantID, // 特店編號
+          AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
+          PrintMode: 1  //列印模式， 1：使用一般模式(A4 大小)；2：使用熱感應標籤機模式(A6 大小)
+        };
+
+        printEndpoint = config.deliveryPrintEndpoint;
+
       }
-    });
+      const CheckMacValue = createLogisticCheckMacValue(params)
+      // 添加 CheckMacValue 到表單數據
+      params.CheckMacValue = CheckMacValue;
+      console.log(params)
 
-    let params = {};
-    let printEndpoint = ""
+      const popupWindow = window.open("", "printWindow", "width=800,height=600,scrollbars=no,resizable=no");
+      // 建立隱藏的表單
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = printEndpoint;
+      form.target = "printWindow";
 
-    // 處理 seven 的託運單
-    if (order.transportationMethod === "seven") {
-      params = {
-        MerchantID: logisticOrder.data.MerchantID, // 特店編號
-        AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
-        CVSPaymentNo: logisticOrder.data.CVSPaymentNo, // 寄貨編號
-        CVSValidationNo: logisticOrder.data.CVSValidationNo // 驗證碼
-      };
+      // 將參數加入表單
+      Object.entries(params).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
 
-      printEndpoint = config.sevenPrintEndpoint;
-
-    } else if (order.transportationMethod === "family") { // 處理 family 的托運單
-      params = {
-        MerchantID: logisticOrder.data.MerchantID, // 特店編號
-        AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
-        CVSPaymentNo: logisticOrder.data.CVSPaymentNo, // 寄貨編號
-      };
-
-      printEndpoint = config.familyPrintEndpoint;
-
-    } else {
-      params = {
-        MerchantID: logisticOrder.data.MerchantID, // 特店編號
-        AllPayLogisticsID: logisticOrder.data.AllPayLogisticsID, // 物流交易編號
-        PrintMode: 1  //列印模式， 1：使用一般模式(A4 大小)；2：使用熱感應標籤機模式(A6 大小)
-      };
-
-      printEndpoint = config.deliveryPrintEndpoint;
-
+      // 提交表單
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form); // 提交後刪除表單
     }
-    const CheckMacValue = createLogisticCheckMacValue(params)
-    // 添加 CheckMacValue 到表單數據
-    params.CheckMacValue = CheckMacValue;
-    console.log(params)
-
-    const popupWindow = window.open("", "printWindow", "width=800,height=600,scrollbars=no,resizable=no");
-    // 建立隱藏的表單
-    const form = document.createElement("form");
-    form.method = "POST";
-    form.action = printEndpoint;
-    form.target = "printWindow";
-
-    // 將參數加入表單
-    Object.entries(params).forEach(([key, value]) => {
-      const input = document.createElement("input");
-      input.type = "hidden";
-      input.name = key;
-      input.value = value;
-      form.appendChild(input);
-    });
-
-    // 提交表單
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form); // 提交後刪除表單
+    catch (err) {
+      createLogistic(order.oid);
+      handleError("物流單不存在，正在自動建立中。請等 30 秒後再試，如果仍看到此訊息，請前往綠界後台列印託運單");
+    }
   }
+
+
+
+  // 控制彈出視窗訊息區
+  const handleSuccess = (message) => {
+    dispatch(showToast({ message: message, variant: "success" }));
+  };
+
+  const handleError = (message) => {
+    dispatch(showToast({ message: message, variant: "danger" }));
+  };
 
   return (
     <Container fluid>

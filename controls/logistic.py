@@ -194,7 +194,6 @@ def create_home_logistic_order(
         # 處理正確的回應
         _, data_string = response_content.split("|", 1)
         response_data = dict(item.split("=") for item in data_string.split("&"))
-        print(response_data)
         # 儲存物流訂單記錄
         new_record = logistics_order_db.create_logistics_order(
             db=db,

@@ -315,28 +315,30 @@ async def get_logistic_order(
 ):
     # 確認是否是管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
-
-    logistic_order = logistics_order_db.get_logistics_order_by_trade_no(
-        db=db, merchant_trade_no=oid
-    )
-    response_dict = {
-        "MerchantID": logistic.merchant_id,
-        "AllPayLogisticsID": logistic_order.allpay_logistics_id,
-        "CVSPaymentNo": logistic_order.cvs_payment_no,
-        "CVSValidationNo": logistic_order.cvs_validation_no,
-    }
-    response_dict["CheckMacValue"] = create_checkMacValue(response_dict)
-
-    return response_dict
+    
+    try:
+        logistic_order = logistics_order_db.get_logistics_order_by_trade_no(
+            db=db, merchant_trade_no=oid
+        )
+        response_dict = {
+            "MerchantID": logistic.merchant_id,
+            "AllPayLogisticsID": logistic_order.allpay_logistics_id,
+            "CVSPaymentNo": logistic_order.cvs_payment_no,
+            "CVSValidationNo": logistic_order.cvs_validation_no,
+        }
+        response_dict["CheckMacValue"] = create_checkMacValue(response_dict)
+        return response_dict
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"No logistic order: {str(e)}")
 
 
 # 建立物流單
-@router.post("/logistics_callback/{oid}")
+@router.post("/create_logistics/{oid}")
 def create_logistic_order(
     oid: str,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
-):
+):  
     adminAutorizationCheck(token_data.get("isAdmin"))
 
     order = order_db.get_order_by_oid(db, oid=oid)

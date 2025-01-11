@@ -323,7 +323,6 @@ async def received_cash_flow_response(
             b"\\\\x([0-9a-fA-F]{2})", lambda m: bytes([int(m.group(1), 16)]), raw_bytes
         )
         correct_str = cleaned_bytes.decode("utf-8")
-        print(correct_str)  # 應該輸出 "付款成功"
     except:
         correct_str = RtnMsg
         print(f"解碼失敗")

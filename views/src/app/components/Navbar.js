@@ -57,9 +57,9 @@ export default function NavBar() {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
-    dispatch(clearCart()); // 清空購物車
     router.push("/");
+    dispatch(clearCart()); // 清空購物車
+    dispatch(logout());
   }
 
   // 控制彈出視窗顯示的函數

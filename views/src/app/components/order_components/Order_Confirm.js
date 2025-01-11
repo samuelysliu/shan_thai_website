@@ -8,24 +8,23 @@ import axios from "axios";
 import config from "@/app/config";
 import { generateRandomString, createCheckMacValue, userDevice } from "../Tools"
 
-
 import { showToast } from "@/app/redux/slices/toastSlice";
 
 const OrderConfirm = () => {
     const router = useRouter();
     const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
     const { userInfo, token } = useSelector((state) => state.user); // 獲取登入 Token
+
     const [cartProduct, setCartProduct] = useState([]);
-    const [recipientName, setRecipientName] = useState(userInfo.username);
-    const [recipientPhone, setRecipientPhone] = useState(userInfo.phone);
-    const [recipientEmail, setRecipientEmail] = useState(userInfo.email);
+    const [recipientName, setRecipientName] = useState(userInfo?.username || "");
+    const [recipientPhone, setRecipientPhone] = useState(userInfo?.phone || "");
+    const [recipientEmail, setRecipientEmail] = useState(userInfo?.email || "");
     const [zipCode, setZipCode] = useState("");
-    const [address, setAddress] = useState(userInfo.address);
+    const [address, setAddress] = useState(userInfo?.address || "");
     const [storeId, setStoreId] = useState("");
     const [transportationMethod, setTransportationMethod] = useState("delivery");
     const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [merchantTradeNo, setMerchantTradeNo] = useState("");
     const endpoint = config.apiBaseUrl;
 
     const dispatch = useDispatch();
@@ -173,7 +172,6 @@ const OrderConfirm = () => {
     // 取得超商地圖
     const getStoreMap = (logisticsSubType) => {
         const randomString = generateRandomString();
-        setMerchantTradeNo(randomString);
 
         const params = {
             MerchantID: config.merchantId, // 特店編號
@@ -250,6 +248,8 @@ const OrderConfirm = () => {
     const handleError = (message) => {
         dispatch(showToast({ message: message, variant: "danger" }));
     };
+
+
 
 
     return (
