@@ -350,9 +350,10 @@ async def received_cash_flow_response(
     )
     
     print(create_checkMacValue(params))
-
+    """
     if CheckMacValue != create_checkMacValue(params):
         raise HTTPException(400, "Invaild call")
+    """
     print(params)
     try:
         create_payment_callback_record(

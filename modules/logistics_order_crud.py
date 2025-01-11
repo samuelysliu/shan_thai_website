@@ -55,9 +55,11 @@ def update_logistics_order_by_trade_no(
     db: Session, merchant_trade_no: str, updates: dict
 ):
     try:
-        logistics_order = db.query(LogisticsOrder).filter(
-            LogisticsOrder.merchant_trade_no == merchant_trade_no
-        ).first()
+        logistics_order = (
+            db.query(LogisticsOrder)
+            .filter(LogisticsOrder.merchant_trade_no == merchant_trade_no)
+            .first()
+        )
 
         if not logistics_order:
             return None
@@ -77,9 +79,11 @@ def update_logistics_order_by_trade_no(
 # 查詢物流記錄
 def get_logistics_order_by_trade_no(db: Session, merchant_trade_no: str):
     try:
-        return db.query(LogisticsOrder).filter(
-            LogisticsOrder.merchant_trade_no == merchant_trade_no
-        ).first()
+        return (
+            db.query(LogisticsOrder)
+            .filter(LogisticsOrder.merchant_trade_no == merchant_trade_no)
+            .first()
+        )
     except SQLAlchemyError as e:
         print(f"Database Error: {e}")
         return None

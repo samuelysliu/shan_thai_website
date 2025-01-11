@@ -187,49 +187,43 @@ def create_home_logistic_order(
 
     form_data["CheckMacValue"] = create_checkMacValue(form_data)
     db = db_connect.SessionLocal()
-    try:
-        # 發送 POST 請求至物流商 API
-        response = requests.post(logistic_endpoint, data=form_data)
-        response_content = response.text
+    response = requests.post(logistic_endpoint, data=form_data)
+    response_content = response.text
+    
+    if response_content.startswith("1|"):
+        # 處理正確的回應
+        _, data_string = response_content.split("|", 1)
+        response_data = dict(item.split("=") for item in data_string.split("&"))
+        print(response_data)
+        # 儲存物流訂單記錄
+        new_record = logistics_order_db.create_logistics_order(
+            db=db,
+            merchant_trade_no=oid,
+            rtn_code=response_data["RtnCode"],
+            allpay_logistics_id=response_data["AllPayLogisticsID"],
+            rtn_msg=response_data.get("RtnMsg", ""),
+            logistics_type=response_data["LogisticsType"],
+            logistics_sub_type=response_data["LogisticsSubType"],
+            goods_amount=response_data["GoodsAmount"],
+            update_status_date=string_to_postgreSQL_time(
+                response_data["UpdateStatusDate"]
+            ),
+            receiver_name=response_data["ReceiverName"],
+            receiver_cell_phone=response_data["ReceiverCellPhone"],
+            receiver_email=response_data["ReceiverEmail"],
+            receiver_address=response_data["ReceiverAddress"],
+            cvs_payment_no=response_data["CVSPaymentNo"],
+            cvs_validation_no=response_data["CVSValidationNo"],
+            booking_note=response_data["BookingNote"],
+        )
 
-        if response_content.startswith("1|"):
-            # 處理正確的回應
-            _, data_string = response_content.split("|", 1)
-            response_data = dict(item.split("=") for item in data_string.split("&"))
-
-            # 儲存物流訂單記錄
-            new_record = logistics_order_db.create_logistics_order(
-                db=db,
-                merchant_trade_no=oid,
-                rtn_code=response_data["RtnCode"],
-                allpay_logistics_id=response_data["AllPayLogisticsID"],
-                rtn_msg=response_data["RtnMs"],
-                logistics_type=response_data["LogisticsType"],
-                logistics_sub_type=response_data["LogisticsSubType"],
-                goods_amount=response_data["GoodsAmount"],
-                update_status_date=string_to_postgreSQL_time(
-                    response_data["UpdateStatusDate"]
-                ),
-                receiver_name=response_data["ReceiverName"],
-                receiver_cell_phone=response_data["ReceiverCellPhone"],
-                receiver_email=response_data["ReceiverEmail"],
-                receiver_address=response_data["ReceiverAddress"],
-                cvs_payment_no=response_data["CVSPaymentNo"],
-                cvs_validation_no=response_data["CVSValidationNo"],
-                booking_note=response_data["BookingNote"],
-            )
-
-            if not new_record:
-                return "failed"
-
-            return "success"
-
-        else:
-            # 處理錯誤的回應
-            error_message = response_content.split("|", 1)[1]
-            print(f"Logistics API error: {error_message}")
+        if not new_record:
             return "failed"
 
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        return "success"
+
+    else:
+        # 處理錯誤的回應
+        error_message = response_content.split("|", 1)[1]
+        print(f"Logistics API error: {error_message}")
         return "failed"
