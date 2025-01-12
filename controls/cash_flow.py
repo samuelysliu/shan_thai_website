@@ -15,13 +15,11 @@ endpoint = os.getenv("WEBSITE_URL")
 
 if environment == "production":
     order_check_endpoint = "https://payment.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
-    merchant_id = "3002599"
-    hash_key = "spPjZn66i0OhqJsQ"
-    hash_iv = "hT5OJckN45isQTTs"
+    merchant_id = "3437729"
+    hash_key = "WsN2DCIPXSIwZWen"
+    hash_iv = "dfTmttwLSzjiZNqx"
 else:
-    order_check_endpoint = (
-        "https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
-    )
+    order_check_endpoint = "https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
     merchant_id = "3002599"
     hash_key = "spPjZn66i0OhqJsQ"
     hash_iv = "hT5OJckN45isQTTs"

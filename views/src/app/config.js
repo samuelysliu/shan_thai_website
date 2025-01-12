@@ -47,31 +47,31 @@ const deliveryPrintEndpoint = {
 }
 
 const merchantId = {
-  production: "",
+  production: "3437729",
   uat: "3002599",
   local: "3002599"
 }
 
 const hashKey = {
-  production: "",
+  production: "WsN2DCIPXSIwZWen",
   uat: "spPjZn66i0OhqJsQ",
   local: "spPjZn66i0OhqJsQ"
 }
 
 const hashIv = {
-  production: "",
+  production: "dfTmttwLSzjiZNqx",
   uat: "hT5OJckN45isQTTs",
   local: "hT5OJckN45isQTTs"
 }
 
 const logisticHashKey = {
-  production: "",
+  production: "WsN2DCIPXSIwZWen",
   uat: "XBERn1YOvpM9nfZc",
   local: "XBERn1YOvpM9nfZc"
 }
 
 const logisticHashIv = {
-  production: "",
+  production: "dfTmttwLSzjiZNqx",
   uat: "h1ONHk4P4yqbl5LK",
   local: "h1ONHk4P4yqbl5LK"
 }

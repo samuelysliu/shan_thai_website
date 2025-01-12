@@ -14,16 +14,14 @@ endpoint = os.getenv("WEBSITE_URL")
 
 if environment == "production":
     logistic_endpoint = "https://logistics.ecpay.com.tw/Express/Create"
-    merchant_id = "2000933"
-    hash_key = "XBERn1YOvpM9nfZc"
-    hash_iv = "h1ONHk4P4yqbl5LK"
-    server_url = ""
+    merchant_id = "3437729"
+    hash_key = "WsN2DCIPXSIwZWen"
+    hash_iv = "dfTmttwLSzjiZNqx"
 else:
     logistic_endpoint = "https://logistics-stage.ecpay.com.tw/Express/Create"
     merchant_id = "2000933"
     hash_key = "XBERn1YOvpM9nfZc"
     hash_iv = "h1ONHk4P4yqbl5LK"
-    server_url = ""
 
 
 def create_checkMacValue(params: dict):
