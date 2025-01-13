@@ -4,6 +4,8 @@ from sqlalchemy.orm import Session
 import modules.dbConnect as db_connect
 import modules.user_crud as user_db
 import modules.user_verify_crud as user_verify_db
+import modules.reward_setting_crud as reward_setting_db
+import modules.shan_thai_token_crud as shan_thai_token_db
 from bcrypt import hashpw, gensalt, checkpw
 import os
 import jwt
@@ -79,7 +81,7 @@ def create_access_token(data: dict):
 
 
 # 給email跟google登入用的 function
-def loginFunction(existing_user):
+def login_function(existing_user):
     if existing_user.identity != "admin":
         isAdmin = False
     else:
@@ -115,6 +117,11 @@ def loginFunction(existing_user):
         }
     }
 
+
+# 新用戶給善泰幣
+def new_user_reward(db):
+    reward = reward_setting_db.get_reward_by_name(db, "new user")
+    return reward["reward"]
 
 # 註冊 API
 @router.post("/register")
@@ -380,6 +387,9 @@ async def verify_user(verification_code: str, db: Session = Depends(get_db)):
     updated_user = user_db.update_user(db, verification_entry.uid, {"identity": "user"})
     if not updated_user:
         raise HTTPException(status_code=500, detail="Failed to update user identity")
+    
+    # 給新用戶獎勵
+    shan_thai_token_db.update_token_balance(db, verification_entry.uid, new_user_reward(db))
 
     # 刪除該用戶的所有驗證碼
     user_verify_db.delete_all_verifications_for_user(db, verification_entry.uid)
@@ -467,7 +477,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     ):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
-    response = loginFunction(existing_user)
+    response = login_function(existing_user)
     
     return response
 
@@ -515,7 +525,6 @@ async def google_login(user: GoogleUserBase, db: Session = Depends(get_db)):
 
         # 檢查用戶是否存在
         existing_user = user_db.get_user_by_email(db, email)
-        print(user_info)
         if not existing_user:
             # 自動註冊新使用者
             new_user = user_db.create_user(
@@ -528,12 +537,15 @@ async def google_login(user: GoogleUserBase, db: Session = Depends(get_db)):
             )
             if not new_user:
                 raise HTTPException(status_code=500, detail="Failed to create user")
+            
+            # 給新用戶獎勵
+            shan_thai_token_db.update_token_balance(db, new_user.uid, new_user_reward(db))
 
-            response = loginFunction(new_user)
+            response = login_function(new_user)
             return response
 
         # 如果用戶已存在，返回登入成功
-        response = loginFunction(existing_user)
+        response = login_function(existing_user)
         return response
 
     except:

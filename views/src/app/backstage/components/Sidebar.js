@@ -76,6 +76,15 @@ export default function Sidebar() {
             <Button
               variant="link"
               className="text-light"
+              onClick={() => handleNavigation("/backstage/reward_management")}
+            >
+              獎勵管理
+            </Button>
+          </li>
+          <li>
+            <Button
+              variant="link"
+              className="text-light"
               onClick={() => handleNavigation("/")}
             >
               回前台

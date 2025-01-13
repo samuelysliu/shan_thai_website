@@ -7,6 +7,7 @@ from controls.backstage.user_backstage import router as backstage_user_router
 from controls.backstage.order_backstage import router as backstage_order_router
 from controls.backstage.terms_backstage import router as backstage_term_router
 from controls.backstage.token_backstage import router as backstage_token_router
+from controls.backstage.reward_setting_backstage import router as backstage_reward_router
 from controls.frontstage.product_frontstage import router as frontstage_product_router
 from controls.frontstage.order_frontstage import router as frontstage_order_router
 from controls.frontstage.user_frontstage import router as frontstage_user_router
@@ -32,6 +33,7 @@ app.include_router(backstage_user_router, prefix="/backstage/v1")
 app.include_router(backstage_order_router, prefix="/backstage/v1")
 app.include_router(backstage_term_router, prefix="/backstage/v1")
 app.include_router(backstage_token_router, prefix="/backstage/v1")
+app.include_router(backstage_reward_router, prefix="/backstage/v1")
 app.include_router(frontstage_product_router, prefix="/frontstage/v1")
 app.include_router(frontstage_order_router, prefix="/frontstage/v1")
 app.include_router(frontstage_user_router, prefix="/frontstage/v1")

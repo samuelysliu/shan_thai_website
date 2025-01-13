@@ -299,5 +299,16 @@ class StoreSelection(Base):
     cvs_address = Column(String(255), nullable=False)  # 超商店舖地址
     created_at = Column(DateTime, default=func.now())  # 記錄建立時間
 
+# 記錄各項獎勵的Table
+class RewardSetting(Base):
+    __tablename__ = "reward_settings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)  # 主鍵，自增 ID
+    name = Column(String(255), nullable=False)  # 獎勵名稱，必填
+    description = Column(Text, nullable=True)  # 獎勵說明，可選填
+    reward_type = Column(String(255), nullable=True)  # 獎勵方式，可選填
+    reward = Column(Integer, nullable=True, default=0)  # 善泰幣獎勵數量，可選填，預設為 0
+    created_at = Column(DateTime, default=func.now(), nullable=False)  # 建立時間
+    updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)  # 更新時間
 
 #Base.metadata.create_all(bind=engine)
