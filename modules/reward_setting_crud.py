@@ -69,9 +69,9 @@ def create_reward(
 
 
 # 更新獎勵
-def update_reward(db: Session, reward_id: int, updates: dict):
+def update_reward(db: Session, reward_name: int, updates: dict):
     try:
-        reward = db.query(RewardSetting).filter(RewardSetting.id == reward_id).first()
+        reward = db.query(RewardSetting).filter(RewardSetting.name == reward_name).first()
         if reward:
             for key, value in updates.items():
                 if key in {"description", "reward_type", "reward"}:

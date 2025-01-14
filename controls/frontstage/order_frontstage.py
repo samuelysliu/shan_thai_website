@@ -8,6 +8,7 @@ import modules.order_crud as order_db
 import modules.product_crud as product_db
 import modules.cart_crud as cart_db
 import modules.store_selection_crud as store_selection_db
+import modules.shan_thai_token_crud as shan_thai_token_db
 from controls.cash_flow import create_payment_callback_record, create_checkMacValue
 from controls.logistic import create_store_logistic_order, create_home_logistic_order
 
@@ -45,11 +46,14 @@ class OrderBase(BaseModel):
     transportationMethod: str
     paymentMethod: str
     orderNote: str
+    shanThaiToken: int = 0
     order_details: List[OrderDetailBase]  # 訂單明細
 
 
 class OrderResponse(OrderBase):
     oid: str
+    discountPrice: int
+    useDiscount: bool
     created_at: datetime
 
     class Config:
@@ -146,14 +150,36 @@ async def create_user_order(
             detail=f"error requests",
         )
 
+    # 確認善泰幣餘額足夠
+    token_data = shan_thai_token_db.get_token_by_uid(db, order.uid)
+    if token_data.balance < order.shanThaiToken:
+        raise HTTPException(
+            status_code=500,
+            detail=f"error requests",
+        )
+    else:  # 扣除使用的善泰幣
+        check_update = shan_thai_token_db.update_token_balance(
+            db, order.uid, (token_data.balance - order.shanThaiToken)
+        )
+        if not check_update:
+            raise HTTPException(
+                status_code=500,
+                detail=f"update shan thai token failed",
+            )
+
+    if order.shanThaiToken > 0:
+        useDiscount = True
+    else:
+        useDiscount = False
+
     # 創建訂單
     new_order = order_db.create_order(
         db,
         oid=generate_verification_code(10),
         uid=order.uid,
         totalAmount=total_amount,  # 使用後端計算的總金額
-        discountPrice=0,
-        useDiscount=False,
+        discountPrice=(total_amount - order.shanThaiToken),
+        useDiscount=useDiscount,
         zipCode=order.zipCode,
         address=order.address,
         recipientName=order.recipientName,
@@ -179,13 +205,19 @@ async def create_user_order(
             if cart_item["pid"] == detail["pid"]:
                 cart_db.remove_cart_item(db, cart_item["cart_id"])
 
+    # 確認是使用優惠價還是總價創建物流訂單
+    if useDiscount:
+        order_amount = new_order.discountPrice
+    else:
+        order_amount = new_order.totalAmount
+
     # 如果是貨到付款，直接建立物流單
     if order.paymentMethod == "貨到付款":
         create_store_logistic_order(
             oid=new_order.oid,
             trade_date=new_order.created_at,
             store_type=new_order.transportationMethod,
-            order_amount=new_order.totalAmount,
+            order_amount=order_amount,
             isCollection="Y",
             product="善泰團隊聖物",
             user_name=new_order.recipientName,
@@ -243,43 +275,6 @@ async def cancel_user_order(
     if not updated_order:
         raise HTTPException(status_code=404, detail="Order not found")
     return updated_order
-
-
-# 更新訂單
-@router.put("/orders/{oid}")
-async def update_order_status(
-    oid: str,
-    order: OrderUpdate,
-    token_data: dict = Depends(verify_token),
-    db: Session = Depends(get_db),
-):
-    try:
-        # 檢查該訂單是否屬於當前用戶
-        check_order = order_db.get_order_by_oid(db, oid)
-        if not check_order or check_order["uid"] != token_data.get("uid"):
-            raise HTTPException(
-                status_code=403, detail="Order not found or access denied"
-            )
-
-        # 確認是合法修改的內容
-        valid_payment = ["匯款", "貨到付款", None]
-        if order.paymentMethod not in valid_payment:
-            raise HTTPException(status_code=400, detail="Invalid order payment")
-
-        valid_status = ["待確認", None]
-        if order.status not in valid_status:
-            raise HTTPException(status_code=400, detail="Invalid order status")
-
-        update_data = order.dict(exclude_unset=True)  # 排除未設置的字段
-        if not update_data:
-            raise HTTPException(status_code=400, detail="No fields to update")
-
-        updated_order = order_db.update_order(db, oid=oid, updates=update_data)
-        if not updated_order:
-            raise HTTPException(status_code=404, detail="Order not found")
-        return updated_order
-    except:
-        raise HTTPException(status_code=500, detail="Failed to update the order")
 
 
 # 接受金流主動回拋訂單資訊
@@ -347,12 +342,12 @@ async def received_cash_flow_response(
             "CustomField4": CustomField4,
         }
     )
-    
+
     print(create_checkMacValue(params))
-    """
+
     if CheckMacValue != create_checkMacValue(params):
         raise HTTPException(400, "Invaild call")
-    """
+
     print(params)
     try:
         create_payment_callback_record(
@@ -386,7 +381,12 @@ async def received_cash_flow_response(
 
             # 建立物流單
             order = order_db.get_order_by_oid(db=db, oid=MerchantTradeNo)
-            
+
+            if order.useDiscount:
+                order_amount = order.discountPrice
+            else:
+                order_amount = order.totalAmount
+
             if (
                 order["transportationMethod"] == "seven"
                 or order["transportationMethod"] == "family"
@@ -395,7 +395,7 @@ async def received_cash_flow_response(
                     oid=MerchantTradeNo,
                     trade_date=TradeDate,
                     store_type=order["transportationMethod"],
-                    order_amount=order["totalAmount"],
+                    order_amount=order_amount,
                     isCollection="N",
                     product="善泰團隊聖物",
                     user_name=order["recipientName"],
@@ -408,7 +408,7 @@ async def received_cash_flow_response(
                     product_weight = 5
                 else:
                     product_weight = order["productWeight"]
-                    
+
                 if order.get("zipCode") == None:
                     zip_code = "0"
                 else:
@@ -417,7 +417,7 @@ async def received_cash_flow_response(
                 result = create_home_logistic_order(
                     oid=MerchantTradeNo,
                     trade_date=TradeDate,
-                    order_amount=order["totalAmount"],
+                    order_amount=order_amount,
                     product="善泰團隊聖物",
                     product_weight=product_weight,
                     user_name=order["recipientName"],
@@ -426,13 +426,13 @@ async def received_cash_flow_response(
                     address=order["address"],
                     user_email=order["recipientEmail"],
                 )
-            
+
             if result == "failed":
                 send_email(
-                "shanthaiteam@gmail.com",
-                f"物流單{MerchantTradeNo}建立失敗，請手動建立",
-                f"<p>物流單{MerchantTradeNo}建立失敗，請手動建立</p>",
-            )
+                    "shanthaiteam@gmail.com",
+                    f"物流單{MerchantTradeNo}建立失敗，請手動建立",
+                    f"<p>物流單{MerchantTradeNo}建立失敗，請手動建立</p>",
+                )
 
         else:  # 如果訂單被取消，要恢復庫存
             order_details = order_db.get_order_details_by_oid(
@@ -457,7 +457,7 @@ async def received_cash_flow_response(
                         detail=f"Failed to update product remain for Product ID {order_detail.pid}",
                     )
             update_data = {"status": "已取消"}
-        
+
         updated_order = order_db.update_order(
             db, oid=MerchantTradeNo, updates=update_data
         )

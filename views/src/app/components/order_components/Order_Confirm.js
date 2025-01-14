@@ -22,6 +22,7 @@ const OrderConfirm = () => {
     const [zipCode, setZipCode] = useState("");
     const [address, setAddress] = useState(userInfo?.address || "");
     const [storeId, setStoreId] = useState("");
+    const [useShanThaiToken, setUseShanThaiToken] = useState(0)
     const [transportationMethod, setTransportationMethod] = useState("delivery");
     const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,7 +56,7 @@ const OrderConfirm = () => {
 
     // 計算總額
     const calculateTotal = () => {
-        return cartProduct.reduce((total, item) => total + item.price * item.quantity, 0);
+        return cartProduct.reduce((total, item) => total + item.price * item.quantity, 0) - useShanThaiToken;
     };
 
     // 提交訂單
@@ -92,8 +93,9 @@ const OrderConfirm = () => {
                 recipientName: recipientName,
                 recipientPhone: recipientPhone,
                 recipientEmail: recipientEmail,
-                transportationMethod,
-                paymentMethod, // 付款方式
+                transportationMethod: transportationMethod,
+                paymentMethod: paymentMethod, // 付款方式
+                shanThaiToken: useShanThaiToken,
                 orderNote: "",
                 order_details: orderDetails,
             };
@@ -104,13 +106,21 @@ const OrderConfirm = () => {
                     Authorization: `Bearer ${token}`,
                 },
             });
+
             const date = new Date(response.data.created_at);
             const formatedCreatedAt = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ` +
                 `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
+            
+            let orderAmount = response.data.totalAmount;
+            
+            if(response.data.useDiscount){
+                orderAmount = response.data.discountPrice;
+            }
+
             if (paymentMethod === "匯款")
-                createCashFlowOrder("ATM", response.data.oid, formatedCreatedAt, response.data.totalAmount)
+                createCashFlowOrder("ATM", response.data.oid, formatedCreatedAt, orderAmount)
             else if ((paymentMethod === "信用卡"))
-                createCashFlowOrder("Credit", response.data.oid, formatedCreatedAt, response.data.totalAmount)
+                createCashFlowOrder("Credit", response.data.oid, formatedCreatedAt, orderAmount)
 
 
             handleSuccess("訂單已提交成功，正在確認付款資訊！");
@@ -237,6 +247,14 @@ const OrderConfirm = () => {
             setStoreId(response.data.cvs_store_id)
         } catch (err) {
             console.error(err);
+        }
+    }
+
+    // 處理善泰幣的輸入
+    const checkShanThaiToken = (e) => {
+        const value = parseInt(e.target.value, 10); // 將輸入值轉為整數
+        if (!isNaN(value) && value >= 0 && value < userInfo.shanThaiToken && value < calculateTotal()) {
+            setUseShanThaiToken(value);
         }
     }
 
@@ -372,16 +390,31 @@ const OrderConfirm = () => {
                 </Col>
 
                 <Col xs={12} md={6}>
-                    <h4>訂單金額總計：NT. {calculateTotal()}</h4>
-                    <Button
-                        variant="primary"
-                        className="mt-4"
-                        onClick={handleSubmitOrder}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? "提交中..." : "確認購買"}
-                    </Button>
-                    <p>提醒您，因應物流公司規定，選擇宅配或是總金額超過兩萬塊，無法貨到付款，造成您的不便，敬請見諒！</p>
+                    <Row className="border-bottom mb-3">
+                        <Form.Group controlId="token" className="mb-3">
+                            <Form.Label>使用善泰幣</Form.Label>
+                            <Form.Control
+                                type="number"
+                                placeholder="請輸入要使用的善泰幣數量"
+                                value={useShanThaiToken || 0}
+                                onChange={(e) => checkShanThaiToken(e)}
+                            />
+                        </Form.Group>
+                        <p>剩餘數量：{userInfo?.shanThaiToken || 0}</p>
+                    </Row>
+
+                    <Row>
+                        <h4>訂單金額總計：NT. {calculateTotal()}</h4>
+                        <Button
+                            variant="primary"
+                            className="mt-4"
+                            onClick={handleSubmitOrder}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? "提交中..." : "確認購買"}
+                        </Button>
+                        <p>提醒您，因應物流公司規定，選擇宅配或是總金額超過兩萬塊，無法貨到付款，造成您的不便，敬請見諒！</p>
+                    </Row>
                 </Col>
             </Row>
 

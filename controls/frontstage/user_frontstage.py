@@ -81,11 +81,14 @@ def create_access_token(data: dict):
 
 
 # 給email跟google登入用的 function
-def login_function(existing_user):
+def login_function(existing_user, db):
     if existing_user.identity != "admin":
         isAdmin = False
     else:
         isAdmin = True
+        
+    user_token = shan_thai_token_db.get_token_by_uid(db, existing_user.uid)
+        
     # 生成 JWT token
     access_token = create_access_token(
         data={
@@ -98,6 +101,7 @@ def login_function(existing_user):
             "mbti": existing_user.mbti,
             "phone": existing_user.phone,
             "address": existing_user.address,
+            "shan_thai_token": user_token.balance,
             "isAdmin": isAdmin,
         }
     )
@@ -112,6 +116,7 @@ def login_function(existing_user):
             "mbti": existing_user.mbti,
             "phone": existing_user.phone,
             "address": existing_user.address,
+            "shan_thai_token": user_token.balance,
             "isAdmin": isAdmin,
             "token": access_token,
         }
@@ -382,7 +387,7 @@ async def verify_user(verification_code: str, db: Session = Depends(get_db)):
     # 檢查驗證碼是否過期
     if verification_entry.expires_at < datetime.utcnow():
         raise {"detail": "User verified expired"}
-
+    
     # 更新用戶身份為 "user"
     updated_user = user_db.update_user(db, verification_entry.uid, {"identity": "user"})
     if not updated_user:
@@ -390,7 +395,7 @@ async def verify_user(verification_code: str, db: Session = Depends(get_db)):
     
     # 給新用戶獎勵
     shan_thai_token_db.update_token_balance(db, verification_entry.uid, new_user_reward(db))
-
+    
     # 刪除該用戶的所有驗證碼
     user_verify_db.delete_all_verifications_for_user(db, verification_entry.uid)
 
@@ -412,7 +417,7 @@ async def get_user_profile(
         "mbti": existing_user["mbti"],
         "phone": existing_user["phone"],
         "address": existing_user["address"],
-        "token": existing_user["token"],
+        "shan_thai_token": existing_user["token"],
     }
 
 
@@ -477,7 +482,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     ):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
-    response = login_function(existing_user)
+    response = login_function(existing_user, db)
     
     return response
 
@@ -541,11 +546,11 @@ async def google_login(user: GoogleUserBase, db: Session = Depends(get_db)):
             # 給新用戶獎勵
             shan_thai_token_db.update_token_balance(db, new_user.uid, new_user_reward(db))
 
-            response = login_function(new_user)
+            response = login_function(new_user, db)
             return response
 
         # 如果用戶已存在，返回登入成功
-        response = login_function(existing_user)
+        response = login_function(existing_user, db)
         return response
 
     except:

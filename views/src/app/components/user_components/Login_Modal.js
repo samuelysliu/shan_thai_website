@@ -39,6 +39,7 @@ export default function LoginModal({ show, handleClose }) {
         "mbti": responseData.mbti,
         "phone": responseData.phone,
         "address": responseData.address,
+        "shanThaiToken": responseData.shan_thai_token,
         "isAdmin": responseData.isAdmin
       }
       const token = responseData.token;
@@ -79,6 +80,7 @@ export default function LoginModal({ show, handleClose }) {
         "mbti": responseData.mbti,
         "phone": responseData.phone,
         "address": responseData.address,
+        "shanThaiToken": responseData.shan_thai_token,
         "isAdmin": responseData.isAdmin
       }
       

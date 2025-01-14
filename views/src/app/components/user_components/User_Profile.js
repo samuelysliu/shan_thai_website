@@ -27,7 +27,7 @@ export default function UserProfile() {
         mbti: "",
         phone: "",
         address: "",
-        token: 0,
+        shanThaiToken: 0,
     });
 
     const [loading, setLoading] = useState(true);
@@ -82,7 +82,15 @@ export default function UserProfile() {
             const response = await axios.get(`${endpoint}/frontstage/v1/profile`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            setUserData(response.data);
+            setUserData({
+                username: response.data.username,
+                email: response.data.email,
+                birth_date: response.data.birth_date,
+                mbti: response.data.mbti,
+                phone: response.data.phone,
+                address: response.data.address,
+                shanThaiToken: response.data.shan_thai_token
+            });
             setUpdatedData(response.data);
         } catch (error) {
             console.error("無法獲取用戶資料：", error);
@@ -112,7 +120,6 @@ export default function UserProfile() {
                 "mbti": response.data.mbti,
                 "phone": response.data.phone,
                 "address": response.data.address,
-
             }
             dispatch(updateUserInfo({ userInfo }));
         } catch (error) {
@@ -315,7 +322,7 @@ export default function UserProfile() {
                                             善泰幣
                                         </strong></td>
                                         <td>
-                                            {userData.token}
+                                            {userData.shanThaiToken}
                                         </td>
                                     </tr>
                                     : ""}

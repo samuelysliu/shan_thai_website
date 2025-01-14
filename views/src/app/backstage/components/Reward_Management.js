@@ -11,7 +11,7 @@ export default function RewardManagement() {
     const endpoint = config.apiBaseUrl;
     const { token } = useSelector((state) => state.user);
 
-    const [rewardName, setRewardName] = useState("");
+    const [rewardName, setRewardName] = useState("new user");
     const [loading, setLoading] = useState(true);
     const [searchReward, setSearchReward] = useState("");
     const [showModal, setShowModal] = useState(false);
@@ -50,7 +50,7 @@ export default function RewardManagement() {
     };
 
     const filteredRewards = rewards.filter((reward) =>
-        reward.name.toLowerCase().includes(setSearchReward.toLowerCase())
+        reward.name.toLowerCase().includes(searchReward.toLowerCase())
     );
 
     // 顯示新增/編輯彈出視窗
@@ -177,7 +177,7 @@ export default function RewardManagement() {
                                     <tr key={reward.id}>
                                         <td>{reward.name}</td>
                                         <td>{reward.description}</td>
-                                        <td>{reward.reward_type}</td>
+                                        <td>{reward.reward_type === "fixed" ? "固定數量" : "根據比例"}</td>
                                         <td>{reward.reward}</td>
                                         <td>
                                             <Button
@@ -203,17 +203,15 @@ export default function RewardManagement() {
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
-                        <Form.Group className="mb-3">
-                            <Form.Label>名稱</Form.Label>
-                            <Form.Select
-                                value={rewardName}
-                                onChange={(e) => setRewardName(e.target.value)}
-                            >
-                                <option value="new user">新會員獎勵</option>
-                                <option value="invite friend">邀請會員獎勵</option>
-                            </Form.Select>
-                        </Form.Group>
-                        {isEditing ? (<>
+                        {isEditing ? <>
+                            <Form.Group className="mb-3">
+                                <Form.Label>名稱</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    value={editableReward.name || ""}
+                                    disabled={true}
+                                />
+                            </Form.Group>
                             <Form.Group className="mb-3">
                                 <Form.Label>描述</Form.Label>
                                 <Form.Control
@@ -264,7 +262,18 @@ export default function RewardManagement() {
                                 />
                             </Form.Group>
 
-                        </>) : ""}
+                        </> :
+                            <Form.Group className="mb-3">
+                                <Form.Label>名稱</Form.Label>
+                                <Form.Select
+                                    value={rewardName}
+                                    onChange={(e) => setRewardName(e.target.value)}
+                                >
+                                    <option value="new user">新會員獎勵</option>
+                                    <option value="invite friend">邀請會員獎勵</option>
+                                </Form.Select>
+                            </Form.Group>
+                        }
 
 
                     </Form>

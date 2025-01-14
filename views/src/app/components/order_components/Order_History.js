@@ -67,22 +67,6 @@ const OrderHistory = () => {
     }
   };
 
-  // 更新訂單 API
-  const updateOrder = async (orderId) => {
-    try {
-      const response = await axios.put(`${endpoint}/frontstage/v1/orders/${orderId}`, { "status": "待確認" }, {
-        headers: {
-          Authorization: `Bearer ${token}`, // 請替換成正確的 Token
-        },
-      });
-
-      fetchOrders();
-    } catch (err) {
-      console.error("更新訂單失敗：", err);
-    } finally {
-    }
-  };
-
   const handleShowModal = (orderId) => {
     setSelectedOrderId(orderId);
     setShowModal(true);
@@ -174,17 +158,6 @@ const OrderHistory = () => {
                   ))}
                 </div>
                 <hr />
-                {(order.paymentMethod === "匯款" && order.status === "待匯款") &&
-                  <>
-                    < div >
-                      <strong>銀行代號：</strong>001 <strong>匯款帳號：</strong>123456 { }
-                      <Button onClick={() => { updateOrder(order.oid) }}>
-                        我已匯款，通知管理員
-                      </Button>
-                    </div>
-                    <hr />
-                  </>
-                }
 
                 <div className="d-flex justify-content-between align-items-center">
                   <Col xs={6} md={4} lg={2}>

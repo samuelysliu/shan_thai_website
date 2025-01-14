@@ -376,7 +376,7 @@ export default function UserManagement() {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>紅利點數</Form.Label>
+                            <Form.Label>善泰幣</Form.Label>
                             <Form.Control
                                 type="number"
                                 value={currentUser.token}

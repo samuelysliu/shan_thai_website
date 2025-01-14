@@ -6,7 +6,9 @@ from modules.dbInit import ShanThaiToken
 # 檢查用戶是否有紅利記錄
 def token_exists(db: Session, uid: int) -> bool:
     try:
-        return db.query(ShanThaiToken).filter(ShanThaiToken.uid == uid).first() is not None
+        return (
+            db.query(ShanThaiToken).filter(ShanThaiToken.uid == uid).first() is not None
+        )
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return False
@@ -49,7 +51,16 @@ def update_token_balance(db: Session, uid: int, new_balance: int):
         if new_balance < 0:
             raise ValueError("Balance cannot be negative.")
         token = db.query(ShanThaiToken).filter(ShanThaiToken.uid == uid).first()
-        if token:
+
+        # 代表尚未創建紀錄，所以要創建新的紀錄
+        if token == None:
+            new_token = ShanThaiToken(uid=uid, balance=new_balance)
+            db.add(new_token)
+            db.commit()
+            db.refresh(new_token)
+            return new_token
+
+        elif token:
             token.balance = new_balance
             db.commit()
             db.refresh(token)
@@ -61,7 +72,6 @@ def update_token_balance(db: Session, uid: int, new_balance: int):
     except ValueError as ve:
         print(f"Validation Error: {ve}")
         return None
-
 
 
 # 刪除用戶紅利記錄

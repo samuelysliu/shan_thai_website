@@ -20,25 +20,33 @@ class RewardUpdate(BaseModel):
     reward_type: str | None
     reward: int = 0
 
+
 # 取得獎勵清單
 @router.get("/reward_setting")
-async def create_reward(reward: RewardCreate, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
+async def create_reward(
+    token_data: dict = Depends(verify_token), db: Session = Depends(get_db)
+):
     # 確認是否為管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
-    
+
     reward_list = reward_setting_db.get_all_rewards(db)
     if not reward_list:
         raise HTTPException(status_code=500, detail="Reward get failed")
     return reward_list
 
+
 # 新建獎勵
 @router.post("/reward_setting")
-async def create_reward(reward: RewardCreate, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
+async def create_reward(
+    reward: RewardCreate,
+    token_data: dict = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
     # 確認是否為管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
-    
+
     reward_check = reward_setting_db.get_reward_by_name(db, reward.name)
-    
+
     if not reward_check:
         if reward.name == "new user":
             description = "新進會員的獎勵"
@@ -51,7 +59,11 @@ async def create_reward(reward: RewardCreate, token_data: dict = Depends(verify_
             raise HTTPException(status_code=500, detail="Invaild Call")
 
         created_reward = reward_setting_db.create_reward(
-            db, name=reward.name, description=description, reward_type=reward_type, reward=0
+            db,
+            name=reward.name,
+            description=description,
+            reward_type=reward_type,
+            reward=0,
         )
         if not created_reward:
             raise HTTPException(status_code=500, detail="Reward creation failed")
@@ -81,7 +93,7 @@ async def update_reward(
         raise HTTPException(status_code=400, detail="No fields to update")
 
     updated_user = reward_setting_db.update_reward(
-        db, user_id=reward.id, updates=update_data
+        db, reward_name=reward_name, updates=update_data
     )
     if not updated_user:
         raise HTTPException(status_code=404, detail="User not found")
