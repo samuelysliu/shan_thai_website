@@ -161,10 +161,14 @@ const OrderHistory = () => {
 
                 <div className="d-flex justify-content-between align-items-center">
                   <Col xs={6} md={4} lg={2}>
-                    <strong>總價:</strong> NT. {order.totalAmount}
+                    <strong>總價:</strong> NT.
+                    {order.useDiscount ? <>
+                      <span style={{ textDecoration: "line-through" }}>{order.totalAmount}</span>
+                      {"   "}{order.discountPrice}
+                    </> : order.totalAmount}
                   </Col>
                   <Col xs={6} md={8} lg={10}>
-                  <strong>付款方式:</strong> {order.paymentMethod}
+                    <strong>付款方式:</strong> {order.paymentMethod}
                   </Col>
                 </div>
 

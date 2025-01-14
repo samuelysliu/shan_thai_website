@@ -77,7 +77,7 @@ export default function RewardManagement() {
         setIsEditing(false);
     };
 
-    // 新增條款
+    // 新增獎勵
     const createReward = async () => {
         setLoading(true);
         try {
@@ -94,10 +94,11 @@ export default function RewardManagement() {
             console.error("無法新增條款：", error);
         } finally {
             setLoading(false);
+            handleCloseModal();
         }
     };
 
-    // 更新條款
+    // 更新獎勵內容
     const updateReward = async () => {
         setLoading(true);
         try {
@@ -270,7 +271,7 @@ export default function RewardManagement() {
                                     onChange={(e) => setRewardName(e.target.value)}
                                 >
                                     <option value="new user">新會員獎勵</option>
-                                    <option value="invite friend">邀請會員獎勵</option>
+                                    {/*<option value="invite friend">邀請會員獎勵</option>*/}
                                 </Form.Select>
                             </Form.Group>
                         }

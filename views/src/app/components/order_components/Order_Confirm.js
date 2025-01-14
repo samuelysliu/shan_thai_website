@@ -22,6 +22,7 @@ const OrderConfirm = () => {
     const [zipCode, setZipCode] = useState("");
     const [address, setAddress] = useState(userInfo?.address || "");
     const [storeId, setStoreId] = useState("");
+    const [shanThaiToken, setShanThaiToken] = useState(0)
     const [useShanThaiToken, setUseShanThaiToken] = useState(0)
     const [transportationMethod, setTransportationMethod] = useState("delivery");
     const [paymentMethod, setPaymentMethod] = useState("匯款"); // 付款方式
@@ -48,11 +49,26 @@ const OrderConfirm = () => {
         }
     };
 
+    // 同步善泰幣數量
+    const getShanThaiTokenBalance = async () => {
+        try {
+            const response = await axios.get(`${endpoint}/frontstage/v1/tokens/${userInfo.uid}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            setShanThaiToken(response.data.balance);
+        } catch (err) {
+            console.error("取得善泰幣資訊失敗：", err);
+        }
+    }
+
     useEffect(() => {
         if (cart.length > 0) {
             productAndCartMapping();
         }
-    }, [cart]);
+        getShanThaiTokenBalance();
+    }, [cart, userInfo]);
 
     // 計算總額
     const calculateTotal = () => {
@@ -61,7 +77,7 @@ const OrderConfirm = () => {
 
     // 提交訂單
     const handleSubmitOrder = async () => {
-        if (!recipientName || !recipientPhone || !recipientEmail || !address) {
+        if (!recipientName || !recipientPhone || !recipientEmail || !address || address === "等待選擇中...") {
             handleError("請完整填寫所有必填欄位！");
             return;
         }
@@ -110,10 +126,10 @@ const OrderConfirm = () => {
             const date = new Date(response.data.created_at);
             const formatedCreatedAt = `${date.getFullYear()}/${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getDate()).padStart(2, "0")} ` +
                 `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}:${String(date.getSeconds()).padStart(2, "0")}`;
-            
+
             let orderAmount = response.data.totalAmount;
-            
-            if(response.data.useDiscount){
+
+            if (response.data.useDiscount) {
                 orderAmount = response.data.discountPrice;
             }
 
@@ -253,7 +269,7 @@ const OrderConfirm = () => {
     // 處理善泰幣的輸入
     const checkShanThaiToken = (e) => {
         const value = parseInt(e.target.value, 10); // 將輸入值轉為整數
-        if (!isNaN(value) && value >= 0 && value < userInfo.shanThaiToken && value < calculateTotal()) {
+        if (!isNaN(value) && value >= 0 && value < shanThaiToken && value < calculateTotal()) {
             setUseShanThaiToken(value);
         }
     }
@@ -400,7 +416,7 @@ const OrderConfirm = () => {
                                 onChange={(e) => checkShanThaiToken(e)}
                             />
                         </Form.Group>
-                        <p>剩餘數量：{userInfo?.shanThaiToken || 0}</p>
+                        <p>剩餘數量：{shanThaiToken || 0}</p>
                     </Row>
 
                     <Row>

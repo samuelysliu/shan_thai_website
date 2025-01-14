@@ -13,6 +13,7 @@ from controls.frontstage.order_frontstage import router as frontstage_order_rout
 from controls.frontstage.user_frontstage import router as frontstage_user_router
 from controls.frontstage.cart_frontstage import router as frontstage_cart_router
 from controls.frontstage.terms_frontstage import router as frontstage_term_router
+from controls.frontstage.token_frontstage import router as frontstage_token_router
 from controls.cash_flow import check_order
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -39,6 +40,7 @@ app.include_router(frontstage_order_router, prefix="/frontstage/v1")
 app.include_router(frontstage_user_router, prefix="/frontstage/v1")
 app.include_router(frontstage_cart_router, prefix="/frontstage/v1")
 app.include_router(frontstage_term_router, prefix="/frontstage/v1")
+app.include_router(frontstage_token_router, prefix="/frontstage/v1")
 
 def check_cashflow_order():
     print("check_cashflow_order start")
