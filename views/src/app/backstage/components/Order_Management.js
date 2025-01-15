@@ -26,9 +26,6 @@ export default function OrderManagement() {
   const [expandedRows, setExpandedRows] = useState([]); // 存儲展開的訂單編號
   const [loading, setLoading] = useState(true);
 
-  const [products, setProducts] = useState([]);
-  const [customers, setCustomers] = useState([]);
-
   const dispatch = useDispatch();
 
   // 控制彈出視窗顯示
@@ -50,8 +47,6 @@ export default function OrderManagement() {
 
   useEffect(() => {
     fetchOrders();
-    fetchProducts();
-    fetchCustomers();
   }, []);
 
   // 拉取所有訂單
@@ -64,7 +59,6 @@ export default function OrderManagement() {
         },
       });
       setOrders(response.data);
-      console.log(response.data)
     } catch (error) {
       console.error("無法拉取訂單資料：", error);
     } finally {
@@ -81,33 +75,6 @@ export default function OrderManagement() {
     }
   };
 
-  // 拉取產品清單
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get(`${endpoint}/backstage/v1/product_list`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
-      setProducts(response.data);
-    } catch (error) {
-      console.error("無法拉取產品資料：", error);
-    }
-  };
-
-  // 拉取客戶清單
-  const fetchCustomers = async () => {
-    try {
-      const response = await axios.get(`${endpoint}/backstage/v1/users_list`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        }
-      });
-      setCustomers(response.data);
-    } catch (error) {
-      console.error("無法拉取客戶資料：", error);
-    }
-  };
 
   // 控制彈出視窗
   const handleShowOrderModal = (order) => {

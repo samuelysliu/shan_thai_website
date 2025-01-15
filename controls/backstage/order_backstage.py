@@ -97,59 +97,6 @@ async def get_orders_by_uid(
     return orders
 
 
-# **新增訂單**
-@router.post("/orders")
-async def create_order(
-    order: OrderCreate,
-    token_data: dict = Depends(verify_token),
-    db: Session = Depends(get_db),
-):
-    adminAutorizationCheck(token_data.get("isAdmin"))
-
-    if order.useDiscount and (order.discountPrice is None or order.discountPrice <= 0):
-        raise HTTPException(status_code=400, detail="Invalid special price")
-
-    for detail in order.order_details:
-        product = product_db.get_product_by_id(db, detail.pid)
-        if not product or product.remain < detail.productNumber:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Product ID {detail.pid} is out of stock or insufficient quantity",
-            )
-
-    for detail in order.order_details:
-        product = product_db.get_product_by_id(db, detail.pid)
-        updated = product_db.update_partial_product(
-            db, detail.pid, {"remain": product.remain - detail.productNumber}
-        )
-        if not updated:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to update stock for Product ID {detail.pid}",
-            )
-
-    created_order = order_db.create_order(
-        db,
-        uid=order.uid,
-        totalAmount=order.totalAmount,
-        discountPrice=order.discountPrice or 0,
-        useDiscount=order.useDiscount,
-        zipCode=order.zipCode,
-        address=order.address,
-        recipientName=order.recipientName,
-        recipientPhone=order.recipientPhone,
-        recipientEmail=order.recipientEmail,
-        transportationMethod=order.transportationMethod,
-        paymentMethod=order.paymentMethod,
-        note=order.note,
-        status=order.status,
-        order_details=[detail.dict() for detail in order.order_details],
-    )
-    if not created_order:
-        raise HTTPException(status_code=500, detail="Order creation failed")
-    return created_order
-
-
 # 更新訂單
 @router.patch("/orders/{oid}")
 async def update_order(
@@ -173,22 +120,6 @@ async def update_order(
         return updated_order
     except:
         raise HTTPException(status_code=500, detail="Failed to cancel the order")
-
-
-# 刪除訂單
-@router.delete("/orders/{oid}")
-async def delete_order(
-    oid: str,
-    token_data: dict = Depends(verify_token),
-    db: Session = Depends(get_db),
-):
-    # 確認是否是管理員
-    adminAutorizationCheck(token_data.get("isAdmin"))
-
-    success = order_db.delete_order(db, oid=oid)
-    if not success:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return {"detail": "Order deleted successfully"}
 
 
 # 接收物流商回傳的物流狀態
@@ -303,6 +234,19 @@ async def received_logistic_response(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
+    if RtnCode == "2030" or RtnCode == "3024":
+        update_data = {"status": "配送中"}
+    elif RtnCode == "2073" or RtnCode == "3018":
+        update_data = {"status": "已送達"}
+    elif RtnCode == "2067" or RtnCode == "3022":
+        update_data = {"status": "已完成"}
+    elif RtnCode == "2074" or RtnCode == "3020":
+        update_data = {"status": "已取消"}
+
+    updated_order = order_db.update_order(db, oid=MerchantTradeNo, updates=update_data)
+    if not updated_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
     return "1|OK"
 
 
@@ -315,7 +259,7 @@ async def get_logistic_order(
 ):
     # 確認是否是管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
-    
+
     try:
         logistic_order = logistics_order_db.get_logistics_order_by_trade_no(
             db=db, merchant_trade_no=oid
@@ -338,7 +282,7 @@ def create_logistic_order(
     oid: str,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
-):  
+):
     adminAutorizationCheck(token_data.get("isAdmin"))
 
     order = order_db.get_order_by_oid(db, oid=oid)
@@ -383,7 +327,7 @@ def create_logistic_order(
             address=order["address"],
             user_email=order["recipientEmail"],
         )
-    
+
     if result == "failed":
         return {"detail": "failed"}
     else:
