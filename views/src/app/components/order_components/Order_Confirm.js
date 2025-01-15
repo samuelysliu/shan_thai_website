@@ -269,8 +269,10 @@ const OrderConfirm = () => {
     // 處理善泰幣的輸入
     const checkShanThaiToken = (e) => {
         const value = parseInt(e.target.value, 10); // 將輸入值轉為整數
-        if (!isNaN(value) && value >= 0 && value < shanThaiToken && value < calculateTotal()) {
+        if (value >= 0 && value < shanThaiToken && value < cartProduct.reduce((total, item) => total + item.price * item.quantity, 0)) {
             setUseShanThaiToken(value);
+        } else if (!value) {
+            setUseShanThaiToken(0);
         }
     }
 
