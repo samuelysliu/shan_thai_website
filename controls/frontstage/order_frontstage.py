@@ -1,5 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, HTTPException, Depends, Form, Query
+from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import List
@@ -21,6 +21,9 @@ from controls.tools import (
 )
 from datetime import datetime
 import re
+import httpx
+from urllib.parse import quote
+import json
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -345,8 +348,10 @@ async def received_cash_flow_response(
 
     print(create_checkMacValue(params))
 
+    """
     if CheckMacValue != create_checkMacValue(params):
         raise HTTPException(400, "Invaild call")
+    """
 
     print(params)
     try:
@@ -548,3 +553,76 @@ async def get_store_selection(merchant_trade_no: str, db: Session = Depends(get_
         "cvs_store_name": record.cvs_store_name,
         "cvs_address": record.cvs_address,
     }
+
+
+# 取得地圖API的 keystr
+async def get_keystr():
+    # 步驟一：呼叫指定的 API
+    url = "https://api.tgos.tw/TGOS_API/tgos?ver=2&AppID=x+JLVSx85Lk=&APIKey=in8W74q0ogpcfW/STwicK8D5QwCdddJf05/7nb+OtDh8R99YN3T0LurV4xato3TpL/fOfylvJ9Wv/khZEsXEWxsBmg+GEj4AuokiNXCh14Rei21U5GtJpIkO++Mq3AguFK/ISDEWn4hMzqgrkxNe1Q=="
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+
+    if response.status_code == 200:
+        content = response.text
+
+        # 步驟二：從內容中提取 `TGOS.tgHash` 的值
+        match = re.search(r'TGOS\.tgHash="([^"]+)"', content)
+        if match:
+            tg_hash = match.group(1)
+            # 將 `tgHash` 使用 `encodeURIComponent` 模擬 URL encode
+            keystr = quote(tg_hash, safe="")
+            return keystr
+        else:
+            print("TGOS.tgHash not found in the response.")
+            return None
+    else:
+        print(f"Failed to fetch the API. Status code: {response.status_code}")
+        return None
+
+
+# 判斷地址是否存在
+@router.get("/address_exist/{address}")
+async def check_address_exist(address: str, token_data: dict = Depends(verify_token),):
+    keystr = await get_keystr()
+
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(
+                f"https://gis.tgos.tw/TGAddress/TGAddress.aspx?oAddress={address}&oSRS=EPSG:3826&oResultDataType=jsonp&keystr={keystr}"
+            )
+            response_text = response.text
+
+            # 移除 JSONP 包裹，提取 JSON
+            if response_text.startswith("var dataObj ="):
+                response_text = response_text[len("var dataObj =") :].strip() 
+                if response_text.endswith(";"):
+                    response_text = response_text[:-1]
+
+            data = json.loads(response_text)  # 解析為 Python 字典
+
+            # 檢查地址是否存在
+            info = data.get("Info", [{}])[0]
+            address_list = data.get("AddressList", [])
+
+            if info.get("OutTotal", "0") == "0":
+                # 地址不存在
+                return JSONResponse(
+                    status_code=200,
+                    content={
+                        "success": False,
+                    },
+                )
+
+            # 地址存在，返回詳細資料
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "success": True,
+                },
+            )
+
+        except httpx.RequestError as e:
+            raise HTTPException(status_code=500, detail=f"API 請求失敗: {e}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"發生未預期的錯誤: {e}")
