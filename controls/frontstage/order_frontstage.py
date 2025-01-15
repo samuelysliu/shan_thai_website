@@ -382,10 +382,10 @@ async def received_cash_flow_response(
             # 建立物流單
             order = order_db.get_order_by_oid(db=db, oid=MerchantTradeNo)
 
-            if order.useDiscount:
-                order_amount = order.discountPrice
+            if order["useDiscount"]:
+                order_amount = order["discountPrice"]
             else:
-                order_amount = order.totalAmount
+                order_amount = order["totalAmount"]
 
             if (
                 order["transportationMethod"] == "seven"
