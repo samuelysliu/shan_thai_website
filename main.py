@@ -16,6 +16,10 @@ from controls.frontstage.terms_frontstage import router as frontstage_term_route
 from controls.frontstage.token_frontstage import router as frontstage_token_router
 from controls.cash_flow import check_order
 from apscheduler.schedulers.background import BackgroundScheduler
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 app = FastAPI()
@@ -46,11 +50,14 @@ def check_cashflow_order():
     print("check_cashflow_order start")
     check_order()
     print("check_cashflow_order end")
-    
-# 初始化排程器
-scheduler = BackgroundScheduler()
-scheduler.add_job(check_cashflow_order, 'interval', minutes=30)
-scheduler.start()
+
+
+environment = os.getenv("environment")
+if environment == "production":
+    # 初始化排程器
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(check_cashflow_order, 'interval', minutes=360)
+    scheduler.start()
 
     
 if __name__ == "__main__":
