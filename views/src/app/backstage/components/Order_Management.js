@@ -31,6 +31,9 @@ export default function OrderManagement() {
   // 控制彈出視窗顯示
   const [showOrderModal, setShowOrderModal] = useState(false);
 
+  // 控制刪除確認視窗顯示
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const [editableOrder, setEditableOrder] = useState({
     oid: "",
     recipientName: "",
@@ -135,6 +138,35 @@ export default function OrderManagement() {
       setLoading(false);
     }
   };
+
+  // 刪除訂單
+  const deleteOrder = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.delete(
+        `${endpoint}/backstage/v1/orders/${editableOrder.oid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const updatedOrder = response.data;
+
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.oid === updatedOrder.oid ? { ...order, ...updatedOrder } : order
+        )
+      );
+      setShowDeleteModal(false);
+      setShowOrderModal(false);
+    } catch (error) {
+      console.error("無法更新訂單：", error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   // 搜尋與篩選功能
   const handleSearch = (e) => setSearchTerm(e.target.value);
@@ -266,7 +298,7 @@ export default function OrderManagement() {
                 <option value="all">所有狀態</option>
                 <option value="待確認">待確認</option>
                 <option value="待出貨">待出貨</option>
-                <option value="已出貨">已出貨</option>
+                <option value="配送中">配送中</option>
                 <option value="已完成">已完成</option>
                 <option value="已取消">已取消</option>
               </Form.Select>
@@ -319,13 +351,18 @@ export default function OrderManagement() {
                         </Button>
                       </td>
                       <td>
-                        <Button
-                          variant="link"
-                          style={{ color: "var(--accent-color)" }}
-                          onClick={() => handleShowOrderModal(order)}
-                        >
-                          編輯
-                        </Button>
+                        {
+                          order.status !== "已取消"
+                            ? <Button
+                              variant="link"
+                              style={{ color: "var(--accent-color)" }}
+                              onClick={() => handleShowOrderModal(order)}
+                            >
+                              編輯
+                            </Button>
+                            : ""
+                        }
+
                       </td>
                       <td>
                         {
@@ -514,8 +551,10 @@ export default function OrderManagement() {
                 <option value="待出貨">待出貨</option>
                 <option value="已出貨">已出貨</option>
                 <option value="已完成">已完成</option>
-                <option value="已取消">已取消</option>
               </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Button variant="danger" onClick={() => setShowDeleteModal(true)}>取消訂單</Button>
             </Form.Group>
           </Form>
         </Modal.Body>
@@ -533,6 +572,22 @@ export default function OrderManagement() {
           >
             儲存
           </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* 刪除確認視窗 */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>確認操作</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          您確定要取消這筆訂單？取消訂單以後，不可再進行操作。
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            取消
+          </Button>
+          <Button variant="primary" onClick={() => deleteOrder()}>確認刪除</Button>
         </Modal.Footer>
       </Modal>
     </Container>

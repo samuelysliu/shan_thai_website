@@ -14,6 +14,7 @@ from controls.logistic import (
 )
 import controls.logistic as logistic
 from datetime import datetime
+from controls.order import cancel_order
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -120,6 +121,22 @@ async def update_order(
         return updated_order
     except:
         raise HTTPException(status_code=500, detail="Failed to cancel the order")
+
+
+# 取消訂單
+@router.delete("/orders/{oid}")
+async def cancel_order_api(
+    oid: str,
+    token_data: dict = Depends(verify_token),
+    db: Session = Depends(get_db),
+):
+    # 確認是否是管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+    response = await cancel_order(oid=oid, db=db)
+    if response["detail"] == "success":
+        return response["data"]
+    else:
+        raise HTTPException(status_code=500, detail=response["detail"])
 
 
 # 接收物流商回傳的物流狀態
