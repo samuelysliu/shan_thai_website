@@ -81,10 +81,10 @@ const OrderConfirm = () => {
             || !address || address === "等待選擇中...") {
             handleError("請完整填寫所有必填欄位！");
             return;
-        } else if ((transportationMethod === "delivery" && address.length <= 6)) {
+        } else if (transportationMethod === "delivery" && address.length <= 6) {
             handleError("請填寫正確的地址欄位！");
             return;
-        } else {
+        } else if (transportationMethod === "delivery"){
             setIsSubmitting(true);
             const response = await axios.get(`${endpoint}/frontstage/v1/address_exist/${address}`, {
                 headers: {

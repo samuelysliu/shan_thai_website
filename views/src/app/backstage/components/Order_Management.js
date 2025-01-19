@@ -312,6 +312,7 @@ export default function OrderManagement() {
                 <tr>
                   <th>訂單編號</th>
                   <th>總金額</th>
+                  <th>優惠價</th>
                   <th>收件人姓名</th>
                   <th>運輸方式</th>
                   <th>付款方式</th>
@@ -328,7 +329,7 @@ export default function OrderManagement() {
                     <tr>
                       <td>{order.oid}</td>
                       <td>NT. {order.totalAmount}</td>
-                      {/*<td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無"}</td>*/}
+                      <td>{order.useDiscount ? <>NT. {order.discountPrice}</> : "無"}</td>
                       <td>{order.recipientName}</td>
                       <td>{
                         order.transportationMethod == "delivery" ? "宅配"
