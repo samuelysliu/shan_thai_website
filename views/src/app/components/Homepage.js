@@ -42,29 +42,6 @@ const HomePageClient = ({ products, productTags }) => {
     // 處理頁碼點擊
     const handlePageChange = (page) => setCurrentPage(page);
 
-    // 處理 line 登入問題
-    const isLineBrowser = () => {
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        return userAgent.toLowerCase().includes("line");
-    }
-
-    useEffect(() => {
-        if (isLineBrowser()) {
-            const url = window.location.href; // 获取当前完整 URL
-            if (/android/i.test(navigator.userAgent)) {
-                // Android 跳转
-                window.location.href = `intent://${url.replace(/^https?:\/\//, "")}#Intent;scheme=https;package=com.android.chrome;end;`;
-            } else if (/iphone|ipad|ipod/i.test(navigator.userAgent)) {
-                // iOS 提示并跳转
-                window.open(url, "_blank");
-            } else {
-                // 通用跳转
-                window.location.href = url;
-            }
-        }
-    }, []);
-
-
     return (
         <>
             <Navbar />
