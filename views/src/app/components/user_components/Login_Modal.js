@@ -83,7 +83,7 @@ export default function LoginModal({ show, handleClose }) {
         "shanThaiToken": responseData.shan_thai_token,
         "isAdmin": responseData.isAdmin
       }
-      
+
       const token = responseData.token;
       dispatch(login({ userInfo, token }));
 
@@ -119,6 +119,17 @@ export default function LoginModal({ show, handleClose }) {
       setRegisterLoading(false); // 停止註冊按鈕的 loading 狀態
     }
   };
+
+  // 忘記密碼
+  const handleForgetPassword = async () => {
+    if(form.email === "") setMessage("請將您的 Email 輸入在 Email 欄位");
+    try {
+      const response = await axios.post(`${endpoint}/frontstage/v1/forgot-password`, { "email": form.email });
+      setMessage("已將驗證信送至您的 Email");
+    } catch (err) {
+      setMessage("此 Email 不存在");
+    }
+  }
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
@@ -174,7 +185,7 @@ export default function LoginModal({ show, handleClose }) {
           </Form>
         </Modal.Body>
         <Modal.Footer className="login-modal-footer">
-          <Col><a>忘記密碼了嗎？</a></Col>
+          <Col><a onClick={handleForgetPassword}>忘記密碼？</a></Col>
         </Modal.Footer>
       </Modal>
     </GoogleOAuthProvider>

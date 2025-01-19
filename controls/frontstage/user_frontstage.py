@@ -43,6 +43,7 @@ class UserBase(BaseModel):
     mbti: str | None = None
     phone: str | None = None
     address: str | None = None
+
     class Config:
         from_attributes = True
 
@@ -86,9 +87,12 @@ def login_function(existing_user, db):
         isAdmin = False
     else:
         isAdmin = True
-        
+
     user_token = shan_thai_token_db.get_token_by_uid(db, existing_user.uid)
-        
+
+    if not user_token:
+        user_token = shan_thai_token_db.create_token(db, existing_user.uid)
+
     # 生成 JWT token
     access_token = create_access_token(
         data={
@@ -127,6 +131,7 @@ def login_function(existing_user, db):
 def new_user_reward(db):
     reward = reward_setting_db.get_reward_by_name(db, "new user")
     return reward["reward"]
+
 
 # 註冊 API
 @router.post("/register")
@@ -387,15 +392,17 @@ async def verify_user(verification_code: str, db: Session = Depends(get_db)):
     # 檢查驗證碼是否過期
     if verification_entry.expires_at < datetime.utcnow():
         raise {"detail": "User verified expired"}
-    
+
     # 更新用戶身份為 "user"
     updated_user = user_db.update_user(db, verification_entry.uid, {"identity": "user"})
     if not updated_user:
         raise HTTPException(status_code=500, detail="Failed to update user identity")
-    
+
     # 給新用戶獎勵
-    shan_thai_token_db.update_token_balance(db, verification_entry.uid, new_user_reward(db))
-    
+    shan_thai_token_db.update_token_balance(
+        db, verification_entry.uid, new_user_reward(db)
+    )
+
     # 刪除該用戶的所有驗證碼
     user_verify_db.delete_all_verifications_for_user(db, verification_entry.uid)
 
@@ -474,8 +481,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     existing_user = user_db.get_user_by_email(db, user.email)
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    
+
     # 檢查密碼
     if not checkpw(
         user.password.encode("utf-8"), existing_user.password.encode("utf-8")
@@ -483,7 +489,7 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Incorrect password")
 
     response = login_function(existing_user, db)
-    
+
     return response
 
 
@@ -495,10 +501,199 @@ async def forgot_password(request: PasswordResetRequest, db: Session = Depends(g
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # 這裡可以發送一封包含重設密碼連結的電子郵件
-    # 請根據你的需求來實作郵件發送功能
+    # 自動生成新密碼
+    new_password = generate_verification_code(6)
 
-    return {"detail": "Password reset link sent to your email"}
+    hashed_new_password = hashpw(new_password.encode("utf-8"), gensalt()).decode(
+        "utf-8"
+    )
+
+    user_db.update_user_password(db, uid=user.uid, new_password=hashed_new_password)
+
+    subject = "善泰團隊網站忘記密碼"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="zh">
+    <head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <meta name="x-apple-disable-message-reformatting">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta content="telephone=no" name="format-detection">
+    <title>善泰團隊網站註冊驗證碼</title>
+
+    <style type="text/css">
+            .rollover:hover .rollover-first {{
+                max-height:0px!important;
+                display:none!important;
+            }}
+            .rollover:hover .rollover-second {{
+                max-height:none!important;
+                display:block!important;
+            }}
+            .rollover span {{
+                font-size:0px;
+            }}
+            u + .body img ~ div div {{
+                display:none;
+            }}
+            #outlook a {{
+                padding:0;
+            }}
+            span.MsoHyperlink,
+            span.MsoHyperlinkFollowed {{
+                color:inherit;
+                mso-style-priority:99;
+            }}
+            a.es-button {{
+                mso-style-priority:100!important;
+                text-decoration:none!important;
+            }}
+            a[x-apple-data-detectors],
+            #MessageViewBody a {{
+                color:inherit!important;
+                text-decoration:none!important;
+                font-size:inherit!important;
+                font-family:inherit!important;
+                font-weight:inherit!important;
+                line-height:inherit!important;
+            }}
+            .es-desk-hidden {{
+                display:none;
+                float:left;
+                overflow:hidden;
+                width:0;
+                max-height:0;
+                line-height:0;
+                mso-hide:all;
+            }}
+            @media only screen and (max-width:600px) {{
+                .es-m-p0r {{ padding-right:0px!important }}
+                *[class="gmail-fix"] {{ display:none!important }}
+                p, a {{ line-height:150%!important }}
+                h1, h1 a {{ line-height:120%!important }}
+                h2, h2 a {{ line-height:120%!important }}
+                h3, h3 a {{ line-height:120%!important }}
+                h4, h4 a {{ line-height:120%!important }}
+                .adapt-img {{ width:100%!important; height:auto!important }}
+            }}
+        </style>
+    </head>
+    <body class="body" style="width:100%;height:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
+    <div dir="ltr" class="es-wrapper-color" lang="zh" style="background-color:#FAFAFA">
+                <v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
+                    <v:fill type="tile" color="#fafafa"></v:fill>
+                </v:background>
+    <table width="100%" cellspacing="0" cellpadding="0" class="es-wrapper" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:#FAFAFA">
+        <tr>
+        <td valign="top" style="padding:0;Margin:0">
+        <table cellpadding="0" cellspacing="0" align="center" class="es-content" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important">
+            <tr>
+            <td align="center" class="es-info-area" style="padding:0;Margin:0">
+            <table align="center" cellpadding="0" cellspacing="0" bgcolor="#00000000" class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px" role="none">
+            </table></td>
+            </tr>
+        </table>
+        <table cellpadding="0" cellspacing="0" align="center" class="es-header" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important;background-color:transparent;background-repeat:repeat;background-position:center top">
+            <tr>
+            <td align="center" style="padding:0;Margin:0">
+            <table bgcolor="#ffffff" align="center" cellpadding="0" cellspacing="0" class="es-header-body" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px">
+                <tr>
+                <td align="left" style="Margin:0;padding-top:10px;padding-right:20px;padding-bottom:10px;padding-left:20px">
+                <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                    <tr>
+                    <td valign="top" align="center" class="es-m-p0r" style="padding:0;Margin:0;width:560px">
+                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                        <tr>
+                        <td align="center" style="padding:0;Margin:0;padding-bottom:20px;font-size:0px"><img src="https://fpgqzrv.stripocdn.email/content/guids/CABINET_7db6159cc290de9c052d910f3f682ad978dde23fed927ab9de64f992d6f4b4dd/images/shanthaiicon.jpg" alt="Logo" width="100" title="Logo" class="adapt-img" style="display:block;font-size:12px;border:0;outline:none;text-decoration:none"></td>
+                        </tr>
+                    </table></td>
+                    </tr>
+                </table></td>
+                </tr>
+            </table></td>
+            </tr>
+        </table>
+        <table cellpadding="0" cellspacing="0" align="center" class="es-content" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important">
+            <tr>
+            <td align="center" style="padding:0;Margin:0">
+            <table bgcolor="#ffffff" align="center" cellpadding="0" cellspacing="0" class="es-content-body" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:#FFFFFF;width:600px">
+                <tr>
+                <td align="left" style="Margin:0;padding-right:20px;padding-bottom:10px;padding-left:20px;padding-top:20px">
+                <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                    <tr>
+                    <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
+                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                        <tr>
+                        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><h1 class="es-m-txt-c" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:70px;font-style:normal;font-weight:bold;line-height:70px;color:#333333">善泰團隊</h1></td>
+                        </tr>
+                    </table></td>
+                    </tr>
+                </table></td>
+                </tr>
+                <tr>
+                <td align="left" style="Margin:0;padding-top:10px;padding-right:20px;padding-bottom:10px;padding-left:20px">
+                <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                    <tr>
+                    <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
+                    <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;border-left:2px dashed #cccccc;border-right:2px dashed #cccccc;border-top:2px dashed #cccccc;border-bottom:2px dashed #cccccc;border-radius:5px" role="presentation">
+                        <tr>
+                        <td align="center" style="padding:0;Margin:0;padding-right:20px;padding-left:20px;padding-top:20px"><h2 class="es-m-txt-c" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:26px;font-style:normal;font-weight:bold;line-height:31.2px;color:#333333">請點擊下方超連結登入</h2></td>
+                        </tr>
+                        <tr>
+                        <td align="center" style="Margin:0;padding-top:10px;padding-right:20px;padding-left:20px;padding-bottom:20px"><h1 class="es-m-txt-c" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:46px;font-style:normal;font-weight:bold;line-height:55.2px;color:#333333">
+                            您的新密碼： <strong>{new_password}</strong>
+                        </td>
+                        </tr>
+                    </table></td>
+                    </tr>
+                </table></td>
+                </tr>
+            </table></td>
+            </tr>
+        </table>
+        <table cellpadding="0" cellspacing="0" align="center" class="es-footer" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;width:100%;table-layout:fixed !important;background-color:transparent;background-repeat:repeat;background-position:center top">
+            <tr>
+            <td align="center" style="padding:0;Margin:0">
+            <table align="center" cellpadding="0" cellspacing="0" class="es-footer-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:640px" role="none">
+                <tr>
+                <td align="left" style="Margin:0;padding-right:20px;padding-left:20px;padding-bottom:20px;padding-top:20px">
+                <table cellpadding="0" cellspacing="0" width="100%" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                    <tr>
+                    <td align="left" style="padding:0;Margin:0;width:600px">
+                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                        <tr>
+                        <td align="center" style="padding:0;Margin:0;padding-top:15px;padding-bottom:15px;font-size:0">
+                        <table cellpadding="0" cellspacing="0" class="es-table-not-adapt es-social" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+                            <tr>
+                            <td align="center" valign="top" style="padding:0;Margin:0;padding-right:40px"><a target="_blank" href="https://www.facebook.com/people/%E5%96%84%E6%B3%B0%E5%9C%98%E9%9A%8A-%E6%B3%B0%E5%9C%8B%E5%8D%97%E5%82%B3%E8%81%96%E7%89%A9%E8%AB%8B%E4%BE%9B/61553678884399/" style="mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Facebook" src="https://fpgqzrv.stripocdn.email/content/assets/img/social-icons/logo-black/facebook-logo-black.png" alt="Fb" width="32" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none"></a></td>
+                            <td align="center" valign="top" style="padding:0;Margin:0;padding-right:40px"><a target="_blank" href="https://x.com/ShanThai666" style="mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="X" src="https://fpgqzrv.stripocdn.email/content/assets/img/social-icons/logo-black/x-logo-black.png" alt="X" width="32" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none"></a></td>
+                            <td align="center" valign="top" style="padding:0;Margin:0;padding-right:40px"><a target="_blank" href="https://www.instagram.com/shanthaiteam/" style="mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Instagram" src="https://fpgqzrv.stripocdn.email/content/assets/img/social-icons/logo-black/instagram-logo-black.png" alt="Inst" width="32" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none"></a></td>
+                            <td align="center" valign="top" style="padding:0;Margin:0;padding-right:40px"><a target="_blank" href="https://www.threads.net/@shanthaiteam" style="mso-line-height-rule:exactly;text-decoration:underline;color:#333333;font-size:12px"><img title="Threads" src="https://fpgqzrv.stripocdn.email/content/assets/img/social-icons/logo-black/threads-logo-black.png" alt="Tr" width="32" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none"></a></td>
+                            </tr>
+                        </table></td>
+                        </tr>
+                        <tr>
+                        <td align="center" style="padding:0;Margin:0;padding-bottom:35px"><p style="Margin:0;mso-line-height-rule:exactly;font-family:arial, 'helvetica neue', helvetica, sans-serif;line-height:18px;letter-spacing:0;color:#333333;font-size:12px">丹鳳捷運站步行約2分鐘(採預約制)</p></td>
+                        </tr>
+                    </table></td>
+                    </tr>
+                </table></td>
+                </tr>
+            </table></td>
+            </tr>
+        </table></td>
+        </tr>
+    </table>
+    </div>
+    </body>
+    </html>
+    """
+
+    send_email(user.email, subject, html_content)
+
+    return {"detail": "success"}
 
 
 # Google OAuth 2.0 設定
@@ -542,9 +737,11 @@ async def google_login(user: GoogleUserBase, db: Session = Depends(get_db)):
             )
             if not new_user:
                 raise HTTPException(status_code=500, detail="Failed to create user")
-            
+
             # 給新用戶獎勵
-            shan_thai_token_db.update_token_balance(db, new_user.uid, new_user_reward(db))
+            shan_thai_token_db.update_token_balance(
+                db, new_user.uid, new_user_reward(db)
+            )
 
             response = login_function(new_user, db)
             return response
