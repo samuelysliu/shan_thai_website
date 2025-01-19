@@ -30,8 +30,6 @@ def create_checkMacValue(params: dict):
         f"{key}={params[key]}" for key in sorted(params.keys(), key=lambda x: str(x))
     )
     
-    print(hash_key)
-    
     # 2. 在參數前后添加 HashKey 和 HashIV
     to_encode = f"HashKey={hash_key}&{sorted_params}&HashIV={hash_iv}"
 

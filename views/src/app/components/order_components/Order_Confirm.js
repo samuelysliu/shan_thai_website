@@ -84,6 +84,9 @@ const OrderConfirm = () => {
         } else if (transportationMethod === "delivery" && address.length <= 6) {
             handleError("請填寫正確的地址欄位！");
             return;
+        } else if (recipientName.length <= 5 && recipientName >= 2) {
+            handleError("請填寫正確的姓名！");
+            return;
         } else if (transportationMethod === "delivery") {
             setIsSubmitting(true);
             const response = await axios.get(`${endpoint}/frontstage/v1/address_exist/${address}`, {
