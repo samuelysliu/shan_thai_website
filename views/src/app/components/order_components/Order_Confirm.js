@@ -84,7 +84,7 @@ const OrderConfirm = () => {
         } else if (transportationMethod === "delivery" && address.length <= 6) {
             handleError("請填寫正確的地址欄位！");
             return;
-        } else if (transportationMethod === "delivery"){
+        } else if (transportationMethod === "delivery") {
             setIsSubmitting(true);
             const response = await axios.get(`${endpoint}/frontstage/v1/address_exist/${address}`, {
                 headers: {
@@ -285,7 +285,7 @@ const OrderConfirm = () => {
     // 處理善泰幣的輸入
     const checkShanThaiToken = (e) => {
         const value = parseInt(e.target.value, 10); // 將輸入值轉為整數
-        if (value >= 0 && value < shanThaiToken && value < cartProduct.reduce((total, item) => total + item.price * item.quantity, 0)) {
+        if (value >= 0 && value < shanThaiToken && value < cartProduct.reduce((total, item) => total + item.price * item.quantity, 0) - 9) {
             setUseShanThaiToken(value);
         } else if (!value) {
             setUseShanThaiToken(0);
@@ -426,7 +426,7 @@ const OrderConfirm = () => {
                 <Col xs={12} md={6}>
                     <Row className="border-bottom mb-3">
                         <Form.Group controlId="token" className="mb-3">
-                            <Form.Label>使用善泰幣</Form.Label>
+                            <Form.Label>善泰幣(最多折抵至10元)</Form.Label>
                             <Form.Control
                                 type="number"
                                 placeholder="請輸入要使用的善泰幣數量"
