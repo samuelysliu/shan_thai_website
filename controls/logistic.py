@@ -223,4 +223,4 @@ def create_home_logistic_order(
         # 處理錯誤的回應
         error_message = response_content.split("|", 1)[1]
         print(f"Logistics API error: {error_message}")
-        return "failed"
+        return "廠商訂單編號重覆"
