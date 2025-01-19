@@ -91,8 +91,11 @@ const OrderConfirm = () => {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            if (!response.data.success) handleError("請填寫正確的地址欄位！");
-            setIsSubmitting(false);
+            if (!response.data.success) {
+                handleError("請填寫正確的地址欄位！");
+                setIsSubmitting(false);
+                return;
+            }
         }
 
         setIsSubmitting(true);

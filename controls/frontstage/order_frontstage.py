@@ -11,7 +11,6 @@ import modules.store_selection_crud as store_selection_db
 import modules.shan_thai_token_crud as shan_thai_token_db
 from controls.cash_flow import create_payment_callback_record, create_checkMacValue
 from controls.logistic import create_store_logistic_order, create_home_logistic_order
-
 from controls.tools import format_to_utc8 as timeformat
 from controls.tools import (
     verify_token,
@@ -19,6 +18,8 @@ from controls.tools import (
     generate_verification_code,
     send_email,
 )
+from controls.order import cancel_order
+
 from datetime import datetime
 import re
 import httpx
@@ -248,36 +249,12 @@ async def cancel_user_order(
     if order["status"] == "已取消":
         raise HTTPException(status_code=400, detail="Order is already cancelled")
 
-    # 2. 將庫存數量加回
-    order_details = order_db.get_order_details_by_oid(db, oid)
-    for order_detail in order_details:
-        product = product_db.get_product_by_id(db, order_detail.pid)
-        if not product:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Product ID {order_detail.pid} not found for restocking",
-            )
-
-        # 更新庫存
-        update_data = {"remain": product.remain + order_detail.productNumber}
-        product_updated = product_db.update_partial_product(
-            db, order_detail.pid, update_data
-        )
-        if not product_updated:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to update product remain for Product ID {order_detail.pid}",
-            )
-
-    # 3. 更新訂單狀態成為取消
-    update_data = {"status": "已取消"}
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No fields to update")
-
-    updated_order = order_db.update_order(db, oid=oid, updates=update_data)
-    if not updated_order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    return updated_order
+    # 將庫存數量加回、更新庫存
+    response = await cancel_order(oid=oid, db=db)
+    if response["detail"] == "success":
+        return response["data"]
+    else:
+        raise HTTPException(status_code=500, detail=response["detail"])
 
 
 # 接受金流主動回拋訂單資訊
@@ -439,33 +416,16 @@ async def received_cash_flow_response(
                     f"<p>物流單{MerchantTradeNo}建立失敗，請手動建立</p>",
                 )
 
-        else:  # 如果訂單被取消，要恢復庫存
-            order_details = order_db.get_order_details_by_oid(
-                db=db, oid=MerchantTradeNo
+            updated_order = order_db.update_order(
+                db, oid=MerchantTradeNo, updates=update_data
             )
-            for order_detail in order_details:
-                product = product_db.get_product_by_id(db, order_detail.pid)
-                if not product:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"Product ID {order_detail.pid} not found for restocking",
-                    )
 
-                # 更新庫存
-                update_data = {"remain": product.remain + order_detail.productNumber}
-                product_updated = product_db.update_partial_product(
-                    db, order_detail.pid, update_data
-                )
-                if not product_updated:
-                    raise HTTPException(
-                        status_code=500,
-                        detail=f"Failed to update product remain for Product ID {order_detail.pid}",
-                    )
-            update_data = {"status": "已取消"}
-
-        updated_order = order_db.update_order(
-            db, oid=MerchantTradeNo, updates=update_data
-        )
+        else:  # 如果訂單被取消，要恢復庫存
+            response = await cancel_order(oid=MerchantTradeNo, db=db)
+            if response["detail"] == "success":
+                updated_order = response["data"]
+            else:
+                updated_order = None
 
         if not updated_order:
             send_email(
@@ -583,7 +543,10 @@ async def get_keystr():
 
 # 判斷地址是否存在
 @router.get("/address_exist/{address}")
-async def check_address_exist(address: str, token_data: dict = Depends(verify_token),):
+async def check_address_exist(
+    address: str,
+    token_data: dict = Depends(verify_token),
+):
     keystr = await get_keystr()
 
     async with httpx.AsyncClient() as client:
@@ -595,7 +558,7 @@ async def check_address_exist(address: str, token_data: dict = Depends(verify_to
 
             # 移除 JSONP 包裹，提取 JSON
             if response_text.startswith("var dataObj ="):
-                response_text = response_text[len("var dataObj =") :].strip() 
+                response_text = response_text[len("var dataObj =") :].strip()
                 if response_text.endswith(";"):
                     response_text = response_text[:-1]
 
@@ -603,7 +566,6 @@ async def check_address_exist(address: str, token_data: dict = Depends(verify_to
 
             # 檢查地址是否存在
             info = data.get("Info", [{}])[0]
-            address_list = data.get("AddressList", [])
 
             if info.get("OutTotal", "0") == "0":
                 # 地址不存在
