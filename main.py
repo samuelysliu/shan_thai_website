@@ -23,7 +23,7 @@ load_dotenv()
 
 
 app = FastAPI()
-environment = os.getenv("environment")
+environment = os.getenv("ENVIRONMENT")
 
 if environment == "uat":
     domain = "https://shan-thai-website.vercel.app"
@@ -31,11 +31,12 @@ elif environment == "production":
     domain = "https://www.shan-thai-team.com"
 else:
     domain = "*"
+    
 
 # 設定 CORS 中介軟體
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[domain],  # 允許的前端來源
+    allow_origins=["domain"],  # 允許的前端來源
     allow_credentials=True,
     allow_methods=["*"],  # 允許所有 HTTP 方法
     allow_headers=["*"],  # 允許所有標頭

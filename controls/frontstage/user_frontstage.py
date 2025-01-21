@@ -199,7 +199,7 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
 
     html_content = f"""
     <!DOCTYPE html>
-    <html lang="zh">
+    <html lang="zh-TW">
     <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
@@ -514,7 +514,7 @@ async def forgot_password(request: PasswordResetRequest, db: Session = Depends(g
 
     html_content = f"""
     <!DOCTYPE html>
-    <html lang="zh">
+    <html lang="zh-TW">
     <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">

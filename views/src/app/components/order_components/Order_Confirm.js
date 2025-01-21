@@ -181,7 +181,7 @@ const OrderConfirm = () => {
             ReturnURL: `${endpoint}/frontstage/v1/cash_flow_order`, // 回調地址
             ChoosePayment: paymentMethods, // Credit 或 ATM
             EncryptType: 1, // 固定為 1
-            ClientBackURL: `${window.location.origin}/order/close`
+            ClientBackURL: `${window.location.origin}/order/history`
         };
 
         // 生成 CheckMacValue
@@ -192,12 +192,12 @@ const OrderConfirm = () => {
 
         const cashFlowEndpoint = config.cashFlowEndpoint
 
-        const popupWindow = window.open("", "cashFlowWindow", "width=1200,height=600,scrollbars=no,resizable=no");
+        //const popupWindow = window.open("", "cashFlowWindow", "width=1200,height=600,scrollbars=no,resizable=no");
         // 建立隱藏的表單
         const form = document.createElement("form");
         form.method = "POST";
         form.action = cashFlowEndpoint;
-        form.target = "cashFlowWindow"; // 在新分頁開啟
+        // form.target = "cashFlowWindow"; // 在新分頁開啟
 
         // 將參數加入表單
         Object.entries(params).forEach(([key, value]) => {
@@ -288,7 +288,7 @@ const OrderConfirm = () => {
     // 處理善泰幣的輸入
     const checkShanThaiToken = (e) => {
         const value = parseInt(e.target.value, 10); // 將輸入值轉為整數
-        if (value >= 0 && value <= shanThaiToken && value < cartProduct.reduce((total, item) => total + item.price * item.quantity, 0) - 9) {
+        if (value >= 0 && value <= shanThaiToken && value < cartProduct.reduce((total, item) => total + item.price * item.quantity, 0) - 19) {
             setUseShanThaiToken(value);
         } else if (!value) {
             setUseShanThaiToken(0);
@@ -429,7 +429,7 @@ const OrderConfirm = () => {
                 <Col xs={12} md={6}>
                     <Row className="border-bottom mb-3">
                         <Form.Group controlId="token" className="mb-3">
-                            <Form.Label>善泰幣(最多折抵至10元)</Form.Label>
+                            <Form.Label>善泰幣(最多折抵至20元)</Form.Label>
                             <Form.Control
                                 type="number"
                                 placeholder="請輸入要使用的善泰幣數量"
