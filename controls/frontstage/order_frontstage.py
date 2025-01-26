@@ -26,6 +26,11 @@ import httpx
 from urllib.parse import quote
 import json
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 router = APIRouter()
 get_db = db_connect.get_db
 
@@ -465,7 +470,7 @@ async def add_store_selection(
     try:
         """
         新增超商選擇記錄
-        """
+
         new_record = store_selection_db.create_store_selection(
             db=db,
             merchant_trade_no=MerchantTradeNo,
@@ -479,19 +484,23 @@ async def add_store_selection(
             raise HTTPException(
                 status_code=500, detail="Failed to create store selection record"
             )
+        """
+        
+        website = os.getenv("WEBSITE_URL")
 
         # 返回 HTML，讓前端執行關閉分頁操作
         html_content = f"""
         <html>
             <body>
                 <script>
-                    // 關閉分頁
-                    window.close();
+                    // 跳轉到頁面
+                    window.location.href = "{website}/order/buy?name={CVSStoreName}&id={CVSStoreID}&type={LogisticsSubType}";
                 </script>
                 <p>Store selection processed successfully. This page will close automatically.</p>
             </body>
         </html>
         """
+
         return HTMLResponse(content=html_content)
     except Exception as e:
         raise HTTPException(

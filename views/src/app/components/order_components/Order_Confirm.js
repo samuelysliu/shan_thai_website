@@ -10,7 +10,7 @@ import { generateRandomString, createCheckMacValue, userDevice } from "../Tools"
 
 import { showToast } from "@/app/redux/slices/toastSlice";
 
-const OrderConfirm = () => {
+const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => {
     const router = useRouter();
     const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
     const { userInfo, token } = useSelector((state) => state.user); // 獲取登入 Token
@@ -69,6 +69,20 @@ const OrderConfirm = () => {
         }
         getShanThaiTokenBalance();
     }, [cart, userInfo]);
+
+    //處理路徑變數資料
+    useEffect(() => {
+        try {
+            if (cvsStoreName.length !== 0)
+                setAddress(cvsStoreName);
+
+            if (cvsStoreId.length !== 0)
+                setStoreId(cvsStoreId);
+
+            if (transportationMethodUrl.length !== 0)
+                setTransportationMethod(transportationMethodUrl)
+        } catch { }
+    }, [cvsStoreName, cvsStoreId, transportationMethodUrl])
 
     // 計算總額
     const calculateTotal = () => {
@@ -230,13 +244,12 @@ const OrderConfirm = () => {
 
         const storeMapEndpoint = config.storeMapEndpoint;
 
-        const popupWindow = window.open("", "storeMapWindow", "width=800,height=600,scrollbars=no,resizable=no");
+        //const popupWindow = window.open("", "storeMapWindow", "width=800,height=600,scrollbars=no,resizable=no");
         // 建立隱藏的表單
         const form = document.createElement("form");
         form.method = "POST";
         form.action = storeMapEndpoint;
-        form.target = "storeMapWindow";
-        //form.target = "hiddenIframe";
+        //form.target = "storeMapWindow";
 
         // 將參數加入表單
         Object.entries(params).forEach(([key, value]) => {
@@ -251,7 +264,7 @@ const OrderConfirm = () => {
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form); // 提交後刪除表單
-
+        /*
         setAddress("等待選擇中...");
         // 定期檢查分頁是否被關閉
         const checkWindowClosed = setInterval(() => {
@@ -261,7 +274,7 @@ const OrderConfirm = () => {
                 getStoreData(randomString); // 呼叫後端 API
             }
         }, 5000);
-
+        */
     }
 
     // 處理寄送方式的邏輯
@@ -274,16 +287,18 @@ const OrderConfirm = () => {
         else setAddress("");
     }
 
+    /*
     // 跟後端要使用者選擇的超商資訊
     const getStoreData = async (tradeNo) => {
         try {
             const response = await axios.get(`${endpoint}/frontstage/v1/store_selection/${tradeNo}`);
             setAddress(response.data.cvs_store_name);
-            setStoreId(response.data.cvs_store_id)
+            setStoreId(response.data.cvs_store_id);
         } catch (err) {
             console.error(err);
         }
     }
+    */
 
     // 處理善泰幣的輸入
     const checkShanThaiToken = (e) => {

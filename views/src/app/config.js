@@ -1,7 +1,7 @@
 const api_url = {
   production: "https://yielding-dove-samuelysliu-ce6a81f4.koyeb.app",
   uat: "https://classical-trish-samuelysliu-dbbd4671.koyeb.app",
-  local: "http://localhost:8000"
+  local: "http://192.168.1.110:8000"
 }
 
 const gaId = {

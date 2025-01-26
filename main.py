@@ -7,7 +7,9 @@ from controls.backstage.user_backstage import router as backstage_user_router
 from controls.backstage.order_backstage import router as backstage_order_router
 from controls.backstage.terms_backstage import router as backstage_term_router
 from controls.backstage.token_backstage import router as backstage_token_router
-from controls.backstage.reward_setting_backstage import router as backstage_reward_router
+from controls.backstage.reward_setting_backstage import (
+    router as backstage_reward_router,
+)
 from controls.frontstage.product_frontstage import router as frontstage_product_router
 from controls.frontstage.order_frontstage import router as frontstage_order_router
 from controls.frontstage.user_frontstage import router as frontstage_user_router
@@ -31,15 +33,15 @@ elif environment == "production":
     domain = "https://www.shan-thai-team.com"
 else:
     domain = "*"
-    
+
 
 # 設定 CORS 中介軟體
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["domain"],  # 允許的前端來源
+    allow_origins=[domain],  # 允許的前端來源
     allow_credentials=True,
-    allow_methods=["*"],  # 允許所有 HTTP 方法
-    allow_headers=["*"],  # 允許所有標頭
+    allow_methods=["*"],  # 限制 HTTP 方法
+    allow_headers=["*"],  # 明確指定允許的標頭
 )
 
 app.include_router(backstage_product_router, prefix="/backstage/v1")
@@ -55,19 +57,19 @@ app.include_router(frontstage_cart_router, prefix="/frontstage/v1")
 app.include_router(frontstage_term_router, prefix="/frontstage/v1")
 app.include_router(frontstage_token_router, prefix="/frontstage/v1")
 
+
 def check_cashflow_order():
     print("check_cashflow_order start")
     check_order()
     print("check_cashflow_order end")
 
 
-
 if environment == "production":
     # 初始化排程器
     scheduler = BackgroundScheduler()
-    scheduler.add_job(check_cashflow_order, 'interval', minutes=360)
+    scheduler.add_job(check_cashflow_order, "interval", minutes=360)
     scheduler.start()
 
-    
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
