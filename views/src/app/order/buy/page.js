@@ -7,7 +7,7 @@ import { Container } from "react-bootstrap";
 import NavBar from "@/app/components/Navbar";
 import { useSearchParams } from "next/navigation";
 
-const BuyPage = () => {
+const BuyPageContent = () => {
   const searchParams = useSearchParams();
   const cvsStoreName = searchParams.get("name");
   const cvsStoreId = searchParams.get("id");
@@ -20,11 +20,22 @@ const BuyPage = () => {
     transportationMethodUrl = "family";
 
   return (
+    <OrderConfirm
+      cvsStoreName={cvsStoreName}
+      cvsStoreId={cvsStoreId}
+      transportationMethodUrl={transportationMethodUrl}
+    />
+  );
+};
+
+const BuyPage = () => {
+
+  return (
     <ClientProvider>
       <NavBar />
       <Container>
-        <Suspense>
-          <OrderConfirm cvsStoreName={cvsStoreName} cvsStoreId={cvsStoreId} transportationMethodUrl={transportationMethodUrl} />
+        <Suspense fallback={<div>Loading...</div>}>
+          <BuyPageContent />
         </Suspense>
       </Container>
 
