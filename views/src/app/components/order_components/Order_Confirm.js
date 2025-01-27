@@ -166,14 +166,20 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                 orderAmount = response.data.discountPrice;
             }
 
-            if (paymentMethod === "匯款")
-                createCashFlowOrder("ATM", response.data.oid, formatedCreatedAt, orderAmount)
-            else if ((paymentMethod === "信用卡"))
-                createCashFlowOrder("Credit", response.data.oid, formatedCreatedAt, orderAmount)
+            if (paymentMethod === "匯款") {
+                createCashFlowOrder("ATM", response.data.oid, formatedCreatedAt, orderAmount);
+                handleSuccess("正在跳轉款付款頁面，請不要離開此頁面！");
+            }
+            else if ((paymentMethod === "信用卡")) {
+                createCashFlowOrder("Credit", response.data.oid, formatedCreatedAt, orderAmount);
+                handleSuccess("正在跳轉款付款頁面，請不要離開此頁面！");
+            }
+            else {
+                handleSuccess("訂單已提交成功，正在確認付款資訊！");
+                router.push("/order/history");
+            }
 
 
-            handleSuccess("訂單已提交成功，正在確認付款資訊！");
-            router.push("/order/history");
         } catch (error) {
             console.error("提交訂單失敗：", error);
             handleError("提交訂單失敗，請重試。");
