@@ -270,17 +270,6 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form); // 提交後刪除表單
-        /*
-        setAddress("等待選擇中...");
-        // 定期檢查分頁是否被關閉
-        const checkWindowClosed = setInterval(() => {
-            if (popupWindow.closed) {
-                clearInterval(checkWindowClosed); // 停止檢查
-                console.log("分頁已關閉，開始獲取門市資訊...");
-                getStoreData(randomString); // 呼叫後端 API
-            }
-        }, 5000);
-        */
     }
 
     // 處理寄送方式的邏輯
@@ -292,19 +281,6 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             getStoreMap("FAMIC2C")
         else setAddress("");
     }
-
-    /*
-    // 跟後端要使用者選擇的超商資訊
-    const getStoreData = async (tradeNo) => {
-        try {
-            const response = await axios.get(`${endpoint}/frontstage/v1/store_selection/${tradeNo}`);
-            setAddress(response.data.cvs_store_name);
-            setStoreId(response.data.cvs_store_id);
-        } catch (err) {
-            console.error(err);
-        }
-    }
-    */
 
     // 處理善泰幣的輸入
     const checkShanThaiToken = (e) => {

@@ -14,11 +14,13 @@ environment = os.getenv("ENVIRONMENT")
 
 if environment == "production":
     order_check_endpoint = "https://payment.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
+    atm_number_check_endpoint = "https://payment.ecpay.com.tw/Cashier/QueryPaymentInfo"
     merchant_id = "3437729"
     hash_key = "WsN2DCIPXSIwZWen"
     hash_iv = "dfTmttwLSzjiZNqx"
 else:
     order_check_endpoint = "https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
+    atm_number_check_endpoint = "https://payment-stage.ecpay.com.tw/Cashier/QueryPaymentInfo"
     merchant_id = "3002599"
     hash_key = "spPjZn66i0OhqJsQ"
     hash_iv = "hT5OJckN45isQTTs"
@@ -208,3 +210,23 @@ def create_payment_callback_record(
 
     except:
         print("Failed to create payment callback record")
+
+# 檢視匯款的帳號
+def get_atm_account(oid: str):
+    form_data = {
+        "MerchantID": merchant_id,
+        "MerchantTradeNo": oid,  # 廠商交易編號
+        "TimeStamp": get_now_time("unix"),
+    }
+    form_data["CheckMacValue"] = create_checkMacValue(form_data)
+    
+    response = requests.post(atm_number_check_endpoint, data=form_data)
+    # 解析字串為字典
+    parsed_data = {key: value[0] for key, value in parse_qs(response.text).items()}
+    
+    return {
+        "tradeAmt": parsed_data["TradeAmt"],
+        "bankCode": parsed_data["BankCode"],
+        "vAccount": parsed_data["vAccount"],
+        "expireDate": parsed_data["ExpireDate"]
+    }

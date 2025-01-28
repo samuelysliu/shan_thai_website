@@ -16,9 +16,14 @@ const OrderHistory = () => {
 
   const [orders, setOrders] = useState([]); // 訂單列表
   const [loading, setLoading] = useState(true); // 加載狀態
-  const [error, setError] = useState(null); // 錯誤訊息
   const [showModal, setShowModal] = useState(false); // 控制彈出視窗
-  const [selectedOrderId, setSelectedOrderId] = useState(null); // 被選中的訂單 ID
+
+  const [ATMInfo, setATMInfo] = useState({
+    tradeAmt: "",
+    bankCode: "",
+    vAccount: "",
+    expireDate: ""
+  });
 
   const { token, userInfo } = useSelector((state) => state.user); // 從 Redux 獲取使用者資訊與 Token
   const dispatch = useDispatch();
@@ -41,19 +46,35 @@ const OrderHistory = () => {
       );
       setOrders(response.data); // 更新訂單列表
     } catch (err) {
-      setError("無法加載訂單資料，請稍後再試。");
-      console.error(err);
+      handleError("無法加載訂單資料，請稍後再試。");
     } finally {
       setLoading(false);
     }
   };
+
+  // 取得匯款資訊
+  const getATMAccount = async (orderId) => {
+    try {
+      const response = await axios.get(`${endpoint}/frontstage/v1/atm_number/${orderId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log(response)
+      setATMInfo(response.data)
+      setShowModal(true);
+    } catch (err) {
+      console.log(err)
+      handleError("超過繳費期限，請重新下單");
+    }
+  }
 
   // 刪除訂單 API
   const cancelOrder = async (orderId) => {
     try {
       const response = await axios.delete(`${endpoint}/frontstage/v1/orders/${orderId}`, {
         headers: {
-          Authorization: `Bearer ${token}`, // 請替換成正確的 Token
+          Authorization: `Bearer ${token}`,
         },
       });
       handleSuccess("訂單已成功取消");
@@ -68,12 +89,10 @@ const OrderHistory = () => {
   };
 
   const handleShowModal = (orderId) => {
-    setSelectedOrderId(orderId);
     setShowModal(true);
   };
 
   const handleCloseModal = () => {
-    setSelectedOrderId(null);
     setShowModal(false);
   };
 
@@ -169,30 +188,34 @@ const OrderHistory = () => {
                   </Col>
                   <Col xs={6} md={8} lg={10}>
                     <strong>付款方式:</strong> {order.paymentMethod}
+                    {
+                      (order.status === "待確認" && order.paymentMethod === "匯款") ?
+                        <>{"          "}<Button onClick={() => { getATMAccount(order.oid) }}>檢視付款帳號</Button></>
+                        : ""
+
+                    }
                   </Col>
                 </div>
-
               </Card.Body>
             </Card>
           </Col>
         ))}
       </Row>
 
-      {/* 確認刪除的彈出視窗 */}
+      {/* 匯款資訊的彈出視窗 */}
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
-          <Modal.Title>確認取消訂單</Modal.Title>
+          <Modal.Title>匯款資訊</Modal.Title>
         </Modal.Header>
-        <Modal.Body>您確定要取消這筆訂單嗎？此操作無法恢復。</Modal.Body>
+        <Modal.Body>
+          <p>銀行代號：{ATMInfo.bankCode}</p>
+          <p>匯款帳號：{ATMInfo.vAccount}</p>
+          <p>匯款期限：{ATMInfo.expireDate}</p>
+          <p>匯款金額：{ATMInfo.tradeAmt}</p>
+        </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleCloseModal}>
-            取消
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => cancelOrder(selectedOrderId)}
-          >
-            確認取消
+            我知道了
           </Button>
         </Modal.Footer>
       </Modal>

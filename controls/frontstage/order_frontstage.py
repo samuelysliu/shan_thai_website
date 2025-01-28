@@ -9,7 +9,11 @@ import modules.product_crud as product_db
 import modules.cart_crud as cart_db
 import modules.store_selection_crud as store_selection_db
 import modules.shan_thai_token_crud as shan_thai_token_db
-from controls.cash_flow import create_payment_callback_record, create_checkMacValue
+from controls.cash_flow import (
+    create_payment_callback_record,
+    create_checkMacValue,
+    get_atm_account,
+)
 from controls.logistic import create_store_logistic_order, create_home_logistic_order
 from controls.tools import format_to_utc8 as timeformat
 from controls.tools import (
@@ -468,24 +472,6 @@ async def add_store_selection(
     db: Session = Depends(get_db),
 ):
     try:
-        """
-        新增超商選擇記錄
-
-        new_record = store_selection_db.create_store_selection(
-            db=db,
-            merchant_trade_no=MerchantTradeNo,
-            logistics_sub_type=LogisticsSubType,
-            cvs_store_id=CVSStoreID,
-            cvs_store_name=CVSStoreName,
-            cvs_address=CVSAddress,
-        )
-
-        if not new_record:
-            raise HTTPException(
-                status_code=500, detail="Failed to create store selection record"
-            )
-        """
-        
         website = os.getenv("WEBSITE_URL")
 
         # 返回 HTML，讓前端執行關閉分頁操作
@@ -508,24 +494,18 @@ async def add_store_selection(
         )
 
 
-# 前端頁面詢問使用者選了哪家超商
-@router.get("/store_selection/{merchant_trade_no}")
-async def get_store_selection(merchant_trade_no: str, db: Session = Depends(get_db)):
-    """
-    根據 merchant_trade_no 查詢超商選擇記錄
-    """
-    record = store_selection_db.get_store_selection_by_trade_no(db, merchant_trade_no)
+# 取得匯款帳號
+@router.get("/atm_number/{oid}")
+async def get_atm_number(oid: str):
+    try:
+        response = get_atm_account(oid)
+        return response
+    except Exception as e:
+        print(str(e))
+        raise HTTPException(
+            status_code=400, detail=f"Error get ATM account: {str(e)}"
+        )
 
-    if not record:
-        raise HTTPException(status_code=404, detail="Store selection record not found")
-
-    return {
-        "merchant_trade_no": record.merchant_trade_no,
-        "logistics_sub_type": record.logistics_sub_type,
-        "cvs_store_id": record.cvs_store_id,
-        "cvs_store_name": record.cvs_store_name,
-        "cvs_address": record.cvs_address,
-    }
 
 
 # 取得地圖API的 keystr

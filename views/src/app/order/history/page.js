@@ -13,7 +13,6 @@ const OrderHistoryPage = () => {
       <Container>
         <OrderHistory />
       </Container>
-
     </ClientProvider>
   );
 };
