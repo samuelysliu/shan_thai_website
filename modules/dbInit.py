@@ -83,6 +83,7 @@ class Product(Base):
     remain = Column(Integer, default=0)
     sold = Column(Integer, default=0)
     productImageUrl = Column(String)
+    launch = Column(Boolean, default=True)
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     

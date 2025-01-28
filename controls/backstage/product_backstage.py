@@ -16,32 +16,13 @@ router = APIRouter()
 get_db = db_connect.get_db
 
 
-class Product(BaseModel):
-    id: int
-    title_cn: str
-    content_cn: str
-    price: int
-    remain: int
-    productImageUrl: str
+class ProductLaunch(BaseModel):
+    launch: bool
 
 
-class ProductTagBase(BaseModel):
+class ProductTag(BaseModel):
     productTag: str
 
-
-class ProductTagCreate(ProductTagBase):
-    pass
-
-
-class ProductTagUpdate(ProductTagBase):
-    pass
-
-
-class ProductTag(ProductTagBase):
-    ptid: int
-
-    class Config:
-        from_attributes = True
 
 # 處理上傳照片
 def handleImageUpload(file: UploadFile = File(...)):
@@ -77,6 +58,7 @@ async def get_product(db: Session = Depends(get_db)):
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
+
 
 # 更新指定產品內容
 @router.patch("/product/{product_id}")
@@ -114,6 +96,7 @@ async def update_partial_product(
         raise HTTPException(status_code=404, detail="Product not found")
     return updated_product
 
+
 # 建立新產品
 @router.post("/product")
 async def create_product(
@@ -143,16 +126,21 @@ async def create_product(
         raise HTTPException(status_code=404, detail="Product create failed")
     return created_product
 
-# 刪除指定產品
-@router.delete("/product/{product_id}")
-async def delete_product(
+
+# 上下架指定產品
+@router.patch("/product_launch/{product_id}")
+async def launch_product(
     product_id: int,
+    product: ProductLaunch,
     db: Session = Depends(get_db),
 ):
-    success = product_db.delete_product(db, product_id=product_id)
-    if not success:
+    # 構建要更新的資料
+    update_data = {}
+    update_data["launch"] = product.launch
+    updated_product = product_db.update_partial_product(db, product_id, update_data)
+    if not updated_product:
         raise HTTPException(status_code=404, detail="Product not found")
-    return {"detail": "success"}
+    return updated_product
 
 
 # 取得產品清單用的 API
@@ -188,7 +176,7 @@ async def get_product_tag(db: Session = Depends(get_db)):
 
 
 @router.post("/product_tag")
-def create_tag(tag: ProductTagCreate, db: Session = Depends(get_db)):
+def create_tag(tag: ProductTag, db: Session = Depends(get_db)):
     product_tag = product_db.create_product_tag(db, tag.productTag)
     if not product_tag:
         raise HTTPException(status_code=404, detail="Product tag create failed")

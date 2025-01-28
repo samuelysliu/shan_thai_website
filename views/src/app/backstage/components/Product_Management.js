@@ -85,7 +85,7 @@ export default function ProductManagement() {
                     },
                 });
             const newProduct = response.data;
-            newProduct.productTag=currentProduct.productTag
+            newProduct.productTag = currentProduct.productTag
             setProducts((prevProducts) => [...prevProducts, newProduct]);
             handleCloseModal();
         } catch (error) {
@@ -137,18 +137,41 @@ export default function ProductManagement() {
         }
     }
 
-    // 刪除指定產品
-    const deleteProducts = async (pid) => {
+    // 上下架指定產品
+    const launchProduct = async (product) => {
         setLoading(true);
         try {
-            const response = await axios.delete(`${endpoint}/backstage/v1/product/${pid}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                }
-            });
-            setProducts((prevProducts) => prevProducts.filter(product => product.pid !== pid)); // 更新產品列表
+            let response = ""
+            // 目前上架中，代表要下架
+            if (product.launch) {
+                response = await axios.patch(`${endpoint}/backstage/v1/product_launch/${product.pid}`,
+                    { launch: false },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        }
+                    });
+            }
+            // 目前下架中，代表要重新上架
+            else {
+                response = await axios.patch(`${endpoint}/backstage/v1/product_launch/${product.pid}`,
+                    { launch: true },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        }
+                    });
+            }
+            const updatedProduct = response.data;
+            console.log(updatedProduct)
+            // 更新本地產品列表
+            setProducts((prevProducts) =>
+                prevProducts.map((product) =>
+                    product.pid === updatedProduct.pid ? updatedProduct : product
+                )
+            );
         } catch (error) {
-            console.error("無法刪除該產品：", error);
+            console.error("無法上下架該產品：", error);
         } finally {
             setLoading(false);
         }
@@ -308,6 +331,7 @@ export default function ProductManagement() {
                             <thead>
                                 <tr>
                                     <th>產品編號</th>
+                                    <th>狀態</th>
                                     <th>產品名稱</th>
                                     <th>價格</th>
                                     <th>剩餘數量</th>
@@ -319,6 +343,7 @@ export default function ProductManagement() {
                                 {filteredProducts.map((product) => (
                                     <tr key={product.pid}>
                                         <td>{product.pid}</td>
+                                        <td>{product.launch ? "上架中" : "已下架"}</td>
                                         <td>{product.title_cn}</td>
                                         <td>NT. {product.price}</td>
                                         <td>{product.remain}</td>
@@ -335,9 +360,9 @@ export default function ProductManagement() {
                                             <Button
                                                 variant="link"
                                                 style={{ color: "var(--secondary-color)" }}
-                                                onClick={() => deleteProducts(product.pid)}
+                                                onClick={() => launchProduct(product)}
                                             >
-                                                刪除
+                                                {product.launch ? "下架" : "重新上架"}
                                             </Button>
                                         </td>
                                     </tr>
@@ -374,7 +399,7 @@ export default function ProductManagement() {
                                     setCurrentProduct({ ...currentProduct, content_cn: content })
                                 }
                             />
-                            
+
                         </Form.Group>
                         <Form.Group className="mb-3">
                             <Form.Label>價格</Form.Label>

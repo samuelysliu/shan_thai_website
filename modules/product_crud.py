@@ -12,6 +12,13 @@ def get_product(db: Session):
         print(f"Error: {e}")
         return None
 
+# 取得所有上架的 Product 資料
+def get_product_launch(db: Session):
+    try:
+        return db.query(ProductModel).filter(ProductModel.launch == True).all()
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return None
 
 # 取得所有 Product 資料並 join product_tag table
 def get_product_join_tag(db: Session):
@@ -38,6 +45,7 @@ def get_product_join_tag(db: Session):
                 "remain": product.remain,
                 "sold": product.sold,
                 "productImageUrl": product.productImageUrl,
+                "launch": product.launch,
                 "created_at": product.created_at,
                 "updated_at": product.updated_at,
             }
@@ -77,6 +85,7 @@ def get_products_by_tag(db: Session, ptid: int):
                 "remain": product.remain,
                 "sold": product.sold,
                 "productImageUrl": product.productImageUrl,
+                "launch": product.launch,
                 "created_at": product.created_at,
                 "updated_at": product.updated_at,
             }
@@ -155,6 +164,7 @@ def update_partial_product(db: Session, product_id: int, update_data: dict):
             "remain": updated_product.remain,
             "sold": updated_product.sold,
             "productImageUrl": updated_product.productImageUrl,
+            "launch": updated_product.launch,
             "created_at": updated_product.created_at,
             "updated_at": updated_product.updated_at,
         }
