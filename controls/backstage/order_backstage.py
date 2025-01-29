@@ -345,7 +345,7 @@ def create_logistic_order(
             user_email=order["recipientEmail"],
         )
 
-    if result == "failed":
+    if result["detail"] == "failed":
         return {"detail": "failed"}
     else:
         return {"detail": "success"}

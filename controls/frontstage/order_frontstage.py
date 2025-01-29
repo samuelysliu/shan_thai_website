@@ -377,6 +377,7 @@ async def received_cash_flow_response(
             # 建立物流單
             order = order_db.get_order_by_oid(db=db, oid=MerchantTradeNo)
 
+            # 根據訂單是否有折扣，決定用原價還是特價
             if order["useDiscount"]:
                 order_amount = order["discountPrice"]
             else:
@@ -422,16 +423,24 @@ async def received_cash_flow_response(
                     user_email=order["recipientEmail"],
                 )
 
-            if result == "failed":
+            if result["detail"] == "failed":
+                reason = result["reason"]
                 send_email(
                     "shanthaiteam@gmail.com",
                     f"物流單{MerchantTradeNo}建立失敗，請手動建立",
-                    f"<p>物流單{MerchantTradeNo}建立失敗，請手動建立</p>",
+                    f"<p>{reason}</p>",
                 )
 
             updated_order = order_db.update_order(
                 db, oid=MerchantTradeNo, updates=update_data
             )
+
+            if not updated_order:
+                send_email(
+                    "shanthaiteam@gmail.com",
+                    f"更新訂單{MerchantTradeNo}失敗，請手動更新",
+                    f"<p>應該更改訂單變成{update_data}，但是失敗，請手動更新</p>",
+                )
 
         else:  # 如果訂單被取消，要恢復庫存
             response = await cancel_order(oid=MerchantTradeNo, db=db)
@@ -440,20 +449,16 @@ async def received_cash_flow_response(
             else:
                 updated_order = None
 
-        if not updated_order:
-            send_email(
-                "shanthaiteam@gmail.com",
-                f"更新訂單{MerchantTradeNo}失敗，請手動更新",
-                f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
-            )
+            if not updated_order:
+                send_email(
+                    "shanthaiteam@gmail.com",
+                    f"更新訂單{MerchantTradeNo}失敗，請手動更新",
+                    f"<p>應該恢復訂單庫存，但是失敗，請手動更新</p>",
+                )
 
         return "1|OK"
-    except:
-        send_email(
-            "shanthaiteam@gmail.com",
-            f"更新訂單{MerchantTradeNo}失敗，請手動更新",
-            f"<p>更新訂單{MerchantTradeNo}失敗，請手動更新</p>",
-        )
+    except Exception as e:
+        print(f"Function received_cash_flow_response 出現意外錯誤：{str(e)}")
         return "1|OK"
 
 
@@ -502,10 +507,7 @@ async def get_atm_number(oid: str):
         return response
     except Exception as e:
         print(str(e))
-        raise HTTPException(
-            status_code=400, detail=f"Error get ATM account: {str(e)}"
-        )
-
+        raise HTTPException(status_code=400, detail=f"Error get ATM account: {str(e)}")
 
 
 # 取得地圖API的 keystr
