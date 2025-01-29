@@ -63,7 +63,8 @@ def create_store_logistic_order(
     store_id: str,
 ):
     if isCollection == "Y" and order_amount > 20000:
-        return "failed"
+        print(f"訂單 {oid} 貨到付款金額超過 2 萬元")
+        return {"detail": "error", "reason": ""}
     if order_amount > 20000:
         order_amount = 20000
     elif order_amount < 1:
@@ -79,7 +80,8 @@ def create_store_logistic_order(
     elif store_type == "family":
         logisticsSubType = "FAMIC2C"
     else:
-        return "failed"
+        print(f"function create_store_logistic_order 有非法呼叫，帶 store_type 為 {store_type}")
+        return {"detail": "error", "reason": ""}
 
     form_data = {
         "MerchantID": merchant_id,
