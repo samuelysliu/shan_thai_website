@@ -136,7 +136,7 @@ def check_order():
                     db, oid=order["oid"], updates=update_data
                 )
                 if not updated_order:
-                    print("訂單更新失敗")
+                    print("訂單" + order["oid"] + f"更新 {update_data} 失敗")
 
     except Exception as e:
         print(e)
