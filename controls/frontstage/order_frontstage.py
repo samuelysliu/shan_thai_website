@@ -425,6 +425,8 @@ async def received_cash_flow_response(
 
             if result["detail"] == "failed":
                 reason = result["reason"]
+                if reason.__contains__("重覆"):
+                    return "1|OK"
                 send_email(
                     "shanthaiteam@gmail.com",
                     f"物流單{MerchantTradeNo}建立失敗，請手動建立",
