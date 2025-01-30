@@ -28,7 +28,7 @@
 @font-face {
   font-family: "chinese-cust";
   /* 自定義字體名稱 */
-  src: url("/fonts/方正舒體.ttf") format("truetype");
+  src: url("/fonts/YuPearl-Medium.ttf") format("truetype");
   /* 指向你的字體檔案路徑 */
   font-weight: normal;
   /* 定義字體權重（normal、bold等） */
