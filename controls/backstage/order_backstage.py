@@ -199,6 +199,8 @@ async def received_logistic_response(
         "CVSValidationNo": CVSValidationNo,
         "BookingNote": BookingNote,
     }
+    
+    print(form_data)
 
     # 檢查 CheckMacValue 是否正確
     calculated_mac = create_checkMacValue(form_data)
@@ -252,7 +254,7 @@ async def received_logistic_response(
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     if RtnCode == "2030" or RtnCode == "3024":
-        update_data = {"status": "配送中"}
+        update_data = {"status": "已出貨"}
     elif RtnCode == "2073" or RtnCode == "3018":
         update_data = {"status": "已送達"}
     elif RtnCode == "2067" or RtnCode == "3022":

@@ -1,10 +1,12 @@
 "use client";  // 設定為客戶端組件
 
-import React, {useState} from "react";
+import React, { useState } from "react";
 import { Container, Row, Col } from 'react-bootstrap';
 
 export default function Product_Menu({ productTags, onTagSelect }) {
   const [selectedTag, setSelectedTag] = useState(-1); // 用於追踪當前選中的標籤
+
+
 
   // 當點擊標籤時處理選擇
   const handleTagSelect = (ptid) => {
@@ -23,16 +25,17 @@ export default function Product_Menu({ productTags, onTagSelect }) {
             全部
           </a>
         </Col>
-        {productTags.map((tag) => (
-          <Col key={tag.ptid} className="tag-item" xs="auto">
-            <a
-              onClick={() => handleTagSelect(tag.ptid)}
-              className={selectedTag === tag.ptid ? "selected-tag" : ""}
-            >
-              {tag.productTag}
-            </a>
-          </Col>
-        ))}
+        {productTags.length !== 0 ?
+          productTags.map((tag) => (
+            <Col key={tag.ptid} className="tag-item" xs="auto">
+              <a
+                onClick={() => handleTagSelect(tag.ptid)}
+                className={selectedTag === tag.ptid ? "selected-tag" : ""}
+              >
+                {tag.productTag}
+              </a>
+            </Col>
+          )) : ""}
       </Row>
     </Container>
   );

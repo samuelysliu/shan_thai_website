@@ -111,7 +111,7 @@ const Product_Detail = ({ pid }) => {
     return (
       <Container className="text-center my-4">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2">正在加載訂單...</p>
+        <p className="mt-2">正在加載產品詳情...</p>
       </Container>
     );
   }

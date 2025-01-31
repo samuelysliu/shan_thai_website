@@ -70,6 +70,7 @@ if environment == "production":
     scheduler.add_job(check_cashflow_order, "interval", minutes=360)
     scheduler.start()
 
+"""
 # 轉移圖片程式
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -104,7 +105,8 @@ def migrate_product_images():
         session.rollback()  # 如果發生錯誤，回滾事務
     finally:
         session.close()  # 關閉會話
-# migrate_product_images()
+migrate_product_images()
+"""
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

@@ -1,3 +1,4 @@
+// app/components/product_components/Product_Grid.js
 "use client";
 
 import React from "react";
@@ -107,7 +108,9 @@ const Product_Grid = ({ initialProducts }) => {
                 src={product.productImageUrl}
                 alt={product.title_cn}
                 onClick={() => router.push(`/product/${product.pid}`)}
-                style={{ cursor: "pointer", height: "200px" }} />
+                style={{ cursor: "pointer", height: "200px" }}
+                loading="lazy" // 添加懶加載屬性
+              />
               <Card.Body>
                 <Card.Title
                   onClick={() => router.push(`/product/${product.pid}`)}
