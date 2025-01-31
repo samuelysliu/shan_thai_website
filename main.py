@@ -70,6 +70,42 @@ if environment == "production":
     scheduler.add_job(check_cashflow_order, "interval", minutes=360)
     scheduler.start()
 
+# 轉移圖片程式
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from modules.dbConnect import Base, engine  # 確保這裡引入了正確的 Base 和 engine
+from modules.dbInit import Product, ProductImage  # 確保這裡引入了 Product 和 ProductImage 模型
+
+# 創建資料庫會話
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+session = SessionLocal()
+
+def migrate_product_images():
+    try:
+        # 獲取所有產品
+        products = session.query(Product).all()
+
+        for product in products:
+            # 獲取產品的圖片 URL
+            if product.productImageUrl:
+                # 假設 productImageUrl 是一個以逗號分隔的字符串，將其分割成列表
+                image_urls = product.productImageUrl.split(',')
+                
+                for url in image_urls:
+                    # 創建新的 ProductImage 實例
+                    product_image = ProductImage(pid=product.pid, image_url=url.strip())
+                    session.add(product_image)
+
+        # 提交事務
+        session.commit()
+        print("圖片遷移完成！")
+    except Exception as e:
+        print(f"發生錯誤：{e}")
+        session.rollback()  # 如果發生錯誤，回滾事務
+    finally:
+        session.close()  # 關閉會話
+# migrate_product_images()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    

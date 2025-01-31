@@ -93,6 +93,21 @@ class Product(Base):
     carts = relationship("Cart", back_populates="product")
     product_tag = relationship("ProductTag", back_populates="product")
     
+    # 新增與 ProductImage 的關聯
+    images = relationship("ProductImage", back_populates="product", cascade="all, delete-orphan")
+    
+class ProductImage(Base):
+    __tablename__ = "product_image"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    pid = Column(Integer, ForeignKey("product.pid"), nullable=False)
+    image_url = Column(String, nullable=False)
+
+    # 關聯到 Product
+    product = relationship("Product", back_populates="images")
+
+
+    
 class User(Base):
     __tablename__ = "users"
     uid = Column(Integer, primary_key=True, autoincrement=True)
