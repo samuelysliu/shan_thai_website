@@ -19,7 +19,7 @@ const Product_Grid = ({ initialProducts }) => {
   // 取得用戶資料
   const { userInfo, token } = useSelector((state) => state.user);
 
-  if (!initialProducts) {
+  if (!initialProducts || initialProducts[0] === 0) {
     return (
       <Container className="text-center my-4">
         <Spinner animation="border" variant="primary" />

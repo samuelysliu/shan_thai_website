@@ -24,7 +24,7 @@ const HomePageClient = ({ products, productTags }) => {
 
     // 處理標籤選擇，根據選擇的標籤從伺服器端獲取產品
     const handleTagSelect = async (tagId) => {
-        console.log(tagId);
+        setFilteredProducts([0]);
         try {
             const response = await fetch(`${endpoint}/frontstage/v1/product_by_tag/${tagId}`, { cache: 'no-store' });
             if (!response.ok) {
@@ -33,6 +33,7 @@ const HomePageClient = ({ products, productTags }) => {
             const filteredProducts = await response.json();
             setFilteredProducts(filteredProducts);
             setCurrentPage(1); // 重置為第一頁
+
         } catch (err) {
             console.error("無法加載指定標籤的產品清單", err);
             setFilteredProducts([]);

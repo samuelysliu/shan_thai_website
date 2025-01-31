@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/app/redux/slices/cartSlice";
-import { Container, Row, Col, Image, Button, Card } from "react-bootstrap";
+import { Container, Row, Col, Image, Button, Card, Spinner } from "react-bootstrap";
 import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
 import axios from "axios";
 import config from "@/app/config";
 
 import { showToast } from "@/app/redux/slices/toastSlice";
 
-const Product_Detail = ({ product }) => {
+const Product_Detail = ({ pid }) => {
   const router = useRouter();
   const endpoint = config.apiBaseUrl;
   // 取得用戶資料
@@ -71,17 +71,47 @@ const Product_Detail = ({ product }) => {
     }
   };
 
-  if (!product) {
+  const [loading, setLoading] = useState(true);
+  const [product, setProduct] = useState(
+    {
+      "pid": 0,
+      "productImageUrl": "",
+      "title_cn": "",
+      "price": 0,
+      "remain": 0,
+      "content_cn": 0
+    }
+  );
+
+  // 取得產品詳情 API
+  const fetchProductDetail = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${endpoint}/frontstage/v1/product_by_pid/${pid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // 加入 Authorization header
+          },
+        }
+      );
+      setProduct(response.data); // 更新訂單列表
+    } catch (err) {
+      handleError("無法加載訂單資料，請稍後再試。");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProductDetail();
+  }, [pid])
+
+  if (loading) {
     return (
       <Container className="text-center my-4">
         <Spinner animation="border" variant="primary" />
-        <p className="mt-2">正在加載產品...</p>
-      </Container>
-    );
-  } else if (product.length === 0) {
-    return (
-      <Container className="text-center my-4">
-        <p className="mt-2">查無此產品</p>
+        <p className="mt-2">正在加載訂單...</p>
       </Container>
     );
   }
