@@ -19,8 +19,12 @@ if environment == "production":
     hash_key = "WsN2DCIPXSIwZWen"
     hash_iv = "dfTmttwLSzjiZNqx"
 else:
-    order_check_endpoint = "https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
-    atm_number_check_endpoint = "https://payment-stage.ecpay.com.tw/Cashier/QueryPaymentInfo"
+    order_check_endpoint = (
+        "https://payment-stage.ecpay.com.tw/Cashier/QueryTradeInfo/V5"
+    )
+    atm_number_check_endpoint = (
+        "https://payment-stage.ecpay.com.tw/Cashier/QueryPaymentInfo"
+    )
     merchant_id = "3002599"
     hash_key = "spPjZn66i0OhqJsQ"
     hash_iv = "hT5OJckN45isQTTs"
@@ -31,7 +35,7 @@ def create_checkMacValue(params: dict):
     sorted_params = "&".join(
         f"{key}={params[key]}" for key in sorted(params.keys(), key=lambda x: str(x))
     )
-    
+
     # 2. 在參數前后添加 HashKey 和 HashIV
     to_encode = f"HashKey={hash_key}&{sorted_params}&HashIV={hash_iv}"
 
@@ -67,6 +71,7 @@ def check_order():
                     "TimeStamp": get_now_time("unix"),
                 }
             )
+            print(order["oid"])
             chcek_mac_value = create_checkMacValue(params)
             params["CheckMacValue"] = chcek_mac_value
 
@@ -211,6 +216,7 @@ def create_payment_callback_record(
     except:
         print("Failed to create payment callback record")
 
+
 # 檢視匯款的帳號
 def get_atm_account(oid: str):
     form_data = {
@@ -219,14 +225,14 @@ def get_atm_account(oid: str):
         "TimeStamp": get_now_time("unix"),
     }
     form_data["CheckMacValue"] = create_checkMacValue(form_data)
-    
+
     response = requests.post(atm_number_check_endpoint, data=form_data)
     # 解析字串為字典
     parsed_data = {key: value[0] for key, value in parse_qs(response.text).items()}
-    
+
     return {
         "tradeAmt": parsed_data["TradeAmt"],
         "bankCode": parsed_data["BankCode"],
         "vAccount": parsed_data["vAccount"],
-        "expireDate": parsed_data["ExpireDate"]
+        "expireDate": parsed_data["ExpireDate"],
     }
