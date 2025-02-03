@@ -26,7 +26,6 @@ load_dotenv()
 
 app = FastAPI()
 environment = os.getenv("ENVIRONMENT")
-print(environment)
 
 if environment == "uat":
     domain = "https://shan-thai-website.vercel.app"
@@ -57,6 +56,10 @@ app.include_router(frontstage_user_router, prefix="/frontstage/v1")
 app.include_router(frontstage_cart_router, prefix="/frontstage/v1")
 app.include_router(frontstage_term_router, prefix="/frontstage/v1")
 app.include_router(frontstage_token_router, prefix="/frontstage/v1")
+
+@app.get("/")
+async def health_check():
+    return {"status": "ok"}
 
 
 def check_cashflow_order():
