@@ -1,6 +1,6 @@
 const api_url = {
-  production: "https://yielding-dove-samuelysliu-ce6a81f4.koyeb.app",
-  uat: "https://classical-trish-samuelysliu-dbbd4671.koyeb.app",
+  production: "https://shan-thai-production-574f69d4f11d.herokuapp.com",
+  uat: "https://shan-thai-uat-cedb1fc3ed25.herokuapp.com",
   local: "http://192.168.1.110:8000"
 }
 
