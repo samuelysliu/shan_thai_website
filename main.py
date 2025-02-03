@@ -26,6 +26,7 @@ load_dotenv()
 
 app = FastAPI()
 environment = os.getenv("ENVIRONMENT")
+print(environment)
 
 if environment == "uat":
     domain = "https://shan-thai-website.vercel.app"
