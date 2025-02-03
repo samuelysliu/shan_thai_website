@@ -1,15 +1,12 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from controls.backstage.cms import router as backstage_router
 from controls.backstage.product_backstage import router as backstage_product_router
 from controls.backstage.user_backstage import router as backstage_user_router
 from controls.backstage.order_backstage import router as backstage_order_router
 from controls.backstage.terms_backstage import router as backstage_term_router
 from controls.backstage.token_backstage import router as backstage_token_router
-from controls.backstage.reward_setting_backstage import (
-    router as backstage_reward_router,
-)
+from controls.backstage.reward_setting_backstage import router as backstage_reward_router
 from controls.frontstage.product_frontstage import router as frontstage_product_router
 from controls.frontstage.order_frontstage import router as frontstage_order_router
 from controls.frontstage.user_frontstage import router as frontstage_user_router
@@ -111,7 +108,6 @@ def migrate_product_images():
         session.close()  # 關閉會話
 migrate_product_images()
 """
-"""
+
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
-"""
