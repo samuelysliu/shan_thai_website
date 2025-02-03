@@ -34,7 +34,8 @@ export default function ProductManagement() {
         price: "",
         remain: "",
         productTag: "",
-        productImageUrl: "",
+        productImageFiles: [],
+        productImageUrl: [],
     });
     const [productTags, setProductTags] = useState([]);
 
@@ -72,8 +73,10 @@ export default function ProductManagement() {
             formData.append("remain", currentProduct.remain)
             formData.append("ptid", currentProduct.ptid)
 
-            if (currentProduct.productImageFile) {
-                formData.append("file", currentProduct.productImageFile); // 圖片檔案
+            if (currentProduct.productImageFiles?.length > 0) {
+                currentProduct.productImageFiles.forEach((file) => {
+                    formData.append("files", file);
+                });
             }
 
             const response = await axios.post(`${endpoint}/backstage/v1/product`,
@@ -84,6 +87,8 @@ export default function ProductManagement() {
                         Authorization: `Bearer ${token}`,
                     },
                 });
+
+            console.log(response)
             const newProduct = response.data;
             newProduct.productTag = currentProduct.productTag
             setProducts((prevProducts) => [...prevProducts, newProduct]);
@@ -105,14 +110,15 @@ export default function ProductManagement() {
         if (currentProduct.productTag) formData.append("ptid", currentProduct.ptid)
 
         // 判斷是否需要上傳圖片
-        if (currentProduct.productImageFile) {
-            // 若使用者上傳新圖片
-            formData.append("file", currentProduct.productImageFile);
-        } else if (currentProduct.productImageUrl) {
-            // 若圖片未變更，傳遞圖片 URL
-            formData.append("productImageUrl", currentProduct.productImageUrl);
+        if (currentProduct.productImageFiles?.length > 0) {
+            currentProduct.productImageFiles.forEach((file) => {
+                formData.append("files", file);
+            });
         }
-        console.log(formData)
+        /*else if (currentProduct.productImageFiles) {
+           formData.append("files", null);
+       }*/
+
         try {
             const response = await axios.patch(`${endpoint}/backstage/v1/product/${currentProduct.pid}`,
                 formData,
@@ -203,7 +209,7 @@ export default function ProductManagement() {
             price: "",
             remain: "",
             productTag: "",
-            productImageUrl: "",
+            productImageUrl: [],
         });
     };
 
@@ -211,6 +217,7 @@ export default function ProductManagement() {
     const handleEditProduct = (product) => {
         setIsEditing(true);
         setCurrentProduct(product); // 設置為當前產品
+        console.log(product);
         setShowModal(true);
     };
 
@@ -252,7 +259,7 @@ export default function ProductManagement() {
         }
     };
 
-
+    // 儲存新的標籤
     const handleSaveNewTag = async (newTag) => {
         try {
             // 呼叫後端 API 新增標籤
@@ -440,33 +447,40 @@ export default function ProductManagement() {
                             <Form.Label>圖片上傳</Form.Label>
                             <Form.Control
                                 type="file"
+                                multiple // ✅ 允許多張圖片
                                 accept="image/png, image/jpeg"
                                 onChange={(e) => {
-                                    const file = e.target.files[0];
-                                    if (file) {
-                                        const fileType = file.type;
-                                        // 確認檔案類型是否正確
-                                        if (fileType === "image/jpeg" || fileType === "image/png") {
-                                            setCurrentProduct({
-                                                ...currentProduct,
-                                                productImageFile: file, // 圖片檔案
-                                            });
+                                    const files = Array.from(e.target.files);
+                                    if (files.length > 0) {
+                                        const validFiles = files.filter((file) =>
+                                            file.type === "image/jpeg" || file.type === "image/png"
+                                        );
+                                        if (validFiles.length !== files.length) {
+                                            handleError("請上傳 JPG 或 PNG 格式的圖片");
+                                            e.target.value = "";
                                         } else {
-                                            handleSuccess("請上傳 JPG 或 PNG 格式的圖片");
-                                            e.target.value = ""; // 清空輸入
+                                            setCurrentProduct((prev) => ({
+                                                ...prev,
+                                                productImageFiles: validFiles, // ✅ 存多張圖片檔案
+                                            }));
                                         }
                                     }
-                                }
-                                }
+                                }}
                             />
-                            {currentProduct.productImageUrl && (
-                                <img
-                                    src={currentProduct.productImageUrl}
-                                    alt="product"
-                                    width="100%"
-                                    className="mt-2"
-                                />
+                            {currentProduct.productImageUrl?.length > 0 && (
+                                <div className="mt-2">
+                                    {currentProduct.productImageUrl.map((img, index) => (
+                                        <img
+                                            key={index}
+                                            src={img}
+                                            alt={`product-url-${index}`}
+                                            width="100"
+                                            className="me-2"
+                                        />
+                                    ))}
+                                </div>
                             )}
+
                         </Form.Group>
 
                     </Form>

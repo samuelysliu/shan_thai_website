@@ -1,9 +1,9 @@
 // app/components/product_components/Product_Grid.js
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
-import { Container, Row, Col, Card, Button, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Spinner, Carousel } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/app/redux/slices/cartSlice";
 import config from "@/app/config";
@@ -16,24 +16,51 @@ const Product_Grid = ({ initialProducts }) => {
   const dispatch = useDispatch();
   const endpoint = config.apiBaseUrl;
   const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
+  const [productImages, setProductImages] = useState({});
+  const observerRef = useRef(null);
+  const loadedPids = useRef(new Set()); // 紀錄已載入的 pid
 
   // 取得用戶資料
   const { userInfo, token } = useSelector((state) => state.user);
 
-  if (!initialProducts || initialProducts[0] === 0) {
-    return (
-      <Container className="text-center my-4">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-2">正在加載產品...</p>
-      </Container>
-    );
-  } else if (initialProducts.length === 0) {
-    return (
-      <Container className="text-center my-4">
-        <p className="mt-2">目前無產品上架</p>
-      </Container>
-    );
-  }
+  // 取得圖片資訊 (Lazy Load)
+  const loadImages = async (pid) => {
+    if (loadedPids.current.has(pid)) return; // 防止重複請求
+    
+    try {
+      const response = await axios.get(`${endpoint}/frontstage/v1/product_images/${pid}`);
+      setProductImages((prev) => ({ ...prev, [pid]: response.data.productImages || [] }));
+      loadedPids.current.add(pid); // 確保已載入
+    } catch (error) {
+      console.error("無法獲取圖片:", error);
+      setProductImages((prev) => ({ ...prev, [pid]: [] })); // 失敗時，設為空陣列避免錯誤
+      loadedPids.current.add(pid); // 避免反覆請求
+    }
+  };
+
+  // 觀察畫面中的產品，當它進入視野時請求圖片
+  const handleIntersection = (entries, observer) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        const pid = entry.target.dataset.pid;
+        loadImages(pid);
+        observer.unobserve(entry.target); // 避免重複觀察，提高效能
+      }
+    });
+  };
+
+  useEffect(() => {
+    if (!observerRef.current) {
+      const observer = new IntersectionObserver(handleIntersection, { rootMargin: "100px" });
+      observerRef.current = observer;
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect(); // 確保在卸載時清除 observer
+      }
+    };
+  }, []);
 
   // 立即購買的邏輯
   const handleBuyNow = async (product) => {
@@ -96,21 +123,66 @@ const Product_Grid = ({ initialProducts }) => {
     dispatch(showToast({ message: message, variant: "danger" }));
   };
 
+  // 沒有產品的處理顯示
+  if (!initialProducts || initialProducts[0] === 0) {
+    return (
+      <Container className="text-center my-4">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">正在加載產品...</p>
+      </Container>
+    );
+  } else if (initialProducts.length === 0) {
+    return (
+      <Container className="text-center my-4">
+        <p className="mt-2">目前無產品上架</p>
+      </Container>
+    );
+  }
+
 
   return (
     <Container className="my-4">
       <Row xs={2} md={3} xl={4} xxl={5}>
         {initialProducts.map((product) => (
           <Col xs={6} md={3} key={product.pid} className="mb-4">
-            <Card className="text-center product-card">
-              <Card.Img
-                variant="top"
-                src={product.productImageUrl}
-                alt={product.title_cn}
-                onClick={() => router.push(`/product/${product.pid}`)}
-                style={{ cursor: "pointer", height: "200px" }}
-                loading="lazy" // 添加懶加載屬性
-              />
+
+            <Card
+              className="text-center product-card"
+              data-pid={product.pid}
+              ref={(el) => {
+                if (el && observerRef.current) {
+                  observerRef.current.observe(el);
+                }
+              }}
+            >
+              {/* 圖片輪播區塊 */}
+              <div style={{ cursor: "pointer" }}>
+                {productImages[product.pid] && productImages[product.pid].length > 0 ? (
+                  <Carousel interval={3000} fade>
+                    {productImages[product.pid].map((img, index) => (
+                      <Carousel.Item key={index}>
+                        <Card.Img
+                          variant="top"
+                          src={img}
+                          alt={product.title_cn}
+                          style={{ height: "200px", objectFit: "cover" }}
+                          loading="lazy"
+                        />
+                      </Carousel.Item>
+                    ))}
+                  </Carousel>
+                ) : (
+                  <Card.Img
+                    variant="top"
+                    src="loading-placeholder.png"
+                    alt={product.title_cn}
+                    style={{ height: "200px" }}
+                    onClick={() => router.push(`/product/${product.pid}`)}
+                    loading="lazy"
+                  />
+                )}
+              </div>
+
               <Card.Body>
                 <Card.Title
                   onClick={() => router.push(`/product/${product.pid}`)}

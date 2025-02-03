@@ -2,7 +2,6 @@ from fastapi import APIRouter, HTTPException, Depends, Form
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 import modules.order_crud as order_db
-import modules.product_crud as product_db
 import modules.logistics_order_crud as logistics_order_db
 import modules.dbConnect as db_connect
 from controls.tools import format_to_utc8 as timeformat
