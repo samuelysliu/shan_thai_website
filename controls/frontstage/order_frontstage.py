@@ -80,7 +80,7 @@ class OrderUpdate(BaseModel):
 
 
 # **檢視用戶自己的歷史訂單**
-@router.get("/orders")
+@router.get("/orders/{uid}")
 async def get_user_orders(
     uid: int, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)
 ):
@@ -113,19 +113,19 @@ async def create_user_order(
 
     # 確認所有產品是否存在並有足夠庫存，並計算價格
     for detail in order.order_details:
-        product = product_db.get_product_by_id(db, detail.pid)
+        product = await product_db.get_product_by_id(db, detail.pid)
         if not product:
             raise HTTPException(
                 status_code=404, detail=f"Product ID {detail.pid} not found"
             )
-        if product.remain < detail.productNumber:
+        if product["remain"] < detail.productNumber:
             raise HTTPException(
                 status_code=400,
                 detail=f"Product ID {detail.pid} is out of stock or insufficient quantity",
             )
 
         # 從資料庫中獲取價格並計算小計
-        subtotal = product.price * detail.productNumber
+        subtotal = product["price"] * detail.productNumber
         total_amount += subtotal
 
         # 添加到訂單明細
@@ -133,15 +133,15 @@ async def create_user_order(
             {
                 "pid": detail.pid,
                 "productNumber": detail.productNumber,
-                "price": product.price,  # 使用資料庫中的價格
+                "price": product["price"],  # 使用資料庫中的價格
                 "subtotal": subtotal,
             }
         )
 
     # 減少剩餘產品數量
     for detail in order_details:
-        update_data = {"remain": product.remain - detail["productNumber"]}
-        product_updated = product_db.update_partial_product(
+        update_data = {"remain": product["remain"] - detail["productNumber"]}
+        product_updated = await product_db.update_partial_product(
             db, detail["pid"], update_data
         )
         if not product_updated:
@@ -514,11 +514,12 @@ async def get_atm_number(oid: str):
 
 # 取得地圖API的 keystr
 async def get_keystr():
-    # 步驟一：呼叫指定的 API
+    #呼叫指定的 API
     url = "https://api.tgos.tw/TGOS_API/tgos?ver=2&AppID=x+JLVSx85Lk=&APIKey=in8W74q0ogpcfW/STwicK8D5QwCdddJf05/7nb+OtDh8R99YN3T0LurV4xato3TpL/fOfylvJ9Wv/khZEsXEWxsBmg+GEj4AuokiNXCh14Rei21U5GtJpIkO++Mq3AguFK/ISDEWn4hMzqgrkxNe1Q=="
 
     async with httpx.AsyncClient() as client:
         response = await client.get(url)
+    
 
     if response.status_code == 200:
         content = response.text

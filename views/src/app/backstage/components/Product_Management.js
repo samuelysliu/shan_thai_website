@@ -88,7 +88,6 @@ export default function ProductManagement() {
                     },
                 });
 
-            console.log(response)
             const newProduct = response.data;
             newProduct.productTag = currentProduct.productTag
             setProducts((prevProducts) => [...prevProducts, newProduct]);
@@ -123,10 +122,11 @@ export default function ProductManagement() {
             const response = await axios.patch(`${endpoint}/backstage/v1/product/${currentProduct.pid}`,
                 formData,
                 {
-                    headers: { "Content-Type": "multipart/form-data" },
-                    Authorization: `Bearer ${token}`,
-                }
-            );
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
             const updatedProduct = response.data;
             // 更新本地產品列表

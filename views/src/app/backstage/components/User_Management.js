@@ -160,6 +160,7 @@ export default function UserManagement() {
     // 彈出視窗控制
     const handleShowModal = (user = null) => {
         if (user) {
+            console.log(user)
             setIsEditing(true);
             setCurrentUser(user);
         } else {
@@ -351,9 +352,9 @@ export default function UserManagement() {
                             <Form.Label>MBTI</Form.Label>
                             <Select
                                 options={mbtiOptions}
-                                value={currentUser.mbti}
-                                onChange={(e) => setCurrentUser({ ...currentUser, mbti: e.target.value })}
-                                placeholder="選擇 MBTI"
+                                defaultValue={currentUser.mbti}
+                                onChange={(e) => setCurrentUser({ ...currentUser, mbti: e.value })}
+                                placeholder={currentUser.mbti || "選擇 MBTI"}
                                 isSearchable
                             />
                         </Form.Group>

@@ -166,6 +166,7 @@ const Product_Grid = ({ initialProducts }) => {
                           src={img}
                           alt={product.title_cn}
                           style={{ height: "200px", objectFit: "cover" }}
+                          onClick={() => router.push(`/product/${product.pid}`)}
                           loading="lazy"
                         />
                       </Carousel.Item>

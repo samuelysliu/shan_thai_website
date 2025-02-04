@@ -103,15 +103,20 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             return;
         } else if (transportationMethod === "delivery") {
             setIsSubmitting(true);
-            const response = await axios.get(`${endpoint}/frontstage/v1/address_exist/${address}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            if (!response.data.success) {
-                handleError("請填寫正確的地址欄位！");
-                setIsSubmitting(false);
-                return;
+            try {
+                const response = await axios.get(`${endpoint}/frontstage/v1/address_exist/${address}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (!response.data.success) {
+                    handleError("請填寫正確的地址欄位！");
+                    setIsSubmitting(false);
+                    return;
+                }
+            }
+            catch (error) {
+                console.error("地圖 API 異常：", error);
             }
         }
 
@@ -323,7 +328,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                         <tr key={item.pid}>
                             <td>
                                 <img
-                                    src={item.productImageUrl}
+                                    src={item.productImageUrl[0]}
                                     alt={item.title_cn}
                                     width="100"
                                     height="100"

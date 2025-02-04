@@ -7,7 +7,8 @@ from controls.tools import format_to_utc8 as timeformat
 async def cancel_order(oid, db):
     order_details = order_db.get_order_details_by_oid(db, oid)
     for order_detail in order_details:
-        product = product_db.get_product_by_id(db, order_detail.pid)
+        product = await product_db.get_product_by_id(db, order_detail.pid)
+
         if not product:
             return {
                 "detail": f"Product ID {order_detail.pid} not found for restocking",
@@ -15,8 +16,8 @@ async def cancel_order(oid, db):
             }
 
         # 更新庫存
-        update_data = {"remain": product.remain + order_detail.productNumber}
-        product_updated = product_db.update_partial_product(
+        update_data = {"remain": product["remain"] + order_detail.productNumber}
+        product_updated = await product_db.update_partial_product(
             db, order_detail.pid, update_data
         )
         if not product_updated:

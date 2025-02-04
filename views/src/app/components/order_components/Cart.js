@@ -29,6 +29,7 @@ const Cart = () => {
       });
 
       const resolvedProducts = await Promise.all(productPromises);
+      console.log(resolvedProducts);
       setCartProduct(resolvedProducts);
     } catch (err) {
       console.error("產品Mapping失敗：", err);
@@ -122,7 +123,7 @@ const Cart = () => {
                 <tr key={item.pid}>
                   <td>
                     <img
-                      src={item.productImageUrl}
+                      src={item.productImageUrl[0]}
                       alt={item.title_cn}
                       width="100"
                       height="100"

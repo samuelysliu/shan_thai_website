@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import SQLAlchemyError
 from modules.dbInit import Order, OrderDetail
 from typing import List
+from modules.dbInit import Product as ProductModel
 
 
 # 取得所有訂單
@@ -19,7 +20,7 @@ def get_orders_by_uid(db: Session, uid: int) -> List[dict]:
         orders = (
             db.query(Order)
             .filter(Order.uid == uid)
-            .options(joinedload(Order.order_details))
+            .options(joinedload(Order.order_details).joinedload(OrderDetail.product).joinedload(ProductModel.images))
             .order_by(Order.created_at.desc())
             .all()
         )
@@ -46,8 +47,8 @@ def get_orders_by_uid(db: Session, uid: int) -> List[dict]:
                         "quantity": detail.productNumber,
                         "price": detail.price,
                         "title_cn": detail.product.title_cn if detail.product else None,
-                        "productImageUrl": (
-                            detail.product.productImageUrl if detail.product else None
+                        "productImageUrls": (
+                            [image.image_url for image in detail.product.images] if detail.product and detail.product.images else []
                         ),
                     }
                     for detail in order.order_details

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // 引入 useRouter
 import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "@/app/redux/slices/cartSlice";
-import { Container, Row, Col, Image, Button, Card, Spinner } from "react-bootstrap";
+import { Container, Row, Col, Button, Card, Spinner, Carousel } from "react-bootstrap";
 import { FaArrowLeft } from "react-icons/fa"; // 引入返回圖示
 import axios from "axios";
 import config from "@/app/config";
@@ -75,7 +75,7 @@ const Product_Detail = ({ pid }) => {
   const [product, setProduct] = useState(
     {
       "pid": 0,
-      "productImageUrl": "",
+      "productImageUrl": {},
       "title_cn": "",
       "price": 0,
       "remain": 0,
@@ -135,7 +135,18 @@ const Product_Detail = ({ pid }) => {
       </Col>
       <Row className="align-items-start">
         <Col xs={12} md={6} className="text-center">
-          <Image src={product.productImageUrl} alt={product.title_cn} fluid rounded />
+          <Carousel interval={3000} fade>
+            {product.productImageUrl.map((img, index) => (
+              <Carousel.Item key={index}>
+                <Card.Img
+                  variant="top"
+                  src={img}
+                  alt={product.title_cn}
+                  loading="lazy"
+                />
+              </Carousel.Item>
+            ))}
+          </Carousel>
         </Col>
         <Col xs={12} md={6}>
           <Card className="border-0">

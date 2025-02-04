@@ -37,7 +37,7 @@ const OrderHistory = () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `${endpoint}/frontstage/v1/orders?uid=${userInfo.uid}`, // API 路徑加上用戶 ID
+        `${endpoint}/frontstage/v1/orders/${userInfo.uid}`, // API 路徑加上用戶 ID
         {
           headers: {
             Authorization: `Bearer ${token}`, // 加入 Authorization header
@@ -162,7 +162,7 @@ const OrderHistory = () => {
                     <Row key={index} className="align-items-center mb-3">
                       <Col xs={12} md={4} className="text-center">
                         <img
-                          src={product.productImageUrl}
+                          src={product.productImageUrls[0]}
                           alt={product.title_cn}
                           className="product-image"
                           width={200}

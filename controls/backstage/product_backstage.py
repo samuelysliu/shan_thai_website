@@ -99,13 +99,12 @@ async def update_partial_product(
         update_data["ptid"] = ptid
 
     if files:
-        print("here")
         update_data["productImages"] = handleImageUpload(files)
 
     if not update_data:
         raise HTTPException(status_code=400, detail="No fields to update")
 
-    updated_product = product_db.update_partial_product(db, product_id, update_data)
+    updated_product = await product_db.update_partial_product(db, product_id, update_data)
     if not updated_product:
         print("System Log: product_backstage API update_partial_product function database query failed")
         raise HTTPException(status_code=404, detail="Product not found")
@@ -132,7 +131,7 @@ async def create_product(
     image_urls = handleImageUpload(files)
 
     # 儲存產品資訊到DB
-    created_product = product_db.create_product(
+    created_product = await product_db.create_product(
         db,
         title_cn,
         content_cn,
@@ -145,9 +144,8 @@ async def create_product(
         print("System Log: product_backstage API create_product function database query failed")
         raise HTTPException(status_code=404, detail="Product create failed")
     
-    
-    
-    return created_product
+    new_product = await product_db.get_product_by_id(db, created_product.pid)
+    return new_product
 
 
 # 上下架指定產品
@@ -164,7 +162,7 @@ async def launch_product(
     # 構建要更新的資料
     update_data = {}
     update_data["launch"] = product.launch
-    updated_product = product_db.update_partial_product(db, product_id, update_data)
+    updated_product = await product_db.update_partial_product(db, product_id, update_data)
     if not updated_product:
         raise HTTPException(status_code=404, detail="Product not found")
     return updated_product

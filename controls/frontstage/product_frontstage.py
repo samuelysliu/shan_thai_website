@@ -62,7 +62,7 @@ async def get_product_images(pid: int, db: Session = Depends(get_db)):
 # 取得特定產品詳情
 @router.get("/product_by_pid/{pid}")
 async def get_product_by_pid(pid: int, db: Session = Depends(get_db)):
-    product = product_db.get_product_by_id(db, pid)
+    product = await product_db.get_product_by_id(db, pid)
     if product is None:
         print(
             "System Log: product_frontstage get_product_by_pid function database query failed"
