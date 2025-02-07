@@ -14,6 +14,7 @@ from controls.frontstage.cart_frontstage import router as frontstage_cart_router
 from controls.frontstage.terms_frontstage import router as frontstage_term_router
 from controls.frontstage.token_frontstage import router as frontstage_token_router
 from controls.cash_flow import check_order
+from controls.logistic import check_logistic_status
 from apscheduler.schedulers.background import BackgroundScheduler
 import os
 from dotenv import load_dotenv
@@ -59,16 +60,22 @@ async def health_check():
     return {"status": "ok"}
 
 
-def check_cashflow_order():
+def check_cashflow_order_scheduler():
     print("check_cashflow_order start")
     check_order()
     print("check_cashflow_order end")
+    
+def check_logisitic_order_scheduler():
+    print("check_logistic_status start")
+    check_logistic_status()
+    print("check_logistic_status end")
 
 
-if environment == "production":
+if environment == "production" or environment == "uat":
     # 初始化排程器
     scheduler = BackgroundScheduler()
-    scheduler.add_job(check_cashflow_order, "interval", minutes=360)
+    scheduler.add_job(check_cashflow_order_scheduler, "interval", minutes=360)
+    scheduler.add_job(check_logisitic_order_scheduler, "interval", minutes=60)
     scheduler.start()
 
 """

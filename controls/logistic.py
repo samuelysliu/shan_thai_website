@@ -7,6 +7,7 @@ import hashlib
 import urllib.parse
 import modules.dbConnect as db_connect
 import modules.logistics_order_crud as logistics_order_db
+import modules.order_crud as order_db
 
 load_dotenv()
 environment = os.getenv("ENVIRONMENT")
@@ -14,11 +15,13 @@ endpoint = os.getenv("WEBSITE_URL")
 
 if environment == "production":
     logistic_endpoint = "https://logistics.ecpay.com.tw/Express/Create"
+    logistic_check_endpoint = "https://logistics.ecpay.com.tw/Helper/QueryLogisticsTradeInfo/V5"
     merchant_id = "3437729"
     hash_key = "WsN2DCIPXSIwZWen"
     hash_iv = "dfTmttwLSzjiZNqx"
 else:
     logistic_endpoint = "https://logistics-stage.ecpay.com.tw/Express/Create"
+    logistic_check_endpoint = "https://logistics-stage.ecpay.com.tw/Helper/QueryLogisticsTradeInfo/V5"
     merchant_id = "2000933"
     hash_key = "XBERn1YOvpM9nfZc"
     hash_iv = "h1ONHk4P4yqbl5LK"
@@ -224,3 +227,48 @@ def create_home_logistic_order(
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         return {"detail": "failed", "reason": str(e)}
+
+
+# 查詢物流狀態
+def check_logistic_status():
+    db = db_connect.SessionLocal()
+    try:
+        order_list = order_db.get_order_by_status(db, "待出貨")
+        
+        # 逐一去呼叫 API 確定物流狀態
+        for order in order_list:
+            params = dict(
+                {
+                    "MerchantID": merchant_id,  # 特店編號(由綠界提供
+                    "MerchantTradeNo": order["oid"],  # 特店交易編號
+                    "TimeStamp": get_now_time("unix"),
+                }
+            )
+            print(order["oid"])
+            chcek_mac_value = create_checkMacValue(params)
+            params["CheckMacValue"] = chcek_mac_value
+
+            # API 回傳為字串，需要做解析轉成 dict
+            response = requests.post(logistic_check_endpoint, data=params)
+            response_dict = dict(item.split("=") for item in response.text.split("&") if "=" in item)
+            
+            # 取得目標欄位
+            RtnCode = response_dict.get("LogisticsStatus", "")
+            
+            if RtnCode == "2030" or RtnCode == "3024":
+                update_data = {"status": "已出貨"}
+            elif RtnCode == "2073" or RtnCode == "3018":
+                update_data = {"status": "已送達"}
+            elif RtnCode == "2067" or RtnCode == "3022":
+                update_data = {"status": "已完成"}
+            elif RtnCode == "2074" or RtnCode == "3020":
+                update_data = {"status": "已取消"}
+
+            updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
+            if not updated_order:
+                print({order["oid"]} + f" 訂單更新物流狀態為 {update_data} 更新失敗")
+                
+    except Exception as e:
+        print(f"System Log: logistic.py check_logistic_status function {e}")
+    finally:
+        db.close()
