@@ -71,7 +71,7 @@ def check_logisitic_order_scheduler():
     print("check_logistic_status end")
 
 
-if environment == "production" or environment == "uat":
+if environment == "production":
     # 初始化排程器
     scheduler = BackgroundScheduler()
     scheduler.add_job(check_cashflow_order_scheduler, "interval", minutes=360)

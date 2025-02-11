@@ -4,7 +4,9 @@ import modules.product_crud as product_db
 import modules.dbConnect as db_connect
 router = APIRouter()
 get_db = db_connect.get_db
+from cachetools import TTLCache, cached
 
+cache = TTLCache(maxsize=128, ttl=600)  # 快取 600 秒 (10 分鐘)
 
 # 取得所有上架產品的資訊
 @router.get("/product")
@@ -43,6 +45,9 @@ async def get_all_product(db: Session = Depends(get_db)):
 # 取得指定產品的所有圖片
 @router.get("/product_images/{pid}")
 async def get_product_images(pid: int, db: Session = Depends(get_db)):
+    if pid in cache:
+        return cache[pid]
+    
     products = product_db.get_product_image_by_id(db, pid)
 
     product_list = [product.image_url for product in products]
@@ -56,6 +61,8 @@ async def get_product_images(pid: int, db: Session = Depends(get_db)):
     if not products:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    cache[pid] = {"pid": pid, "productImages": product_list}
+    
     return {"pid": pid, "productImages": product_list}
 
 

@@ -4,7 +4,8 @@ from modules.dbInit import Product as ProductModel
 from modules.dbInit import ProductImage as ProductImageModel
 from modules.dbInit import ProductTag as ProductTagModel
 from typing import List
-from functools import lru_cache
+
+
 
 
 # 取得所有 Product 資料
@@ -17,7 +18,7 @@ def get_product(db: Session):
 
 
 # 取得所有上架的 Product 資料(不含圖片)
-@lru_cache(maxsize=128)
+
 def get_product_launch(db: Session):
     try:
         return db.query(ProductModel).filter(ProductModel.launch == True).all()
@@ -69,9 +70,9 @@ def get_product_join_tag(db: Session):
 
 
 # 根據產品id (pid) 獲取產品圖片
-@lru_cache(maxsize=128)
 def get_product_image_by_id(db: Session, pid: int):
     try:
+        print("執行")
         return db.query(ProductImageModel).filter(ProductImageModel.pid == pid).all()
     except SQLAlchemyError as e:
         print(f"Error: {e}")
@@ -79,7 +80,6 @@ def get_product_image_by_id(db: Session, pid: int):
 
 
 # 根據產品id (pid) 獲取單一產品資料
-@lru_cache(maxsize=128)
 async def get_product_by_id(db: Session, pid: int):
     try:
         product = (
@@ -120,7 +120,6 @@ async def get_product_by_id(db: Session, pid: int):
 
 
 # 根據標籤 (ptid) 查詢所有產品(不含圖片)
-@lru_cache(maxsize=128)
 def get_products_by_tag(db: Session, ptid: int):
     try:
         # 查詢符合 `ptid` 的產品並格式化數據
@@ -223,12 +222,6 @@ async def update_partial_product(db: Session, product_id: int, update_data: dict
         db.commit()
         db.refresh(updated_product)
 
-        # 清除所有快取的數據
-        get_product_launch.cache_clear()
-        get_product_image_by_id.cache_clear()
-        get_product_by_id.cache_clear()
-        get_products_by_tag.cache_clear()
-
         # 格式化返回數據
         return {
             "pid": updated_product.pid,
@@ -262,12 +255,6 @@ def delete_product(db: Session, product_id: int):
     try:
         product = db.query(ProductModel).filter(ProductModel.pid == product_id).first()
 
-        # 清除所有快取的數據
-        get_product_launch.cache_clear()
-        get_product_image_by_id.cache_clear()
-        get_product_by_id.cache_clear()
-        get_products_by_tag.cache_clear()
-
         if product:
             db.query(ProductImageModel).filter(
                 ProductImageModel.pid == product_id
@@ -290,7 +277,6 @@ def create_product_tag(db: Session, product_tag: str) -> ProductTagModel:
     return new_tag
 
 
-@lru_cache(maxsize=128)
 def get_all_product_tags(db: Session) -> list[ProductTagModel]:
     return db.query(ProductTagModel).all()
 
@@ -302,9 +288,6 @@ def update_product_tag(db: Session, ptid: int, new_tag: str) -> ProductTagModel:
         db.commit()
         db.refresh(tag)
 
-        # 清除所有快取的數據
-        get_all_product_tags.cache_clear()
-
         return tag
     else:
         return None
@@ -315,9 +298,6 @@ def delete_product_tag(db: Session, ptid: int) -> bool:
     if tag:
         db.delete(tag)
         db.commit()
-
-        # 清除所有快取的數據
-        get_all_product_tags.cache_clear()
 
         return True
     else:
