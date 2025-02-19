@@ -10,6 +10,7 @@ from controls.logistic import (
     create_checkMacValue,
     create_store_logistic_order,
     create_home_logistic_order,
+    check_logistic_status,
 )
 import controls.logistic as logistic
 from datetime import datetime
@@ -350,3 +351,8 @@ def create_logistic_order(
         return {"detail": "failed"}
     else:
         return {"detail": "success"}
+
+# 檢查物流狀態
+@router.get("/secret/order_check")
+def secret_order_check():
+    check_logistic_status()

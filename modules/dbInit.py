@@ -84,6 +84,7 @@ class Product(Base):
     sold = Column(Integer, default=0)
     productImageUrl = Column(String)
     launch = Column(Boolean, default=True)
+    isDelete = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     

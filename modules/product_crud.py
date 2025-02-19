@@ -6,22 +6,19 @@ from modules.dbInit import ProductTag as ProductTagModel
 from typing import List
 
 
-
-
 # 取得所有 Product 資料
 def get_product(db: Session):
     try:
-        return db.query(ProductModel).options(joinedload(ProductModel.images)).all()
+        return db.query(ProductModel).options(joinedload(ProductModel.images)).filter(ProductModel.isDelete == False).all()
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return None
 
 
 # 取得所有上架的 Product 資料(不含圖片)
-
 def get_product_launch(db: Session):
     try:
-        return db.query(ProductModel).filter(ProductModel.launch == True).all()
+        return db.query(ProductModel).filter(ProductModel.launch == True).filter(ProductModel.isDelete == False).all()
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return None
@@ -36,6 +33,7 @@ def get_product_join_tag(db: Session):
             .options(
                 joinedload(ProductModel.product_tag), joinedload(ProductModel.images)
             )
+            .filter(ProductModel.isDelete == False)
             .all()
         )
 
@@ -72,7 +70,6 @@ def get_product_join_tag(db: Session):
 # 根據產品id (pid) 獲取產品圖片
 def get_product_image_by_id(db: Session, pid: int):
     try:
-        print("執行")
         return db.query(ProductImageModel).filter(ProductImageModel.pid == pid).all()
     except SQLAlchemyError as e:
         print(f"Error: {e}")

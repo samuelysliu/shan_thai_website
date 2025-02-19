@@ -20,7 +20,6 @@ get_db = db_connect.get_db
 class ProductLaunch(BaseModel):
     launch: bool
 
-
 class ProductTag(BaseModel):
     productTag: str
 
@@ -64,6 +63,7 @@ async def get_product(token_data: dict = Depends(verify_token), db: Session = De
     adminAutorizationCheck(token_data.get("isAdmin"))
     
     product = product_db.get_product_join_tag(db)
+    print(product)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
@@ -192,6 +192,23 @@ async def get_product_list(token_data: dict = Depends(verify_token), db: Session
     ]
     return data
 
+# 刪除產品
+@router.delete("/product/{product_id}")
+async def launch_product(
+    product_id: int,
+    token_data: dict = Depends(verify_token),
+    db: Session = Depends(get_db),
+):  
+    # 確認是否是管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+    
+    # 構建要更新的資料
+    update_data = {}
+    update_data["isDelete"] = True
+    updated_product = await product_db.update_partial_product(db, product_id, update_data)
+    if not updated_product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return updated_product
 
 # 產品標籤的操作
 @router.get("/product_tag")

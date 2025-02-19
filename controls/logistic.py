@@ -265,7 +265,7 @@ def check_logistic_status():
                 elif RtnCode == "2074" or RtnCode == "3020":
                     update_data = {"status": "已取消"}
                 else:
-                    return
+                    continue
 
                 updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
                 if not updated_order:

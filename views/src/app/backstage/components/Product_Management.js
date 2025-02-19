@@ -25,6 +25,7 @@ export default function ProductManagement() {
 
     // 控制彈出視窗顯示
     const [showModal, setShowModal] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [currentProduct, setCurrentProduct] = useState({
         pid: null,
@@ -217,7 +218,6 @@ export default function ProductManagement() {
     const handleEditProduct = (product) => {
         setIsEditing(true);
         setCurrentProduct(product); // 設置為當前產品
-        console.log(product);
         setShowModal(true);
     };
 
@@ -277,6 +277,35 @@ export default function ProductManagement() {
             handleError("新增標籤失敗，請稍後再試！");
         }
     };
+
+    // 刪除產品確認視窗控制
+    const handleDeleteProduct = async (product) => {
+        setShowConfirm(true);
+        setCurrentProduct(product); // 設置為當前產品
+    }
+    // 刪除產品
+    const deleteProduct = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.delete(`${endpoint}/backstage/v1/product/${currentProduct.pid}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
+            const updatedProduct = response.data
+            console.log(updatedProduct)
+            // 更新本地產品列表
+            setProducts((prevProducts) =>
+                prevProducts.filter((product) => product.pid !== updatedProduct.pid)
+            );
+        } catch (error) {
+            console.error("無法上刪除該產品：", error);
+        } finally {
+            setShowConfirm(false);
+            setLoading(false);
+        }
+    }
 
     // 控制彈出視窗訊息區
     const handleSuccess = (message) => {
@@ -370,6 +399,14 @@ export default function ProductManagement() {
                                                 onClick={() => launchProduct(product)}
                                             >
                                                 {product.launch ? "下架" : "重新上架"}
+                                            </Button>
+                                            |
+                                            <Button
+                                                variant="link"
+                                                style={{ color: "red" }}
+                                                onClick={() => handleDeleteProduct(product)}
+                                            >
+                                                刪除
                                             </Button>
                                         </td>
                                     </tr>
@@ -495,6 +532,28 @@ export default function ProductManagement() {
                         onClick={isEditing ? updateProducts : createProducts}
                     >
                         {isEditing ? "儲存修改" : "新增"}
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* 新增/編輯產品的彈出視窗 */}
+            <Modal show={showConfirm} onHide={() => setShowConfirm(false)}>
+                <Modal.Header closeButton>
+                    <Modal.Title>刪除確認</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    確定要將這項產品刪除嗎？
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCloseModal}>
+                        取消
+                    </Button>
+                    <Button
+                        variant="primary"
+                        style={{ backgroundColor: "var(--accent-color)", borderColor: "var(--accent-color)" }}
+                        onClick={() => deleteProduct()}
+                    >
+                        確認刪除
                     </Button>
                 </Modal.Footer>
             </Modal>
