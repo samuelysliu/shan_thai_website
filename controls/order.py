@@ -1,5 +1,7 @@
 import modules.order_crud as order_db
 import modules.product_crud as product_db
+import modules.reward_setting_crud as reward_setting_db
+import modules.shan_thai_token_crud as shan_thai_token_db
 from controls.tools import format_to_utc8 as timeformat
 
 
@@ -35,7 +37,7 @@ async def cancel_order(oid, db):
         }
 
     updated_order = order_db.update_order(db, oid=oid, updates=update_data)
-    
+
     if not updated_order:
         return {
             "detail": "Order not found",
@@ -43,8 +45,30 @@ async def cancel_order(oid, db):
         }
     updated_order.created_at = timeformat(updated_order.created_at.isoformat())
     updated_order.updated_at = timeformat(updated_order.updated_at.isoformat())
-    
+
     return {
         "detail": "success",
         "data": updated_order,
     }
+
+
+# 當訂單完成根據訂單金額發送善泰幣
+async def order_back_shan_thai_token(db, order):
+    reward_detail = reward_setting_db.get_reward_by_name(db, "order back")
+    user_token = shan_thai_token_db.get_token_by_uid(
+        db, order.uid
+    )  # 取得用戶目前餘額
+    user_token_balance = user_token.balance
+    if (
+        reward_detail["reward_type"] == "ratio"
+    ):  # 如果是比例類型的反饋，則需要根據訂單優惠價
+        if order.useDiscount:  # 確認這筆訂單有沒有優惠價
+            order_amount = order.discountPrice
+        else:
+            order_amount = order.totalAmount
+        user_token_balance = user_token_balance + round(
+            order_amount * reward_detail["reward"] / 100
+        )  # 四捨五入到整數
+    else:
+        user_token_balance = user_token_balance + reward_detail["reward"]
+    shan_thai_token_db.update_token_balance(db, order.uid, user_token_balance)

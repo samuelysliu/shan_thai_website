@@ -14,7 +14,8 @@ from controls.logistic import (
 )
 import controls.logistic as logistic
 from datetime import datetime
-from controls.order import cancel_order
+from controls.order import cancel_order, order_back_shan_thai_token
+import asyncio
 
 router = APIRouter()
 get_db = db_connect.get_db
@@ -105,10 +106,17 @@ async def update_order(
     order: OrderUpdate,
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
-):
+):  
     try:
         # 確認是否是管理員
         adminAutorizationCheck(token_data.get("isAdmin"))
+
+        # 處理訂單返饋善泰幣
+        change_status = False
+        old_order = order_db.get_order_by_oid(db, oid=oid)
+        if old_order["status"] != order.status and order.status == "已完成":
+            change_status = True
+
         # 構建要更新的資料
         update_data = order.dict(exclude_unset=True)  # 排除未設置的字段
         if not update_data:
@@ -118,9 +126,12 @@ async def update_order(
         if not updated_order:
             raise HTTPException(status_code=404, detail="Order not found")
 
+        # 處理訂單返饋善泰幣
+        if change_status:
+            asyncio.create_task(order_back_shan_thai_token(db, updated_order))
         return updated_order
     except:
-        raise HTTPException(status_code=500, detail="Failed to cancel the order")
+        raise HTTPException(status_code=500, detail="Failed to updated the order")
 
 
 # 取消訂單
@@ -199,7 +210,7 @@ async def received_logistic_response(
         "CVSValidationNo": CVSValidationNo,
         "BookingNote": BookingNote,
     }
-    
+
     print(form_data)
 
     # 檢查 CheckMacValue 是否正確
@@ -351,6 +362,7 @@ def create_logistic_order(
         return {"detail": "failed"}
     else:
         return {"detail": "success"}
+
 
 # 檢查物流狀態
 @router.get("/secret/order_check")

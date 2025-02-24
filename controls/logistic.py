@@ -8,6 +8,8 @@ import urllib.parse
 import modules.dbConnect as db_connect
 import modules.logistics_order_crud as logistics_order_db
 import modules.order_crud as order_db
+from controls.order import order_back_shan_thai_token
+import asyncio
 
 load_dotenv()
 environment = os.getenv("ENVIRONMENT")
@@ -233,7 +235,7 @@ def create_home_logistic_order(
 def check_logistic_status():
     db = db_connect.SessionLocal()
     try:
-        for i in ["待出貨", "已出貨", "已送達"]:
+        for i in ["待出貨", "配送中", "已送達"]:
             order_list = order_db.get_order_by_status(db, i)
             
             # 逐一去呼叫 API 確定物流狀態
@@ -255,13 +257,14 @@ def check_logistic_status():
                 
                 # 取得目標欄位
                 RtnCode = response_dict.get("LogisticsStatus", "")
-                
+                change_status = False
                 if RtnCode == "2030" or RtnCode == "3024":
-                    update_data = {"status": "已出貨"}
+                    update_data = {"status": "配送中"}
                 elif RtnCode == "2073" or RtnCode == "3018":
                     update_data = {"status": "已送達"}
                 elif RtnCode == "2067" or RtnCode == "3022":
                     update_data = {"status": "已完成"}
+                    change_status = True
                 elif RtnCode == "2074" or RtnCode == "3020":
                     update_data = {"status": "已取消"}
                 else:
@@ -270,6 +273,9 @@ def check_logistic_status():
                 updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
                 if not updated_order:
                     print({order["oid"]} + f" 訂單更新物流狀態為 {update_data} 更新失敗")
+                    
+                if change_status:
+                    asyncio.create_task(order_back_shan_thai_token(db, updated_order))
                 
     except Exception as e:
         print(f"System Log: logistic.py check_logistic_status function {e}")

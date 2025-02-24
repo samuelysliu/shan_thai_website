@@ -353,7 +353,7 @@ export default function OrderManagement() {
                       </td>
                       <td>
                         {
-                          order.status !== "已取消"
+                          (order.status !== "已取消" && order.status !== "已完成")
                             ? <Button
                               variant="link"
                               style={{ color: "var(--accent-color)" }}
@@ -549,7 +549,7 @@ export default function OrderManagement() {
                 }
               >
                 <option value="待確認">待確認</option>
-                <option value="待出貨">待出貨</option>
+                <option value="配送中">配送中</option>
                 <option value="已出貨">已出貨</option>
                 <option value="已完成">已完成</option>
               </Form.Select>

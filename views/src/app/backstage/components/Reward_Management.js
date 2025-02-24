@@ -49,10 +49,6 @@ export default function RewardManagement() {
         setSearchReward(e.target.value);
     };
 
-    const filteredRewards = rewards.filter((reward) =>
-        reward.name.toLowerCase().includes(searchReward.toLowerCase())
-    );
-
     // 顯示新增/編輯彈出視窗
     const handleShowModal = (reward = null) => {
         if (reward) {
@@ -112,14 +108,17 @@ export default function RewardManagement() {
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 
+            const updatedReward = response.data;
+
             setRewards((prevRewards) =>
                 prevRewards.map((reward) =>
-                    reward.id === editableReward.id ? response.data : rewards
+                    reward.id === updatedReward.id ? { ...reward, ...updatedReward } : reward
                 )
             );
+
             handleCloseModal();
         } catch (error) {
-            console.error("無法更新條款：", error);
+            console.error("無法更新獎勵：", error);
         } finally {
             setLoading(false);
         }
@@ -174,7 +173,7 @@ export default function RewardManagement() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {filteredRewards.map((reward) => (
+                                {rewards.map((reward) => (
                                     <tr key={reward.id}>
                                         <td>{reward.name}</td>
                                         <td>{reward.description}</td>
@@ -271,6 +270,7 @@ export default function RewardManagement() {
                                     onChange={(e) => setRewardName(e.target.value)}
                                 >
                                     <option value="new user">新會員獎勵</option>
+                                    <option value="order back">訂單完成回饋</option>
                                     {/*<option value="invite friend">邀請會員獎勵</option>*/}
                                 </Form.Select>
                             </Form.Group>

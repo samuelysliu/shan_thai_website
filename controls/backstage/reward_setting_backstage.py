@@ -52,9 +52,10 @@ async def create_reward(
             description = "新進會員的獎勵"
             reward_type = "fixed"
 
-        elif reward.name == "invite friend":
-            description = "邀請的朋友如果有消費的獎勵"
-            reward_type = "fixed"
+        elif reward.name == "order back":
+            description = "每一筆訂單都會返回優惠價比例的善泰幣"
+            reward_type = "ratio"
+            
         else:
             raise HTTPException(status_code=500, detail="Invaild Call")
 

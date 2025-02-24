@@ -63,7 +63,6 @@ async def get_product(token_data: dict = Depends(verify_token), db: Session = De
     adminAutorizationCheck(token_data.get("isAdmin"))
     
     product = product_db.get_product_join_tag(db)
-    print(product)
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
