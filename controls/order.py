@@ -53,22 +53,22 @@ async def cancel_order(oid, db):
 
 
 # 當訂單完成根據訂單金額發送善泰幣
-async def order_back_shan_thai_token(db, order):
+async def order_back_shan_thai_token(db, uid, useDiscount, discountPrice, totalAmount):
     reward_detail = reward_setting_db.get_reward_by_name(db, "order back")
     user_token = shan_thai_token_db.get_token_by_uid(
-        db, order.uid
+        db, uid
     )  # 取得用戶目前餘額
     user_token_balance = user_token.balance
     if (
         reward_detail["reward_type"] == "ratio"
     ):  # 如果是比例類型的反饋，則需要根據訂單優惠價
-        if order.useDiscount:  # 確認這筆訂單有沒有優惠價
-            order_amount = order.discountPrice
+        if useDiscount:  # 確認這筆訂單有沒有優惠價
+            order_amount = discountPrice
         else:
-            order_amount = order.totalAmount
+            order_amount = totalAmount
         user_token_balance = user_token_balance + round(
             order_amount * reward_detail["reward"] / 100
         )  # 四捨五入到整數
     else:
         user_token_balance = user_token_balance + reward_detail["reward"]
-    shan_thai_token_db.update_token_balance(db, order.uid, user_token_balance)
+    shan_thai_token_db.update_token_balance(db, uid, user_token_balance)

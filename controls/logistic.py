@@ -279,9 +279,9 @@ async def check_logistic_status():
                 updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
                 if not updated_order:
                     print({order["oid"]} + f" 訂單更新物流狀態為 {update_data} 更新失敗")
-                    
+
                 if change_status:
-                    asyncio.create_task(order_back_shan_thai_token(db, updated_order))
+                    asyncio.create_task(order_back_shan_thai_token(db, updated_order.uid, updated_order.useDiscount, updated_order.discountPrice, updated_order.totalAmount))
                 
     except Exception as e:
         print(f"System Log: logistic.py check_logistic_status function {e}")
