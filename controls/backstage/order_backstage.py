@@ -366,5 +366,5 @@ def create_logistic_order(
 
 # 檢查物流狀態
 @router.get("/secret/order_check")
-def secret_order_check():
-    check_logistic_status()
+async def secret_order_check():
+    await check_logistic_status()

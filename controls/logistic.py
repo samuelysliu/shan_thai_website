@@ -232,10 +232,10 @@ def create_home_logistic_order(
 
 
 # 查詢物流狀態
-def check_logistic_status():
+async def check_logistic_status():
     db = db_connect.SessionLocal()
     try:
-        for i in ["待出貨", "配送中", "已送達"]:
+        for i in ["已送達", "配送中", "已出貨", "待出貨"]:
             order_list = order_db.get_order_by_status(db, i)
             
             # 逐一去呼叫 API 確定物流狀態
@@ -247,10 +247,11 @@ def check_logistic_status():
                         "TimeStamp": get_now_time("unix"),
                     }
                 )
-                print(order["oid"])
                 chcek_mac_value = create_checkMacValue(params)
                 params["CheckMacValue"] = chcek_mac_value
-
+                
+                print(order["oid"])
+                
                 # API 回傳為字串，需要做解析轉成 dict
                 response = requests.post(logistic_check_endpoint, data=params)
                 response_dict = dict(item.split("=") for item in response.text.split("&") if "=" in item)
@@ -258,18 +259,23 @@ def check_logistic_status():
                 # 取得目標欄位
                 RtnCode = response_dict.get("LogisticsStatus", "")
                 change_status = False
-                if RtnCode == "2030" or RtnCode == "3024":
+                
+                if RtnCode == "2068" or RtnCode == "4001" or RtnCode == "3301":
+                    update_data = {"status": "已出貨"}
+                elif RtnCode == "2030" or RtnCode == "3024" or RtnCode == "3313":
                     update_data = {"status": "配送中"}
-                elif RtnCode == "2073" or RtnCode == "3018":
+                elif RtnCode == "2073" or RtnCode == "3018" or RtnCode == "3029" or RtnCode == "3314":
                     update_data = {"status": "已送達"}
-                elif RtnCode == "2067" or RtnCode == "3022":
+                elif RtnCode == "2067" or RtnCode == "3022" or RtnCode == "3032" or RtnCode == "3309":
                     update_data = {"status": "已完成"}
                     change_status = True
-                elif RtnCode == "2074" or RtnCode == "3020":
+                elif RtnCode == "2074" or RtnCode == "3020" or RtnCode == "3315":
                     update_data = {"status": "已取消"}
                 else:
                     continue
-
+                
+                print(update_data)
+                
                 updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
                 if not updated_order:
                     print({order["oid"]} + f" 訂單更新物流狀態為 {update_data} 更新失敗")

@@ -28,7 +28,7 @@ environment = os.getenv("ENVIRONMENT")
 if environment == "uat":
     domain = "https://shan-thai-website.vercel.app"
 elif environment == "production":
-    domain = "https://www.shan-thai-team.com"
+    domain = "*"
 else:
     domain = "*"
 

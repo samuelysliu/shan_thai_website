@@ -1,7 +1,7 @@
 const api_url = {
   production: "https://shan-thai-production-574f69d4f11d.herokuapp.com",
   uat: "https://shan-thai-uat-cedb1fc3ed25.herokuapp.com",
-  local: "http://192.168.1.110:8000"
+  local: "http://localhost:8000"
 }
 
 const gaId = {

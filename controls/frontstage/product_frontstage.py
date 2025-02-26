@@ -12,6 +12,7 @@ cache = TTLCache(maxsize=128, ttl=600)  # 快取 600 秒 (10 分鐘)
 @router.get("/product")
 async def get_all_product(db: Session = Depends(get_db)):
     products = product_db.get_product_launch(db)
+    
     if products is None:
         print(
             "System Log: product_frontstage get_all_product function database query failed"
@@ -38,7 +39,6 @@ async def get_all_product(db: Session = Depends(get_db)):
         }
         for product in products
     ]
-
     return formatted_products
 
 
