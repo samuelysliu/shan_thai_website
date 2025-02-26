@@ -260,20 +260,19 @@ async def check_logistic_status():
                 RtnCode = response_dict.get("LogisticsStatus", "")
                 change_status = False
                 
-                if RtnCode == "2068" or RtnCode == "4001" or RtnCode == "3301":
+                if RtnCode == "2068" or RtnCode == "3032" or RtnCode == "3301":
                     update_data = {"status": "已出貨"}
                 elif RtnCode == "2030" or RtnCode == "3024" or RtnCode == "3313":
                     update_data = {"status": "配送中"}
                 elif RtnCode == "2073" or RtnCode == "3018" or RtnCode == "3029" or RtnCode == "3314":
                     update_data = {"status": "已送達"}
-                elif RtnCode == "2067" or RtnCode == "3022" or RtnCode == "3032" or RtnCode == "3309":
+                elif RtnCode == "2067" or RtnCode == "3022"  or RtnCode == "3309":
                     update_data = {"status": "已完成"}
                     change_status = True
                 elif RtnCode == "2074" or RtnCode == "3020" or RtnCode == "3315":
                     update_data = {"status": "已取消"}
                 else:
                     continue
-                
                 print(update_data)
                 
                 updated_order = order_db.update_order(db, oid=order["oid"], updates=update_data)
