@@ -65,9 +65,9 @@ def check_cashflow_order_scheduler():
     check_order()
     print("check_cashflow_order end")
     
-def check_logisitic_order_scheduler():
+async def check_logisitic_order_scheduler():
     print("check_logistic_status start")
-    check_logistic_status()
+    await check_logistic_status()
     print("check_logistic_status end")
 
 
