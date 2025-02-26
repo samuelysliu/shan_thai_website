@@ -210,6 +210,7 @@ async def launch_product(
     return updated_product
 
 # 產品標籤的操作
+# 取得所有產品標籤
 @router.get("/product_tag")
 async def get_product_tag(token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
     # 確認是否是管理員
@@ -221,7 +222,7 @@ async def get_product_tag(token_data: dict = Depends(verify_token), db: Session 
         return []
     return product_tag
 
-
+# 建立新標籤
 @router.post("/product_tag")
 def create_tag(tag: ProductTag, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
     # 確認是否是管理員
@@ -233,7 +234,7 @@ def create_tag(tag: ProductTag, token_data: dict = Depends(verify_token), db: Se
 
     return product_tag
 
-
+# 刪除標籤
 @router.delete("/product_tag/{tag_id}")
 def delete_tag(tag_id: int, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
     # 確認是否是管理員
@@ -243,4 +244,4 @@ def delete_tag(tag_id: int, token_data: dict = Depends(verify_token), db: Sessio
     if not product_tag:
         raise HTTPException(status_code=404, detail="Product tag delete failed")
 
-    return {"detail": "Delete failed"}
+    return tag_id

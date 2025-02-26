@@ -278,6 +278,44 @@ export default function ProductManagement() {
         }
     };
 
+    // 刪除標籤事件
+    const handleDeleteTag = async (filter) => {
+        const filteredProducts = products.filter((product) => {
+            return product.ptid === parseInt(filter);
+        });
+
+        console.log(filteredProducts.length);
+        if (filteredProducts.length !== 0) {
+            handleError("有產品依然是該標籤，無法刪除此標籤");
+        } else {
+            try {
+                // 呼叫後端 API 新增標籤
+                const response = await axios.delete(`${endpoint}/backstage/v1/product_tag/${filter}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    }
+                });
+                const updatedTag = response.data;
+                console.log(updatedTag);
+                handleSuccess("刪除標籤成功");
+
+                // 更新標籤列表
+                setProductTags((prevTags) =>
+                    prevTags.filter((tag) => tag.ptid !== updatedTag)
+                );
+
+                // 更新目前的Filter
+                setFilter("all")
+
+            } catch (error) {
+                console.error("無法刪除該標籤：", error);
+                handleError("刪除標籤失敗");
+            }
+            
+        }
+
+    }
+
     // 刪除產品確認視窗控制
     const handleDeleteProduct = async (product) => {
         setShowConfirm(true);
@@ -306,6 +344,7 @@ export default function ProductManagement() {
             setLoading(false);
         }
     }
+
 
     // 控制彈出視窗訊息區
     const handleSuccess = (message) => {
@@ -336,17 +375,26 @@ export default function ProductManagement() {
                             </InputGroup>
                         </Col>
                         <Col md={4}>
-                            <Form.Select
-                                value={filter}
-                                onChange={(e) => setFilter(e.target.value)}
-                            >
-                                <option value="all">全部</option>
-                                {productTags.map((tag) => (
-                                    <option key={tag.ptid} value={tag.ptid}>
-                                        {tag.productTag}
-                                    </option>
-                                ))}
-                            </Form.Select>
+                            <InputGroup>
+                                <Form.Select
+                                    value={filter}
+                                    onChange={(e) => setFilter(e.target.value)}
+                                >
+                                    <option value="all">全部</option>
+                                    {productTags.map((tag) => (
+                                        <option key={tag.ptid} value={tag.ptid}>
+                                            {tag.productTag}
+                                        </option>
+                                    ))}
+                                </Form.Select>
+                                <Button
+                                    variant="danger"
+                                    onClick={() => handleDeleteTag(filter)}
+                                    disabled={filter === "all"} // 沒選擇標籤時禁用
+                                >
+                                    🗑️
+                                </Button>
+                            </InputGroup>
                         </Col>
                         <Col md={2}>
                             <Button
