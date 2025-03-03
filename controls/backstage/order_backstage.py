@@ -63,15 +63,15 @@ class OrderUpdate(BaseModel):
 
 
 # **取得所有訂單（包含明細、用戶、產品資訊）**
-@router.get("/orders")
+@router.get("/orders/{offset}/{limit}")
 async def get_all_orders(
-    token_data: dict = Depends(verify_token), db: Session = Depends(get_db)
+    offset: int, limit: int, token_data: dict = Depends(verify_token), db: Session = Depends(get_db)
 ):
     # 確認是否為管理員
     adminAutorizationCheck(token_data.get("isAdmin"))
 
     # 獲取訂單數據
-    orders = order_db.get_order_join_user_product(db)
+    orders = order_db.get_order_join_user_product(db, limit=limit, offset=offset)
     if not orders:
         raise HTTPException(status_code=404, detail="No orders found")
 
@@ -82,6 +82,18 @@ async def get_all_orders(
 
     return orders
 
+# 取得訂單總共有幾筆
+@router.get("/order_count")
+async def get_order_count(token_data: dict = Depends(verify_token), db: Session = Depends(get_db)):
+    # 確認是否為管理員
+    adminAutorizationCheck(token_data.get("isAdmin"))
+
+    # 獲取訂單數據
+    orders = order_db.get_order_count(db)
+    if not orders:
+        raise HTTPException(status_code=404, detail="No orders found")
+    
+    return orders
 
 # 根據 UID 查詢用戶的所有訂單
 @router.get("/orders/user/{user_id}")

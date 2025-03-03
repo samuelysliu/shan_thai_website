@@ -20,7 +20,11 @@ def get_orders_by_uid(db: Session, uid: int) -> List[dict]:
         orders = (
             db.query(Order)
             .filter(Order.uid == uid)
-            .options(joinedload(Order.order_details).joinedload(OrderDetail.product).joinedload(ProductModel.images))
+            .options(
+                joinedload(Order.order_details)
+                .joinedload(OrderDetail.product)
+                .joinedload(ProductModel.images)
+            )
             .order_by(Order.created_at.desc())
             .all()
         )
@@ -48,7 +52,9 @@ def get_orders_by_uid(db: Session, uid: int) -> List[dict]:
                         "price": detail.price,
                         "title_cn": detail.product.title_cn if detail.product else None,
                         "productImageUrls": (
-                            [image.image_url for image in detail.product.images] if detail.product and detail.product.images else []
+                            [image.image_url for image in detail.product.images]
+                            if detail.product and detail.product.images
+                            else []
                         ),
                     }
                     for detail in order.order_details
@@ -107,6 +113,7 @@ def get_order_by_oid(db: Session, oid: int) -> dict:
         print(f"Error while fetching order OID {oid}: {e}")
         return None
 
+
 def get_order_by_status(db: Session, status: str) -> List[dict]:
     try:
         orders = (
@@ -143,16 +150,20 @@ def get_order_by_status(db: Session, status: str) -> List[dict]:
 
 
 # **取得所有訂單及其明細，跨 user 和 product 表**
-def get_order_join_user_product(db: Session):
+def get_order_join_user_product(db: Session, limit, offset):
     try:
         # 使用 `joinedload` 預加載 `users` 和 `order_details`，並進一步載入 `product` 關聯數據
         orders = (
             db.query(Order)
             .options(
                 joinedload(Order.users),  # 預加載 `users`
-                joinedload(Order.order_details).joinedload(OrderDetail.product),  # 預加載 `order_details` 和其關聯的 `product`
+                joinedload(Order.order_details).joinedload(
+                    OrderDetail.product
+                ),  # 預加載 `order_details` 和其關聯的 `product`
             )
-            .order_by(Order.created_at.asc())
+            .order_by(Order.created_at.desc())
+            .offset(offset=offset)
+            .limit(limit=limit)
             .all()
         )
 
@@ -179,7 +190,9 @@ def get_order_join_user_product(db: Session):
                 "details": [
                     {
                         "pid": detail.pid,
-                        "productTitle_cn": detail.product.title_cn if detail.product else None,
+                        "productTitle_cn": (
+                            detail.product.title_cn if detail.product else None
+                        ),
                         "productNumber": detail.productNumber,
                         "price": detail.price,
                         "subtotal": detail.subtotal,
@@ -191,6 +204,15 @@ def get_order_join_user_product(db: Session):
         ]
 
         return formatted_orders
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+        return None
+
+
+def get_order_count(db: Session):
+    try:
+        order_count = db.query(Order.oid).count()
+        return order_count
     except SQLAlchemyError as e:
         print(f"Error: {e}")
         return None

@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Container } from 'react-bootstrap';
 import Product_Grid from './product_components/Product_Grid';
 import Product_Menu from './product_components/Product_Menu';
-import Pagination_Component from './Pagination_Component';
+import PaginationComponent from './Pagination_Component';
 import Footer from './Footer';
 import Navbar from './Navbar';
 import config from '../config';
@@ -74,11 +74,12 @@ const HomePageClient = () => {
                 <Product_Menu productTags={productTags} onTagSelect={getProductList} />
                 {/* Product Grid */}
                 <Product_Grid initialProducts={paginatedProducts} />
-                <Pagination_Component
+                <PaginationComponent
                     totalProducts={totalProducts}
                     productsPerPage={productsPerPage}
                     currentPage={currentPage}
                     onPageChange={handlePageChange}
+                    type={""}
                 />
             </Container>
             <Footer />

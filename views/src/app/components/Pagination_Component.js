@@ -4,14 +4,15 @@ import React from 'react';
 import { Pagination } from 'react-bootstrap';
 import { useRouter } from 'next/navigation';
 
-export default function Pagination_Component({ totalProducts, productsPerPage, currentPage, onPageChange }) {
+export default function PaginationComponent({ totalProducts, productsPerPage, currentPage, onPageChange, type }) {
   const router = useRouter();
   const totalPages = Math.ceil(totalProducts / productsPerPage);
 
   // 處理分頁跳轉
   const handlePageClick = (page) => {
     onPageChange(page); // 回傳父組件
-    router.push(`/?page=${page}`); // 更新網址參數
+    if(type !== "backstage")
+      router.push(`/?page=${page}`); // 更新網址參數
   };
 
   // 動態生成頁碼

@@ -9,24 +9,67 @@ import Sidebar from "./Sidebar";
 import config from "../../config";
 
 import { useSelector, useDispatch } from 'react-redux';
-
 import { createLogisticCheckMacValue } from "../../components/Tools";
-
 import { showToast } from "@/app/redux/slices/toastSlice";
+import PaginationComponent from "../../components/Pagination_Component"
 
 export default function OrderManagement() {
   const endpoint = config.apiBaseUrl;
-
   // 從 Redux 中取出會員資訊
   const { token } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filter, setFilter] = useState("all");
+
+  // 訂單相關狀態
   const [orders, setOrders] = useState([]);
   const [expandedRows, setExpandedRows] = useState([]); // 存儲展開的訂單編號
   const [loading, setLoading] = useState(true);
 
-  const dispatch = useDispatch();
+  // 分頁相關狀態
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const ordersPerPage = 20; // 每頁顯示 20 筆訂單
+
+
+  useEffect(() => {
+    fetchTotalOrders(); // 先獲取總數量，計算總頁數
+  }, []);
+
+  useEffect(() => {
+    fetchOrders(currentPage); // 根據當前頁數請求訂單數據
+  }, [currentPage]);
+
+  // 獲取訂單總數
+  const fetchTotalOrders = async () => {
+    try {
+      const response = await axios.get(`${endpoint}/backstage/v1/order_count`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTotalOrders(response.data); // 設定總訂單數量
+    } catch (error) {
+      console.error("無法獲取訂單總數:", error);
+    }
+  };
+
+  // 拉取所有訂單
+  const fetchOrders = async (page) => {
+    setLoading(true);
+    const offset = (page - 1) * ordersPerPage;
+    try {
+      const response = await axios.get(`${endpoint}/backstage/v1/orders/${offset}/${ordersPerPage}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setOrders(response.data);
+    } catch (error) {
+      console.error("無法拉取訂單資料：", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 控制彈出視窗顯示
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -48,26 +91,7 @@ export default function OrderManagement() {
     totalAmount: 0,
   });
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
 
-  // 拉取所有訂單
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(`${endpoint}/backstage/v1/orders`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setOrders(response.data);
-    } catch (error) {
-      console.error("無法拉取訂單資料：", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // 切換展開行
   const toggleRow = (oid) => {
@@ -412,6 +436,14 @@ export default function OrderManagement() {
               </tbody>
             </Table>
           )}
+          {/* 分頁組件 */}
+          <PaginationComponent
+            totalProducts={totalOrders} // 這裡是總訂單數
+            productsPerPage={ordersPerPage} // 每頁 20 筆
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+            type={"backstage"}
+          />
         </Col>
       </Row>
 
