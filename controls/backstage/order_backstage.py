@@ -119,6 +119,25 @@ async def update_order(
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):  
+    # 處理訂單返饋善泰幣
+    change_status = False
+    old_order = order_db.get_order_by_oid(db, oid=oid)
+    if old_order["status"] != order.status and order.status == "已完成":
+        change_status = True
+
+        # 構建要更新的資料
+    update_data = order.dict(exclude_unset=True)  # 排除未設置的字段
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    updated_order = order_db.update_order(db, oid=oid, updates=update_data)
+    if not updated_order:
+        raise HTTPException(status_code=404, detail="Order not found")
+        # 處理訂單返饋善泰幣
+    if change_status:
+        asyncio.create_task(order_back_shan_thai_token(db, updated_order.uid, updated_order.useDiscount, updated_order.discountPrice, updated_order.totalAmount))
+    return updated_order
+    
     try:
         # 確認是否是管理員
         adminAutorizationCheck(token_data.get("isAdmin"))
