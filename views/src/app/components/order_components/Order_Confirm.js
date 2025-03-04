@@ -50,15 +50,6 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             const resolvedProducts = await Promise.all(productPromises);
             setCartProduct(resolvedProducts);
 
-            // 檢視商品是否需要出貨
-            for (let i = 0; i < resolvedProducts.length; i++) {
-                if (resolvedProducts[i].isDelivery) {
-                    setProductIsDelivery(true)
-                } else {
-                    setProductNotDelivery(true)
-                }
-            }
-
         } catch (err) {
             console.error("產品 Mapping 失敗：", err);
         }
@@ -84,6 +75,17 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
         }
         getShanThaiTokenBalance();
     }, [cart, userInfo]);
+
+    useEffect(() => {
+        if (cartProduct.length > 0) {
+            // 檢視商品是否需要出貨
+            const hasDeliveryProduct = cartProduct.some(item => item.isDelivery);
+            const hasNonDeliveryProduct = cartProduct.some(item => !item.isDelivery);
+
+            setProductIsDelivery(hasDeliveryProduct);
+            setProductNotDelivery(hasNonDeliveryProduct);
+        }
+    }, [cartProduct]);
 
     //處理路徑變數資料
     useEffect(() => {
@@ -113,7 +115,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
         } else if (transportationMethod === "delivery" && address.length <= 6) {
             handleError("請填寫正確的地址欄位！");
             return;
-        } else if (recipientName.length <= 5 && recipientName >= 2) {
+        } else if (recipientName.length <= 5 && recipientName.length >= 2) {
             handleError("請填寫正確的姓名！");
             return;
         } else if (transportationMethod === "delivery") {
@@ -151,10 +153,10 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             if (transportationMethod === "delivery")
                 postAddress = address
             else postAddress = storeId
-            
+
             // 處理是否需要出貨
             let transport = "";
-            if(productIsDelivery)
+            if (productIsDelivery)
                 transport = transportationMethod;
             else transport = "no"
 
@@ -310,12 +312,13 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
 
     // 處理善泰幣的輸入
     const checkShanThaiToken = (e) => {
-        const value = parseInt(e.target.value, 10); // 將輸入值轉為整數
-        if (value >= 0 && value <= shanThaiToken && value < cartProduct.reduce((total, item) => total + item.price * item.quantity, 0) - 19) {
-            setUseShanThaiToken(value);
-        } else if (!value) {
-            setUseShanThaiToken(0);
-        }
+        const value = parseInt(e.target.value, 10) || 0; // 將輸入值轉為整數
+        setUseShanThaiToken(prev => {
+            if (value >= 0 && value <= shanThaiToken && value < cartProduct.reduce((total, item) => total + item.price * item.quantity, 0) - 19) {
+                return value;
+            }
+            return prev; // 避免不必要的 re-render
+        });
     }
 
     // 控制彈出視窗訊息區
@@ -437,7 +440,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                                 />
                             </Form.Group>
                         </>
-                        : setTransportationMethod("no")}
+                        : ""}
 
 
                     <Form.Group controlId="formPaymentMethod" className="mb-3">
