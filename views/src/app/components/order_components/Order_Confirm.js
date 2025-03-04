@@ -151,6 +151,12 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             if (transportationMethod === "delivery")
                 postAddress = address
             else postAddress = storeId
+            
+            // 處理是否需要出貨
+            let transport = "";
+            if(productIsDelivery)
+                transport = transportationMethod;
+            else transport = "no"
 
 
             // 組合訂單資料
@@ -162,7 +168,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                 recipientName: recipientName,
                 recipientPhone: recipientPhone,
                 recipientEmail: recipientEmail,
-                transportationMethod: transportationMethod,
+                transportationMethod: transport,
                 paymentMethod: paymentMethod, // 付款方式
                 shanThaiToken: useShanThaiToken,
                 orderNote: "",
@@ -431,7 +437,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                                 />
                             </Form.Group>
                         </>
-                        : ""}
+                        : setTransportationMethod("no")}
 
 
                     <Form.Group controlId="formPaymentMethod" className="mb-3">
