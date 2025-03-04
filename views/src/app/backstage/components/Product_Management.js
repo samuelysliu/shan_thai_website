@@ -32,10 +32,10 @@ export default function ProductManagement() {
         ptid: null,
         title_cn: "",
         content_cn: "",
-        price: "",
-        remain: "",
+        price: 0,
+        remain: 0,
         productTag: "",
-        isDelivery: null,
+        isDelivery: false,
         productImageFiles: [],
         productImageUrl: [],
     });
@@ -501,7 +501,7 @@ export default function ProductManagement() {
                             <Form.Label>價格</Form.Label>
                             <Form.Control
                                 type="number"
-                                value={currentProduct.price}
+                                value={currentProduct.price || 0}
                                 name="price"
                                 onChange={(e) =>
                                     setCurrentProduct({ ...currentProduct, price: e.target.value })
@@ -512,7 +512,7 @@ export default function ProductManagement() {
                             <Form.Label>剩餘數量</Form.Label>
                             <Form.Control
                                 type="number"
-                                value={currentProduct.remain}
+                                value={currentProduct.remain || 0}
                                 name="remain"
                                 onChange={(e) =>
                                     setCurrentProduct({ ...currentProduct, remain: e.target.value })
@@ -537,7 +537,7 @@ export default function ProductManagement() {
                             <Form.Check
                                 type="checkbox"
                                 label="是"
-                                checked={currentProduct.isDelivery}
+                                checked={Boolean(currentProduct.isDelivery)}
                                 onChange={(e) =>
                                     setCurrentProduct({ ...currentProduct, isDelivery: e.target.checked })
                                 }>
