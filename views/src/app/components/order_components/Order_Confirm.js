@@ -29,6 +29,11 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const endpoint = config.apiBaseUrl;
 
+    // 設定此次購買商品清單中，是否有需要寄送的商品，控制出貨方式
+    const [productIsDelivery, setProductIsDelivery] = useState(false);
+    // 設定是否有不需要寄送的商品，控制付款方式
+    const [productNotDelivery, setProductNotDelivery] = useState(false)
+
     const dispatch = useDispatch();
 
     // 同步購物車與商品詳細資料
@@ -44,6 +49,16 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
 
             const resolvedProducts = await Promise.all(productPromises);
             setCartProduct(resolvedProducts);
+
+            // 檢視商品是否需要出貨
+            for (let i = 0; i < resolvedProducts.length; i++) {
+                if (resolvedProducts[i].isDelivery) {
+                    setProductIsDelivery(true)
+                } else {
+                    setProductNotDelivery(true)
+                }
+            }
+
         } catch (err) {
             console.error("產品 Mapping 失敗：", err);
         }
@@ -334,7 +349,11 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                                     height="100"
                                 />
                             </td>
-                            <td>{item.title_cn}</td>
+                            <td>
+                                {item.title_cn}
+                                <br></br>
+                                {item.isDelivery ? "" : <p style={{ color: "red" }}>非實體商品，不會出貨</p>}
+                            </td>
                             <td>NT. {item.price}</td>
                             <td>{item.quantity}</td>
                             <td>NT. {item.price * item.quantity}</td>
@@ -374,42 +393,46 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                             onChange={(e) => setRecipientEmail(e.target.value)}
                         />
                     </Form.Group>
+                    {productIsDelivery ?
+                        <>
+                            <Form.Group controlId="formTransportationMethod" className="mb-3">
+                                <Form.Label>寄送方式</Form.Label>
+                                <Form.Select
+                                    value={transportationMethod}
+                                    onChange={(e) => transportationLogic(e.target.value)}
+                                >
+                                    <option value="delivery">宅配(中華郵政)</option>
+                                    <option value="seven">Seven 自取</option>
+                                    <option value="family">Family 自取</option>
+                                </Form.Select>
+                            </Form.Group>
 
-                    <Form.Group controlId="formTransportationMethod" className="mb-3">
-                        <Form.Label>寄送方式</Form.Label>
-                        <Form.Select
-                            value={transportationMethod}
-                            onChange={(e) => transportationLogic(e.target.value)}
-                        >
-                            <option value="delivery">宅配(中華郵政)</option>
-                            <option value="seven">Seven 自取</option>
-                            <option value="family">Family 自取</option>
-                        </Form.Select>
-                    </Form.Group>
+                            {transportationMethod === "delivery" ?
+                                <Form.Group controlId="formZipCode" className="mb-3">
+                                    <Form.Label>郵遞區號</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        placeholder="請輸入郵遞區號3碼"
+                                        value={zipCode}
+                                        onChange={(e) => setZipCode(e.target.value)}
+                                        disabled={transportationMethod !== "delivery"}
+                                    />
+                                </Form.Group>
+                                : ""}
 
-                    {transportationMethod === "delivery" ?
-                        <Form.Group controlId="formZipCode" className="mb-3">
-                            <Form.Label>郵遞區號</Form.Label>
-                            <Form.Control
-                                type="text"
-                                placeholder="請輸入郵遞區號3碼"
-                                value={zipCode}
-                                onChange={(e) => setZipCode(e.target.value)}
-                                disabled={transportationMethod !== "delivery"}
-                            />
-                        </Form.Group>
+                            <Form.Group controlId="formAddress" className="mb-3">
+                                <Form.Label>{transportationMethod === "delivery" ? "送貨地址" : "超商門市"}</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="請輸入完整送貨地址"
+                                    value={address || ""}
+                                    onChange={(e) => setAddress(e.target.value)}
+                                    disabled={transportationMethod !== "delivery"}
+                                />
+                            </Form.Group>
+                        </>
                         : ""}
 
-                    <Form.Group controlId="formAddress" className="mb-3">
-                        <Form.Label>{transportationMethod === "delivery" ? "送貨地址" : "超商門市"}</Form.Label>
-                        <Form.Control
-                            type="text"
-                            placeholder="請輸入完整送貨地址"
-                            value={address || ""}
-                            onChange={(e) => setAddress(e.target.value)}
-                            disabled={transportationMethod !== "delivery"}
-                        />
-                    </Form.Group>
 
                     <Form.Group controlId="formPaymentMethod" className="mb-3">
                         <Form.Label>付款方式</Form.Label>
@@ -420,7 +443,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                             <option value="匯款">匯款</option>
                             <option value="信用卡">信用卡</option>
                             {
-                                (transportationMethod !== "delivery" && calculateTotal() <= 20000)
+                                (transportationMethod !== "delivery" && calculateTotal() <= 20000 && !productNotDelivery)
                                     ? <option value="貨到付款">貨到付款</option>
                                     : ""
                             }

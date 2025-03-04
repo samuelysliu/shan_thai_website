@@ -35,6 +35,7 @@ export default function ProductManagement() {
         price: "",
         remain: "",
         productTag: "",
+        isDelivery: null,
         productImageFiles: [],
         productImageUrl: [],
     });
@@ -73,6 +74,7 @@ export default function ProductManagement() {
             formData.append("price", currentProduct.price);
             formData.append("remain", currentProduct.remain)
             formData.append("ptid", currentProduct.ptid)
+            formData.append("isDelivery", currentProduct.isDelivery)
 
             if (currentProduct.productImageFiles?.length > 0) {
                 currentProduct.productImageFiles.forEach((file) => {
@@ -107,8 +109,10 @@ export default function ProductManagement() {
         if (currentProduct.content_cn) formData.append("content_cn", currentProduct.content_cn);
         if (currentProduct.price) formData.append("price", currentProduct.price);
         if (currentProduct.remain) formData.append("remain", currentProduct.remain);
-        if (currentProduct.productTag) formData.append("ptid", currentProduct.ptid)
+        if (currentProduct.productTag) formData.append("ptid", currentProduct.ptid);
+        if (currentProduct.isDelivery !== null) formData.append("isDelivery", currentProduct.isDelivery);
 
+        console.log(formData)
         // 判斷是否需要上傳圖片
         if (currentProduct.productImageFiles?.length > 0) {
             currentProduct.productImageFiles.forEach((file) => {
@@ -311,7 +315,7 @@ export default function ProductManagement() {
                 console.error("無法刪除該標籤：", error);
                 handleError("刪除標籤失敗");
             }
-            
+
         }
 
     }
@@ -526,6 +530,18 @@ export default function ProductManagement() {
                                 ))}
                                 <option value="add_new_tag">+ 新增標籤</option> {/* 新增標籤選項 */}
                             </Form.Select>
+                        </Form.Group>
+
+                        <Form.Group className="mb-3">
+                            <Form.Label>是否有實體貨物</Form.Label>
+                            <Form.Check
+                                type="checkbox"
+                                label="是"
+                                checked={currentProduct.isDelivery}
+                                onChange={(e) =>
+                                    setCurrentProduct({ ...currentProduct, isDelivery: e.target.checked })
+                                }>
+                            </Form.Check>
                         </Form.Group>
 
                         <Form.Group className="mb-3">

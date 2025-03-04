@@ -77,7 +77,8 @@ async def update_partial_product(
     price: int = Form(None),
     remain: int = Form(None),
     ptid: int = Form(None),
-    files: List[UploadFile] = File(None), 
+    files: List[UploadFile] = File(None),
+    isDelivery: bool = Form(None), 
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
@@ -96,6 +97,9 @@ async def update_partial_product(
         update_data["remain"] = remain
     if ptid is not None:
         update_data["ptid"] = ptid
+    if isDelivery is not None:
+        update_data["isDelivery"] = isDelivery
+    print(update_data)
 
     if files:
         update_data["productImages"] = handleImageUpload(files)
@@ -119,6 +123,7 @@ async def create_product(
     remain: int = Form(...),
     ptid: int = Form(...),
     files: List[UploadFile] = File(...),
+    isDelivery: bool = Form(...),
     token_data: dict = Depends(verify_token),
     db: Session = Depends(get_db),
 ):
@@ -138,6 +143,7 @@ async def create_product(
         remain,
         ptid,
         images=image_urls,
+        isDelivery=isDelivery
     )
     if not created_product:
         print("System Log: product_backstage API create_product function database query failed")
@@ -186,6 +192,7 @@ async def get_product_list(token_data: dict = Depends(verify_token), db: Session
             "remain": product["remain"],
             "price": product["price"],
             "specialPrice": product["specialPrice"],
+            "isDelivery": product["isDelivery"]
         }
         for product in products
     ]

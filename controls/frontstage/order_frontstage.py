@@ -22,7 +22,7 @@ from controls.tools import (
     generate_verification_code,
     send_email,
 )
-from controls.order import cancel_order
+from controls.order import cancel_order, order_back_shan_thai_token
 
 from datetime import datetime
 import re
@@ -32,6 +32,7 @@ import json
 
 import os
 from dotenv import load_dotenv
+import asyncio
 
 load_dotenv()
 
@@ -372,66 +373,71 @@ async def received_cash_flow_response(
         if (
             PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM")
         ) and RtnCode == 1:
-            update_data = {"status": "待出貨"}
-
+            
             # 建立物流單
             order = order_db.get_order_by_oid(db=db, oid=MerchantTradeNo)
-
-            # 根據訂單是否有折扣，決定用原價還是特價
-            if order["useDiscount"]:
-                order_amount = order["discountPrice"]
+            
+            # 判斷是否需要出貨
+            if order["transportationMethod"] == "no":
+                update_data = {"status": "已完成"}
             else:
-                order_amount = order["totalAmount"]
+                update_data = {"status": "待出貨"}
 
-            if (
-                order["transportationMethod"] == "seven"
-                or order["transportationMethod"] == "family"
-            ):
-                result = create_store_logistic_order(
-                    oid=MerchantTradeNo,
-                    trade_date=TradeDate,
-                    store_type=order["transportationMethod"],
-                    order_amount=order_amount,
-                    isCollection="N",
-                    product="善泰團隊聖物",
-                    user_name=order["recipientName"],
-                    user_phone=order["recipientPhone"],
-                    user_email=order["recipientEmail"],
-                    store_id=order["address"],
-                )
-            else:
-                if order.get("productWeight") == None:
-                    product_weight = 5
+                # 根據訂單是否有折扣，決定用原價還是特價
+                if order["useDiscount"]:
+                    order_amount = order["discountPrice"]
                 else:
-                    product_weight = order["productWeight"]
+                    order_amount = order["totalAmount"]
 
-                if order.get("zipCode") == None:
-                    zip_code = "0"
+                if (
+                    order["transportationMethod"] == "seven"
+                    or order["transportationMethod"] == "family"
+                ):
+                    result = create_store_logistic_order(
+                        oid=MerchantTradeNo,
+                        trade_date=TradeDate,
+                        store_type=order["transportationMethod"],
+                        order_amount=order_amount,
+                        isCollection="N",
+                        product="善泰團隊聖物",
+                        user_name=order["recipientName"],
+                        user_phone=order["recipientPhone"],
+                        user_email=order["recipientEmail"],
+                        store_id=order["address"],
+                    )
                 else:
-                    zip_code = order["zipCode"]
+                    if order.get("productWeight") == None:
+                        product_weight = 5
+                    else:
+                        product_weight = order["productWeight"]
 
-                result = create_home_logistic_order(
-                    oid=MerchantTradeNo,
-                    trade_date=TradeDate,
-                    order_amount=order_amount,
-                    product="善泰團隊聖物",
-                    product_weight=product_weight,
-                    user_name=order["recipientName"],
-                    user_phone=order["recipientPhone"],
-                    zip_code=zip_code,
-                    address=order["address"],
-                    user_email=order["recipientEmail"],
-                )
+                    if order.get("zipCode") == None:
+                        zip_code = "0"
+                    else:
+                        zip_code = order["zipCode"]
 
-            if result["detail"] == "failed":
-                reason = result["reason"]
-                if reason.__contains__("重覆"):
-                    return "1|OK"
-                send_email(
-                    "shanthaiteam@gmail.com",
-                    f"物流單{MerchantTradeNo}建立失敗，請手動建立",
-                    f"<p>{reason}</p>",
-                )
+                    result = create_home_logistic_order(
+                        oid=MerchantTradeNo,
+                        trade_date=TradeDate,
+                        order_amount=order_amount,
+                        product="善泰團隊聖物",
+                        product_weight=product_weight,
+                        user_name=order["recipientName"],
+                        user_phone=order["recipientPhone"],
+                        zip_code=zip_code,
+                        address=order["address"],
+                        user_email=order["recipientEmail"],
+                    )
+
+                if result["detail"] == "failed":
+                    reason = result["reason"]
+                    if reason.__contains__("重覆"):
+                        return "1|OK"
+                    send_email(
+                        "shanthaiteam@gmail.com",
+                        f"物流單{MerchantTradeNo}建立失敗，請手動建立",
+                        f"<p>{reason}</p>",
+                    )
 
             updated_order = order_db.update_order(
                 db, oid=MerchantTradeNo, updates=update_data
@@ -443,6 +449,9 @@ async def received_cash_flow_response(
                     f"更新訂單{MerchantTradeNo}失敗，請手動更新",
                     f"<p>應該更改訂單變成{update_data}，但是失敗，請手動更新</p>",
                 )
+            if order["transportationMethod"] == "no":
+                asyncio.create_task(order_back_shan_thai_token(db, updated_order.uid, updated_order.useDiscount, updated_order.discountPrice, updated_order.totalAmount))
+            
 
         else:  # 如果訂單被取消，要恢復庫存
             response = await cancel_order(oid=MerchantTradeNo, db=db)

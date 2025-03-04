@@ -55,6 +55,7 @@ def get_product_join_tag(db: Session):
                 "sold": product.sold,
                 "productImageUrl": [image.image_url for image in product.images],
                 "launch": product.launch,
+                "isDelivery": product.isDelivery,
                 "created_at": product.created_at,
                 "updated_at": product.updated_at,
             }
@@ -108,6 +109,7 @@ async def get_product_by_id(db: Session, pid: int):
                 image.image_url for image in product.images
             ],  # 獲取所有圖片 URL
             "launch": product.launch,
+            "isDelivery": product.isDelivery,
             "created_at": product.created_at,
             "updated_at": product.updated_at,
         }
@@ -156,6 +158,7 @@ async def create_product(
     remain: int,
     ptid: int,
     images: List[str],
+    isDelivery: bool
 ):
     try:
         new_product = ProductModel(
@@ -164,6 +167,7 @@ async def create_product(
             price=price,
             remain=remain,
             ptid=ptid,
+            isDelivery=isDelivery,
         )
         db.add(new_product)
         db.commit()
@@ -238,6 +242,7 @@ async def update_partial_product(db: Session, product_id: int, update_data: dict
             "sold": updated_product.sold,
             "productImageUrl": [image.image_url for image in product.images],
             "launch": updated_product.launch,
+            "isDelivery": updated_product.isDelivery,
             "created_at": updated_product.created_at,
             "updated_at": updated_product.updated_at,
         }

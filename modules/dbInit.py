@@ -83,6 +83,7 @@ class Product(Base):
     remain = Column(Integer, default=0)
     sold = Column(Integer, default=0)
     productImageUrl = Column(String)
+    isDelivery = Column(Boolean, default=True)
     launch = Column(Boolean, default=True)
     isDelete = Column(Boolean, default=False)
     created_at = Column(DateTime, default=func.now(), onupdate=func.now())
