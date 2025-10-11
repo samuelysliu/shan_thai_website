@@ -49,7 +49,6 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
 
             const resolvedProducts = await Promise.all(productPromises);
             setCartProduct(resolvedProducts);
-
         } catch (err) {
             console.error("產品 Mapping 失敗：", err);
         }
@@ -85,6 +84,22 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             setProductIsDelivery(hasDeliveryProduct);
             setProductNotDelivery(hasNonDeliveryProduct);
         }
+
+        // 處理GA結帳埋點
+        if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'begin_checkout', {
+                currency: 'TWD',
+                value: totalAmount,
+                items: cartProduct.map(item => ({
+                    item_id: item.pid,
+                    item_name: item.title_cn,
+                    subtotal: item.quantity * item.price,
+                    price: item.price,
+                    quantity: item.quantity,
+                })),
+            });
+        }
+
     }, [cartProduct]);
 
     //處理路徑變數資料
@@ -193,6 +208,23 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             if (response.data.useDiscount) {
                 orderAmount = response.data.discountPrice;
             }
+            
+            // 處理結帳GA埋點
+            window.gtag('event', 'purchase', {
+                transaction_id: response.data.oid, // 後端生成的訂單編號
+                affiliation: '善泰團隊購物網站',
+                value: response.data.totalAmount,
+                currency: 'TWD',
+                coupon: response.data.useDiscount ? orderAmount : 0,
+                items: cartProduct.map(item => ({
+                    item_id: item.pid,
+                    item_name: item.title_cn,
+                    subtotal: item.quantity * item.price,
+                    price: item.price,
+                    quantity: item.quantity,
+                })),
+            });
+
 
             if (paymentMethod === "匯款") {
                 createCashFlowOrder("ATM", response.data.oid, formatedCreatedAt, orderAmount);

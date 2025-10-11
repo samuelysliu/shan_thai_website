@@ -13,7 +13,7 @@ const Cart = () => {
   const router = useRouter();
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart.items); // 從 Redux 獲取購物車商品
-  const { token } = useSelector((state) => state.user); // 獲取登入Token
+  const { userInfo, token } = useSelector((state) => state.user); // 獲取登入Token
   const [cartProduct, setCartProduct] = useState([]);
   const endpoint = config.apiBaseUrl;
 
@@ -88,6 +88,24 @@ const Cart = () => {
     } catch (err) {
       console.error("移除購物車失敗：", err);
     }
+
+    // GA 紀錄
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', 'remove_from_cart', {
+        currency: 'TWD',
+        value: product.price,
+        items: [
+          {
+            item_id: product.pid,
+            item_name: product.title_cn,
+            price: product.price,
+            quantity: 1,
+            user_id: userInfo.uid
+          },
+        ],
+      });
+    }
+
   };
 
   // 計算總額

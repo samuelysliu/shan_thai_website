@@ -64,6 +64,24 @@ const Product_Detail = ({ pid }) => {
       // 更新 Redux 中的購物車
       dispatch(addToCart(cartObject));
       handleSuccess("加入成功！");
+
+      // GA 紀錄
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'add_to_cart', {
+          currency: 'TWD',
+          value: product.price,
+          items: [
+            {
+              item_id: product.pid,
+              item_name: product.title_cn,
+              price: product.price,
+              quantity: 1,
+              user_id: userInfo.uid
+            },
+          ],
+        });
+      }
+
       return true;
     } catch (error) {
       console.error("無法將商品加入購物車：", error);
@@ -106,6 +124,23 @@ const Product_Detail = ({ pid }) => {
   useEffect(() => {
     fetchProductDetail();
   }, [pid])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.gtag && product.pid !== 0) {
+      window.gtag('event', 'view_item', {
+        currency: 'TWD',
+        value: product.price,
+        items: [
+          {
+            item_id: product.pid,
+            item_name: product.title_cn,
+            price: product.price,
+            quantity: 1,
+          },
+        ],
+      });
+    }
+  }, [product])
 
   if (loading) {
     return (
