@@ -86,19 +86,25 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
         }
 
         // 處理GA結帳埋點
-        if (typeof window !== 'undefined' && window.gtag) {
-            window.gtag('event', 'begin_checkout', {
-                currency: 'TWD',
-                value: totalAmount,
-                items: cartProduct.map(item => ({
-                    item_id: item.pid,
-                    item_name: item.title_cn,
-                    subtotal: item.quantity * item.price,
-                    price: item.price,
-                    quantity: item.quantity,
-                })),
-            });
+        try {
+            if (typeof window !== 'undefined' && window.gtag) {
+                const totalAmount = calculateTotal();
+                window.gtag('event', 'begin_checkout', {
+                    currency: 'TWD',
+                    value: totalAmount,
+                    items: cartProduct.map(item => ({
+                        item_id: item.pid,
+                        item_name: item.title_cn,
+                        subtotal: item.quantity * item.price,
+                        price: item.price,
+                        quantity: item.quantity,
+                    })),
+                });
+            }
+        } catch (error) {
+            console.error(error);
         }
+
 
     }, [cartProduct]);
 
@@ -208,7 +214,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             if (response.data.useDiscount) {
                 orderAmount = response.data.discountPrice;
             }
-            
+
             // 處理結帳GA埋點
             window.gtag('event', 'purchase', {
                 transaction_id: response.data.oid, // 後端生成的訂單編號
