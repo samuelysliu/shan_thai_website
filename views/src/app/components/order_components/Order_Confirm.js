@@ -180,9 +180,17 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             const totalAmount = orderDetails.reduce((sum, item) => sum + item.subtotal, 0);
 
             let postAddress = ""
-            if (transportationMethod === "delivery")
-                postAddress = address
-            else postAddress = storeId
+            let finalTransportationMethod = transportationMethod;
+            
+            // 如果沒有需要出貨的商品，設置為"非實體商品"
+            if (!productIsDelivery) {
+                finalTransportationMethod = "非實體商品";
+                postAddress = "";
+            } else {
+                if (transportationMethod === "delivery")
+                    postAddress = address
+                else postAddress = storeId
+            }
 
             // 組合訂單資料
             const orderData = {
@@ -193,7 +201,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                 recipientName: recipientName,
                 recipientPhone: recipientPhone,
                 recipientEmail: recipientEmail,
-                transportationMethod: transportationMethod,
+                transportationMethod: finalTransportationMethod,
                 paymentMethod: paymentMethod, // 付款方式
                 shanThaiToken: useShanThaiToken,
                 orderNote: "",

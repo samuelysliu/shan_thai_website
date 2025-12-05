@@ -410,7 +410,7 @@ async def received_cash_flow_response(
         ) and RtnCode == 1:
             
             # 判斷是否需要出貨
-            if order["transportationMethod"] == "no":
+            if order["transportationMethod"] == "非實體商品":
                 update_data = {"status": "已完成"}
             else:
                 update_data = {"status": "待出貨"}
@@ -481,7 +481,7 @@ async def received_cash_flow_response(
                     f"更新訂單{MerchantTradeNo}失敗，請手動更新",
                     f"<p>應該更改訂單變成{update_data}，但是失敗，請手動更新</p>",
                 )
-            if order["transportationMethod"] == "no":
+            if order["transportationMethod"] == "非實體商品":
                 asyncio.create_task(order_back_shan_thai_token(db, updated_order.uid, updated_order.useDiscount, updated_order.discountPrice, updated_order.totalAmount))
             
 
