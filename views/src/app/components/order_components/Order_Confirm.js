@@ -129,17 +129,26 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
 
     // 提交訂單
     const handleSubmitOrder = async () => {
-        if (!recipientName || !recipientPhone || !recipientEmail
-            || !address || address === "等待選擇中...") {
+        if (!recipientName || !recipientPhone || !recipientEmail) {
             handleError("請完整填寫所有必填欄位！");
             return;
-        } else if (transportationMethod === "delivery" && address.length <= 6) {
-            handleError("請填寫正確的地址欄位！");
-            return;
-        } else if (recipientName.length > 5 && recipientName.length < 2) {
+        }
+        
+        // 只在有需要出貨的商品時才檢查地址
+        if (productIsDelivery) {
+            if (!address || address === "等待選擇中...") {
+                handleError("請完整填寫所有必填欄位！");
+                return;
+            } else if (transportationMethod === "delivery" && address.length <= 6) {
+                handleError("請填寫正確的地址欄位！");
+                return;
+            }
+        }
+        
+        if (recipientName.length > 5 && recipientName.length < 2) {
             handleError("請填寫正確的姓名！");
             return;
-        } else if (transportationMethod === "delivery") {
+        } else if (productIsDelivery && transportationMethod === "delivery") {
             setIsSubmitting(true);
             try {
                 const response = await axios.get(`${endpoint}/frontstage/v1/address_exist/${address}`, {

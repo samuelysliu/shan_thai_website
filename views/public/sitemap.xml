@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- 首頁 -->
+  <url>
+    <loc>https://www.shan-thai-team.com</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- 關於我們 -->
+  <url>
+    <loc>https://www.shan-thai-team.com/about</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  
+  <!-- FAQ -->
+  <url>
+    <loc>https://www.shan-thai-team.com/faq</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <!-- 購物車 -->
+  <url>
+    <loc>https://www.shan-thai-team.com/product/cart</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- 注意：商品頁面應該使用 sitemap-products.xml 動態生成
+       請在您的後端定期更新 sitemap-products.xml -->
+</urlset>

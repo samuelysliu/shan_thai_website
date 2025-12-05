@@ -1,0 +1,23 @@
+# 允許所有爬蟲
+User-agent: *
+Allow: /
+Disallow: /backstage/
+Disallow: /admin/
+Disallow: /_next/
+Disallow: /.next/
+Disallow: /api/
+Disallow: /static/
+
+# 特別指令
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Sitemap 位置
+Sitemap: https://www.shan-thai-team.com/sitemap.xml
+Sitemap: https://www.shan-thai-team.com/sitemap-products.xml
+
+# 爬蟲延遲
+Crawl-delay: 1

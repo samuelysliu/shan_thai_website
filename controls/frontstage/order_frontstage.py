@@ -183,8 +183,11 @@ async def create_user_order(
 
     if order.shanThaiToken > 0:
         useDiscount = True
+        # 計算最終支付金額：總金額減去善泰幣折扣
+        final_payment_amount = max(0, total_amount - order.shanThaiToken)
     else:
         useDiscount = False
+        final_payment_amount = total_amount
 
     # 創建訂單
     new_order = order_db.create_order(
@@ -192,7 +195,7 @@ async def create_user_order(
         oid=generate_verification_code(10),
         uid=order.uid,
         totalAmount=total_amount,  # 使用後端計算的總金額
-        discountPrice=(total_amount - order.shanThaiToken),
+        discountPrice=final_payment_amount,
         useDiscount=useDiscount,
         zipCode=order.zipCode,
         address=order.address,
@@ -339,43 +342,58 @@ async def received_cash_flow_response(
         }
     )
 
-    print(create_checkMacValue(params))
-    print(params)
-
-    if CheckMacValue != create_checkMacValue(params):
-        raise HTTPException(400, "Invaild call")
-
     try:
-        create_payment_callback_record(
-            db=db,
-            MerchantID=MerchantID,
-            MerchantTradeNo=MerchantTradeNo,
-            StoreID=StoreID,
-            RtnCode=RtnCode,
-            RtnMsg=RtnMsg,
-            TradeNo=TradeNo,
-            TradeAmt=TradeAmt,
-            PaymentDate=PaymentDate,
-            PaymentType=PaymentType,
-            PaymentTypeChargeFee=PaymentTypeChargeFee,
-            PlatformID=None,
-            TradeDate=TradeDate,
-            SimulatePaid=SimulatePaid,
-            CheckMacValue=CheckMacValue,
-            BankCode=None,
-            vAccount=None,
-            ExpireDate=None,
-        )
-    except:
-        print("Failed to call create_payment_callback_record")
+        if CheckMacValue != create_checkMacValue(params):
+            raise HTTPException(400, "Invalid call")
 
-    try:
+        try:
+            create_payment_callback_record(
+                db=db,
+                MerchantID=MerchantID,
+                MerchantTradeNo=MerchantTradeNo,
+                StoreID=StoreID,
+                RtnCode=RtnCode,
+                RtnMsg=RtnMsg,
+                TradeNo=TradeNo,
+                TradeAmt=TradeAmt,
+                PaymentDate=PaymentDate,
+                PaymentType=PaymentType,
+                PaymentTypeChargeFee=PaymentTypeChargeFee,
+                PlatformID=None,
+                TradeDate=TradeDate,
+                SimulatePaid=SimulatePaid,
+                CheckMacValue=CheckMacValue,
+                BankCode=None,
+                vAccount=None,
+                ExpireDate=None,
+            )
+        except Exception as e:
+            print(f"Failed to create payment callback record: {str(e)}")
+
+        # 驗證訂單是否存在並屬於有效的訂單
+        order = order_db.get_order_by_oid(db=db, oid=MerchantTradeNo)
+        if not order:
+            print(f"Order {MerchantTradeNo} not found in database")
+            send_email(
+                "shanthaiteam@gmail.com",
+                f"支付回調異常 - 訂單不存在",
+                f"<p>接收到訂單 {MerchantTradeNo} 的支付回調，但訂單在數據庫中不存在。可能是偽造請求。</p>",
+            )
+            return "1|OK"
+
+        # 驗證訂單金額是否與回調金額一致
+        if order["totalAmount"] != TradeAmt:
+            print(f"Order amount mismatch for {MerchantTradeNo}: expected {order['totalAmount']}, got {TradeAmt}")
+            send_email(
+                "shanthaiteam@gmail.com",
+                f"支付回調異常 - 金額不符",
+                f"<p>訂單 {MerchantTradeNo} 的支付金額不匹配。數據庫金額: {order['totalAmount']}, 回調金額: {TradeAmt}。可能是偽造請求。</p>",
+            )
+            return "1|OK"
+
         if (
             PaymentType.__contains__("Credit") or PaymentType.__contains__("ATM")
         ) and RtnCode == 1:
-            
-            # 建立物流單
-            order = order_db.get_order_by_oid(db=db, oid=MerchantTradeNo)
             
             # 判斷是否需要出貨
             if order["transportationMethod"] == "no":
@@ -468,8 +486,22 @@ async def received_cash_flow_response(
                 )
 
         return "1|OK"
+    except HTTPException as he:
+        # 捕捉簽名驗證失敗等異常
+        print(f"HTTP Exception in payment callback: {str(he)}")
+        send_email(
+            "shanthaiteam@gmail.com",
+            f"支付回調驗證失敗",
+            f"<p>訂單 {MerchantTradeNo} 的支付回調驗證失敗。</p>",
+        )
+        return "1|OK"
     except Exception as e:
         print(f"Function received_cash_flow_response 出現意外錯誤：{str(e)}")
+        send_email(
+            "shanthaiteam@gmail.com",
+            f"支付回調處理異常",
+            f"<p>訂單 {MerchantTradeNo} 的支付回調處理出現異常：{str(e)}</p>",
+        )
         return "1|OK"
 
 

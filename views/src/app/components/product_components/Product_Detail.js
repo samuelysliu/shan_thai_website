@@ -161,8 +161,41 @@ const Product_Detail = ({ pid }) => {
     dispatch(showToast({ message: message, variant: "danger" }));
   };
 
+  // 生成結構化數據 (JSON-LD)
+  const structuredData = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    name: product.title_cn,
+    description: product.content_cn ? product.content_cn.replace(/<[^>]*>/g, '').substring(0, 160) : "南傳聖物",
+    image: product.productImageUrl?.[0] || "",
+    price: product.price,
+    priceCurrency: "TWD",
+    availability: product.remain > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+    inventoryLevel: product.remain,
+    brand: {
+      "@type": "Brand",
+      name: "善泰團隊"
+    },
+    offers: {
+      "@type": "Offer",
+      price: product.price,
+      priceCurrency: "TWD",
+      availability: product.remain > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      seller: {
+        "@type": "Organization",
+        name: "善泰團隊"
+      }
+    }
+  };
+
   return (
-    <Container className="my-4">
+    <>
+      {/* 添加結構化數據到頁面 */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
+      <Container className="my-4">
       <Col xs={12}>
         <Button variant="link" onClick={() => router.back()}>
           <FaArrowLeft /> 返回
@@ -223,7 +256,8 @@ const Product_Detail = ({ pid }) => {
           <div dangerouslySetInnerHTML={{ __html: product.content_cn }}></div>
         </Col>
       </Row>
-    </Container>
+      </Container>
+    </>
   );
 }
 

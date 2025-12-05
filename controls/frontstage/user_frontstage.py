@@ -480,13 +480,25 @@ async def login_user(user: UserLogin, db: Session = Depends(get_db)):
     # 檢查用戶是否存在
     existing_user = user_db.get_user_by_email(db, user.email)
     if not existing_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     # 檢查密碼
-    if not checkpw(
-        user.password.encode("utf-8"), existing_user.password.encode("utf-8")
-    ):
-        raise HTTPException(status_code=401, detail="Incorrect password")
+    try:
+        # 將存儲在數據庫中的hash字符串轉換為bytes
+        if isinstance(existing_user.password, str):
+            hashed_password_bytes = existing_user.password.encode("utf-8")
+        else:
+            hashed_password_bytes = existing_user.password
+        
+        # 使用 checkpw 驗證：明文密碼 vs 數據庫中的hash
+        if not checkpw(user.password.encode("utf-8"), hashed_password_bytes):
+            raise HTTPException(status_code=401, detail="Invalid password")
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Password verification error: {str(e)}")
+        # 出於安全考慮，不要洩露具體錯誤信息
+        raise HTTPException(status_code=401, detail="Invalid email or password")
 
     response = login_function(existing_user, db)
 

@@ -2,6 +2,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 import modules.product_crud as product_db
 import modules.dbConnect as db_connect
+from fastapi.responses import Response
+from datetime import datetime
 router = APIRouter()
 get_db = db_connect.get_db
 from cachetools import TTLCache, cached
@@ -137,3 +139,43 @@ async def get_product_tag(db: Session = Depends(get_db)):
         print("Product tag not found")
         return []
     return product_tags
+
+
+# 生成產品Sitemap用於SEO
+@router.get("/sitemap-products.xml")
+async def get_products_sitemap(db: Session = Depends(get_db)):
+    """
+    生成所有產品的Sitemap XML
+    用於Google Search Console爬蟲發現所有商品頁面
+    """
+    try:
+        products = product_db.get_product_launch(db)
+        
+        if not products:
+            products = []
+        
+        # 生成XML
+        sitemap_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+        sitemap_xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        
+        for product in products:
+            updated_at = product.get("updated_at", datetime.now())
+            if isinstance(updated_at, datetime):
+                updated_at_str = updated_at.strftime("%Y-%m-%d")
+            else:
+                updated_at_str = updated_at
+            
+            sitemap_xml += '  <url>\n'
+            sitemap_xml += f'    <loc>https://www.shan-thai-team.com/product/{product["pid"]}</loc>\n'
+            sitemap_xml += f'    <lastmod>{updated_at_str}</lastmod>\n'
+            sitemap_xml += '    <changefreq>weekly</changefreq>\n'
+            sitemap_xml += '    <priority>0.8</priority>\n'
+            sitemap_xml += '  </url>\n'
+        
+        sitemap_xml += '</urlset>'
+        
+        return Response(content=sitemap_xml, media_type="application/xml")
+    
+    except Exception as e:
+        print(f"Error generating product sitemap: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to generate sitemap")
