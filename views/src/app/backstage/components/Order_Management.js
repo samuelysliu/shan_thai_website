@@ -358,7 +358,9 @@ export default function OrderManagement() {
                       <td>{order.recipientName}</td>
                       <td>{
                         order.transportationMethod == "delivery" ? "宅配"
-                          : (order.transportationMethod == "seven" ? "Seven 自取" : "全家自取")
+                          : (order.transportationMethod == "seven" ? "Seven 自取"
+                            : (order.transportationMethod == "family" ? "全家自取"
+                              : (order.transportationMethod == "非實體商品" ? "非實體商品" : order.transportationMethod)))
                       }</td>
                       <td>{order.paymentMethod}</td>
                       <td>{order.status}</td>

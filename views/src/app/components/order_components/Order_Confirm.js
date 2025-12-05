@@ -78,11 +78,14 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
     useEffect(() => {
         if (cartProduct.length > 0) {
             // 檢視商品是否需要出貨
-            const hasDeliveryProduct = cartProduct.some(item => item.isDelivery);
-            const hasNonDeliveryProduct = cartProduct.some(item => !item.isDelivery);
+            const hasDeliveryProduct = cartProduct.some(item => item.isDelivery === true);
+            const hasNonDeliveryProduct = cartProduct.some(item => item.isDelivery === false);
 
             setProductIsDelivery(hasDeliveryProduct);
             setProductNotDelivery(hasNonDeliveryProduct);
+            
+            console.log("[DEBUG] cartProduct items:", cartProduct.map(item => ({pid: item.pid, isDelivery: item.isDelivery})));
+            console.log("[DEBUG] hasDeliveryProduct:", hasDeliveryProduct, "hasNonDeliveryProduct:", hasNonDeliveryProduct);
         }
 
         // 處理GA結帳埋點
@@ -129,6 +132,9 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
 
     // 提交訂單
     const handleSubmitOrder = async () => {
+        console.log("[DEBUG] productIsDelivery:", productIsDelivery);
+        console.log("[DEBUG] cartProduct:", cartProduct);
+        
         if (!recipientName || !recipientPhone || !recipientEmail) {
             handleError("請完整填寫所有必填欄位！");
             return;
@@ -182,15 +188,18 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             let postAddress = ""
             let finalTransportationMethod = transportationMethod;
             
-            // 如果沒有需要出貨的商品，設置為"非實體商品"
+            // 如果沒有需要出貨的商品，強制設置為"非實體商品"
             if (!productIsDelivery) {
                 finalTransportationMethod = "非實體商品";
                 postAddress = "";
+                console.log("[DEBUG] All products are non-delivery, setting transportationMethod to 非實體商品");
             } else {
                 if (transportationMethod === "delivery")
                     postAddress = address
                 else postAddress = storeId
             }
+
+            console.log("[DEBUG] Final transportationMethod:", finalTransportationMethod);
 
             // 組合訂單資料
             const orderData = {

@@ -111,6 +111,8 @@ async def create_user_order(
 
     total_amount = 0  # 初始化總金額
     order_details = []  # 儲存處理後的訂單明細
+    
+    print(f"[DEBUG] Received transportationMethod: {order.transportationMethod}")
 
     # 確認所有產品是否存在並有足夠庫存，並計算價格
     # 同時檢查是否所有商品都不需要出貨
@@ -147,6 +149,8 @@ async def create_user_order(
     # 如果所有商品都不需要出貨，設置運送方式為"非實體商品"
     all_non_delivery = all(not product.get("isDelivery", True) for product in all_products)
     final_transportation_method = "非實體商品" if all_non_delivery else order.transportationMethod
+    
+    print(f"[DEBUG] all_non_delivery={all_non_delivery}, final_transportation_method={final_transportation_method}")
 
     # 減少剩餘產品數量
     for detail in order_details:
@@ -204,6 +208,7 @@ async def create_user_order(
         final_payment_amount = total_amount
 
     # 創建訂單
+    print(f"[DEBUG] Creating order with transportationMethod={final_transportation_method}, status={status}")
     new_order = order_db.create_order(
         db,
         oid=generate_verification_code(10),
