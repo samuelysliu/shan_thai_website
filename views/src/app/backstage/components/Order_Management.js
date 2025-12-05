@@ -362,7 +362,7 @@ export default function OrderManagement() {
                             : (order.transportationMethod == "family" ? "全家自取"
                               : (order.transportationMethod == "非實體商品" ? "非實體商品"
                                 : (order.transportationMethod == "no" ? "非實體商品" : order.transportationMethod)
-                              ))
+                              )))
                       }</td>
                       <td>{order.paymentMethod}</td>
                       <td>{order.status}</td>
