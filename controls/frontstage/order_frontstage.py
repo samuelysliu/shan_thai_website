@@ -144,25 +144,29 @@ async def create_user_order(
             }
         )
 
-    # 如果所有商品都不需要出貨，強制設置運送方式為"非實體商品"
+    # 如果所有商品都不需要出貨，設置運送方式為"非實體商品"
     all_non_delivery = all(not product.get("isDelivery", True) for product in all_products)
-    if all_non_delivery:
-        order.transportationMethod = "非實體商品"
+    final_transportation_method = "非實體商品" if all_non_delivery else order.transportationMethod
 
     # 減少剩餘產品數量
     for detail in order_details:
-        update_data = {"remain": product["remain"] - detail["productNumber"]}
-        product_updated = await product_db.update_partial_product(
-            db, detail["pid"], update_data
-        )
-        if not product_updated:
-            raise HTTPException(
-                status_code=500,
-                detail=f"Failed to update product remain for Product ID {detail['pid']}",
+        # 從 all_products 中找到對應的商品
+        product_info = next((p for p in all_products if p["pid"] == detail["pid"]), None)
+        if product_info:
+            update_data = {"remain": product_info["remain"] - detail["productNumber"]}
+            product_updated = await product_db.update_partial_product(
+                db, detail["pid"], update_data
             )
+            if not product_updated:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to update product remain for Product ID {detail['pid']}",
+                )
 
-    # 處理訂單狀態
-    if order.paymentMethod == "貨到付款":
+    # 處理訂單狀態：如果是非實體商品，直接設為"已完成"
+    if final_transportation_method == "非實體商品":
+        status = "已完成"
+    elif order.paymentMethod == "貨到付款":
         status = "待出貨"
     else:
         status = "待確認"
@@ -212,7 +216,7 @@ async def create_user_order(
         recipientName=order.recipientName,
         recipientPhone=order.recipientPhone,
         recipientEmail=order.recipientEmail,
-        transportationMethod=order.transportationMethod,
+        transportationMethod=final_transportation_method,
         paymentMethod=order.paymentMethod,
         orderNote=order.orderNote,
         status=status,
@@ -239,7 +243,7 @@ async def create_user_order(
         order_amount = new_order.totalAmount
 
     # 只有在不是"非實體商品"時才建立物流單
-    if order.paymentMethod == "貨到付款" and new_order.transportationMethod != "非實體商品":
+    if order.paymentMethod == "貨到付款" and final_transportation_method != "非實體商品":
         create_store_logistic_order(
             oid=new_order.oid,
             trade_date=new_order.created_at,

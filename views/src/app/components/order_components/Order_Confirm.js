@@ -184,13 +184,6 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                 postAddress = address
             else postAddress = storeId
 
-            // 處理是否需要出貨
-            let transport = "";
-            if (productIsDelivery)
-                transport = transportationMethod;
-            else transport = "非實體商品"
-
-
             // 組合訂單資料
             const orderData = {
                 uid: userInfo.uid,
@@ -200,7 +193,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
                 recipientName: recipientName,
                 recipientPhone: recipientPhone,
                 recipientEmail: recipientEmail,
-                transportationMethod: transport,
+                transportationMethod: transportationMethod,
                 paymentMethod: paymentMethod, // 付款方式
                 shanThaiToken: useShanThaiToken,
                 orderNote: "",
