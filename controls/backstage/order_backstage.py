@@ -330,6 +330,11 @@ def create_logistic_order(
     order = order_db.get_order_by_oid(db, oid=oid)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
+    
+    # 防止為"非實體商品"的訂單建立物流單
+    if order["transportationMethod"] == "非實體商品":
+        raise HTTPException(status_code=400, detail="Cannot create logistics for non-physical products")
+    
     if (
         order["transportationMethod"] == "seven"
         or order["transportationMethod"] == "family"

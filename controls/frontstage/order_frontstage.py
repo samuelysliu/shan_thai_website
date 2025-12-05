@@ -113,6 +113,8 @@ async def create_user_order(
     order_details = []  # 儲存處理後的訂單明細
 
     # 確認所有產品是否存在並有足夠庫存，並計算價格
+    # 同時檢查是否所有商品都不需要出貨
+    all_products = []
     for detail in order.order_details:
         product = await product_db.get_product_by_id(db, detail.pid)
         if not product:
@@ -129,6 +131,9 @@ async def create_user_order(
         subtotal = product["price"] * detail.productNumber
         total_amount += subtotal
 
+        # 保存產品信息用於檢查 isDelivery
+        all_products.append(product)
+
         # 添加到訂單明細
         order_details.append(
             {
@@ -138,6 +143,11 @@ async def create_user_order(
                 "subtotal": subtotal,
             }
         )
+
+    # 如果所有商品都不需要出貨，強制設置運送方式為"非實體商品"
+    all_non_delivery = all(not product.get("isDelivery", True) for product in all_products)
+    if all_non_delivery:
+        order.transportationMethod = "非實體商品"
 
     # 減少剩餘產品數量
     for detail in order_details:
@@ -228,8 +238,8 @@ async def create_user_order(
     else:
         order_amount = new_order.totalAmount
 
-    # 如果是貨到付款，直接建立物流單
-    if order.paymentMethod == "貨到付款":
+    # 只有在不是"非實體商品"時才建立物流單
+    if order.paymentMethod == "貨到付款" and new_order.transportationMethod != "非實體商品":
         create_store_logistic_order(
             oid=new_order.oid,
             trade_date=new_order.created_at,

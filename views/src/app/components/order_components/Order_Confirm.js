@@ -188,7 +188,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             let transport = "";
             if (productIsDelivery)
                 transport = transportationMethod;
-            else transport = "no"
+            else transport = "非實體商品"
 
 
             // 組合訂單資料
