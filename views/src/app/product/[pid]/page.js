@@ -36,7 +36,7 @@ export async function generateMetadata({ params }) {
         title: `${product.title_cn} - 善泰團隊`,
         description: `${product.title_cn}。價格：NT$${product.price}`,
         url: `https://www.shan-thai-team.com/product/${pid}`,
-        type: "product",
+        type: "website",
         images: [
           {
             url: imageUrl,
