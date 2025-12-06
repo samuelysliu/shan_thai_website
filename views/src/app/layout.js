@@ -42,12 +42,13 @@ export const metadata = {
     description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。",
     creator: "@shanthaiteam",
   },
-  viewport: "width=device-width, initial-scale=1.0, maximum-scale=5.0",
   authors: [{ name: "善泰團隊" }],
   creator: "善泰團隊",
   publisher: "善泰團隊",
   applicationName: "善泰團隊商城",
 };
+
+export const viewport = "width=device-width, initial-scale=1.0, maximum-scale=5.0";
 
 export default function RootLayout({ children }) {
   return (
