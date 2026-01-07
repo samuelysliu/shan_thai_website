@@ -140,6 +140,7 @@ def create_user(
         db.refresh(new_user)
         return new_user
     except SQLAlchemyError as e:
+        db.rollback()
         print(f"Error: {e}")
         return None
 
@@ -167,6 +168,7 @@ def update_user(db: Session, user_id: int, updates: dict):
             return user
         return None
     except SQLAlchemyError as e:
+        db.rollback()
         print(f"Error: {e}")
         return None
 
@@ -182,6 +184,7 @@ def update_user_password(db: Session, uid: int, new_password: str):
             return user
         return None
     except SQLAlchemyError as e:
+        db.rollback()
         print(f"Error: {e}")
         return None
 
@@ -196,6 +199,7 @@ def delete_user(db: Session, uid: int):
             return True
         return False
     except SQLAlchemyError as e:
+        db.rollback()
         print(f"Error: {e}")
         return False
 
@@ -211,5 +215,6 @@ def soft_delete_user(db: Session, uid: int):
             return True
         return False
     except SQLAlchemyError as e:
+        db.rollback()
         print(f"Error: {e}")
         return False

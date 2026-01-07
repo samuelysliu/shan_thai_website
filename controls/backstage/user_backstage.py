@@ -95,7 +95,7 @@ async def update_user(user_id: int, user: UserUpdate, db: Session = Depends(get_
 # 刪除用戶
 @router.delete("/users/{uid}")
 async def delete_user(uid: int, db: Session = Depends(get_db)):
-    success = user_db.delete_user(db, uid=uid)
+    success = user_db.soft_delete_user(db, uid=uid)
     if not success:
         raise HTTPException(status_code=404, detail="User not found")
     return {"detail": "User deleted successfully"}

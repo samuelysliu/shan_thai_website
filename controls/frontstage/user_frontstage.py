@@ -85,6 +85,8 @@ def create_access_token(data: dict):
 def login_function(existing_user, db):
     if existing_user.identity != "admin":
         isAdmin = False
+    elif existing_user.identity == "delete":
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     else:
         isAdmin = True
 
