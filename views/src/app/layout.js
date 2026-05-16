@@ -20,8 +20,8 @@ const geistMono = localFont({
 const gaId = config.gaId;
 
 export const metadata = {
-  title: "善泰團隊 - 南傳聖物請供 | 佛牌、四面佛、供尊",
-  description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。善泰團隊，幫您找到最適合的聖物。提供正宗泰國佛牌、四面佛、聖物供應。",
+  title: "善泰佛閣 - 南傳聖物請供 | 佛牌、四面佛、供尊",
+  description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。善泰佛閣，幫您找到最適合的聖物。提供正宗泰國佛牌、四面佛、聖物供應。",
   keywords: "佛牌,四面佛,求財,改運,聖物,供尊,南傳聖物,泰國佛牌",
   robots: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1",
   canonical: "https://www.shan-thai-team.com",
@@ -29,23 +29,23 @@ export const metadata = {
     canonical: "https://www.shan-thai-team.com",
   },
   openGraph: {
-    title: "善泰團隊 - 南傳聖物請供",
-    description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。善泰團隊，幫您找到最適合的聖物。",
+    title: "善泰佛閣 - 南傳聖物請供",
+    description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。善泰佛閣，幫您找到最適合的聖物。",
     url: "https://www.shan-thai-team.com",
-    siteName: "善泰團隊",
+    siteName: "善泰佛閣",
     locale: "zh_TW",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "善泰團隊 - 南傳聖物請供",
+    title: "善泰佛閣 - 南傳聖物請供",
     description: "想要求財、改運、佛牌、供尊，通通可以在這裡找到。",
     creator: "@shanthaiteam",
   },
-  authors: [{ name: "善泰團隊" }],
-  creator: "善泰團隊",
-  publisher: "善泰團隊",
-  applicationName: "善泰團隊商城",
+  authors: [{ name: "善泰佛閣" }],
+  creator: "善泰佛閣",
+  publisher: "善泰佛閣",
+  applicationName: "善泰佛閣商城",
 };
 
 export const viewport = "width=device-width, initial-scale=1.0, maximum-scale=5.0";
@@ -71,7 +71,7 @@ export default function RootLayout({ children }) {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Organization",
-            "name": "善泰團隊",
+            "name": "善泰佛閣",
             "url": "https://www.shan-thai-team.com",
             "description": "南傳聖物請供，提供佛牌、四面佛等聖物",
             "logo": "https://www.shan-thai-team.com/logo.png",
@@ -90,7 +90,7 @@ export default function RootLayout({ children }) {
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "LocalBusiness",
-            "name": "善泰團隊",
+            "name": "善泰佛閣",
             "url": "https://www.shan-thai-team.com",
             "description": "南傳聖物請供",
             "priceRange": "NTD"

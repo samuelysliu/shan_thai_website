@@ -219,7 +219,7 @@ a {
 
 /* navbar 區塊 */
 .navbar {
-  background-color: var(--primary-color) !important;
+  background-color: #020504 !important;
 }
 
 .navbar .navbar-brand,

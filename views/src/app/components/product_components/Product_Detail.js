@@ -174,7 +174,7 @@ const Product_Detail = ({ pid }) => {
     inventoryLevel: product.remain,
     brand: {
       "@type": "Brand",
-      name: "善泰團隊"
+      name: "善泰佛閣"
     },
     offers: {
       "@type": "Offer",
@@ -183,7 +183,7 @@ const Product_Detail = ({ pid }) => {
       availability: product.remain > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       seller: {
         "@type": "Organization",
-        name: "善泰團隊"
+        name: "善泰佛閣"
       }
     }
   };

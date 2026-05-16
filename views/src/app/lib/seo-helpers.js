@@ -16,7 +16,7 @@ export const generateProductSchema = (product) => {
     "image": imageArray,
     "brand": {
       "@type": "Brand",
-      "name": "善泰團隊"
+      "name": "善泰佛閣"
     },
     "offers": {
       "@type": "Offer",
@@ -28,7 +28,7 @@ export const generateProductSchema = (product) => {
         : "https://schema.org/OutOfStock",
       "seller": {
         "@type": "Organization",
-        "name": "善泰團隊"
+        "name": "善泰佛閣"
       }
     },
     "aggregateRating": product.rating ? {

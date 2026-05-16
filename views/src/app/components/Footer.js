@@ -16,7 +16,7 @@ export default function Footer() {
     <Container fluid className="footer mt-4 py-4">
       <Row className="justify-content-center text-center">
         <Col xs={12} sm={6} md={4} className="footer-col">
-          <a onClick={() => handleNavLink('/about')}>關於善泰團隊</a>
+          <a onClick={() => handleNavLink('/about')}>關於善泰佛閣</a>
         </Col>
         <Col xs={12} sm={6} md={4} className="footer-col">
           <h5>聯絡我們</h5>

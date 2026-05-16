@@ -197,7 +197,7 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
         )
 
     verify_page = f"{endpoint}/profile/verify/{verification_code}"
-    subject = "善泰團隊網站註冊驗證碼"
+    subject = "善泰佛閣網站註冊驗證碼"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -208,7 +208,7 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
     <meta name="x-apple-disable-message-reformatting">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="telephone=no" name="format-detection">
-    <title>善泰團隊網站註冊驗證碼</title>
+    <title>善泰佛閣網站註冊驗證碼</title>
 
     <style type="text/css">
             .rollover:hover .rollover-first {{
@@ -313,7 +313,7 @@ async def register_user(user: UserRegistration, db: Session = Depends(get_db)):
                     <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
                     <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                         <tr>
-                        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><h1 class="es-m-txt-c" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:70px;font-style:normal;font-weight:bold;line-height:70px;color:#333333">善泰團隊</h1></td>
+                        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><h1 class="es-m-txt-c" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:70px;font-style:normal;font-weight:bold;line-height:70px;color:#333333">善泰佛閣</h1></td>
                         </tr>
                     </table></td>
                     </tr>
@@ -524,7 +524,7 @@ async def forgot_password(request: PasswordResetRequest, db: Session = Depends(g
 
     user_db.update_user_password(db, uid=user.uid, new_password=hashed_new_password)
 
-    subject = "善泰團隊網站忘記密碼"
+    subject = "善泰佛閣網站忘記密碼"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -535,7 +535,7 @@ async def forgot_password(request: PasswordResetRequest, db: Session = Depends(g
     <meta name="x-apple-disable-message-reformatting">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta content="telephone=no" name="format-detection">
-    <title>善泰團隊網站註冊驗證碼</title>
+    <title>善泰佛閣網站註冊驗證碼</title>
 
     <style type="text/css">
             .rollover:hover .rollover-first {{
@@ -640,7 +640,7 @@ async def forgot_password(request: PasswordResetRequest, db: Session = Depends(g
                     <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
                     <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
                         <tr>
-                        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><h1 class="es-m-txt-c" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:70px;font-style:normal;font-weight:bold;line-height:70px;color:#333333">善泰團隊</h1></td>
+                        <td align="center" style="padding:0;Margin:0;padding-bottom:10px"><h1 class="es-m-txt-c" style="Margin:0;font-family:arial, 'helvetica neue', helvetica, sans-serif;mso-line-height-rule:exactly;letter-spacing:0;font-size:70px;font-style:normal;font-weight:bold;line-height:70px;color:#333333">善泰佛閣</h1></td>
                         </tr>
                     </table></td>
                     </tr>

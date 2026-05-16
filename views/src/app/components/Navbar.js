@@ -86,14 +86,14 @@ export default function NavBar() {
         <Container>
           <Navbar.Brand>
             <img
-              src="/logo.png" // 確保圖片放在 public 資料夾內
+              src="/shan_thai_logo.jpg" // 確保圖片放在 public 資料夾內
               alt="Logo"
-              width="30" // 設定寬度
-              height="30" // 設定高度
+              //width="30" // 設定寬度
+              height="40" // 設定高度
               style={{ objectFit: 'contain' }} // 保持圖片比例
               className="me-2" // Bootstrap 樣式，讓圖片與文字有間距
             />
-            善泰團隊</Navbar.Brand>
+            </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="mx-auto">

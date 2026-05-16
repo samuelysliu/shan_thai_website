@@ -36,13 +36,13 @@ export async function generateMetadata({ params }) {
     const price = product.price || 0;
     
     return {
-      title: `${title} - 善泰團隊 | 南傳聖物`,
+      title: `${title} - 善泰佛閣 | 南傳聖物`,
       description: `${title}。${product.description || "正宗南傳聖物，幫您找到最適合的聖物。"}`,
       keywords: `${title},聖物,佛牌,${product.category || "聖物類別"}`,
       robots: "index, follow",
       canonical: `https://www.shan-thai-team.com/product/${pid}`,
       openGraph: {
-        title: `${title} - 善泰團隊`,
+        title: `${title} - 善泰佛閣`,
         description: `${title}。價格：NT$${price}`,
         url: `https://www.shan-thai-team.com/product/${pid}`,
         type: "website",
@@ -54,12 +54,12 @@ export async function generateMetadata({ params }) {
             alt: title,
           },
         ],
-        siteName: "善泰團隊",
+        siteName: "善泰佛閣",
         locale: "zh_TW",
       },
       twitter: {
         card: "summary_large_image",
-        title: `${title} - 善泰團隊`,
+        title: `${title} - 善泰佛閣`,
         description: `${title}。NT$${price}`,
         images: [imageUrl],
       },
@@ -69,8 +69,8 @@ export async function generateMetadata({ params }) {
     
     // 返回默認元數據而不是拋出錯誤，防止頁面 500
     return {
-      title: "商品詳情 - 善泰團隊 | 南傳聖物",
-      description: "善泰團隊 - 南傳聖物請供，提供正宗泰國佛牌、四面佛、聖物供應。",
+      title: "商品詳情 - 善泰佛閣 | 南傳聖物",
+      description: "善泰佛閣 - 南傳聖物請供，提供正宗泰國佛牌、四面佛、聖物供應。",
       keywords: "聖物,佛牌,供尊,南傳聖物,泰國佛牌",
     };
   }

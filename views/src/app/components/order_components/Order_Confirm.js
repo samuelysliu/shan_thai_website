@@ -237,7 +237,7 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             // 處理結帳GA埋點
             window.gtag('event', 'purchase', {
                 transaction_id: response.data.oid, // 後端生成的訂單編號
-                affiliation: '善泰團隊購物網站',
+                affiliation: '善泰佛閣購物網站',
                 value: response.data.totalAmount,
                 currency: 'TWD',
                 coupon: response.data.useDiscount ? orderAmount : 0,
@@ -281,8 +281,8 @@ const OrderConfirm = ({ cvsStoreName, cvsStoreId, transportationMethodUrl }) => 
             MerchantTradeDate: orderDate, // yyyy/MM/dd HH:mm:ss
             PaymentType: "aio",
             TotalAmount: orderAmount, // 交易金額
-            TradeDesc: "善泰團隊聖物", // 交易描述
-            ItemName: "善泰團隊聖物", // 商品名稱
+            TradeDesc: "善泰佛閣聖物", // 交易描述
+            ItemName: "善泰佛閣聖物", // 商品名稱
             ReturnURL: `${endpoint}/frontstage/v1/cash_flow_order`, // 回調地址
             ChoosePayment: paymentMethods, // Credit 或 ATM
             EncryptType: 1, // 固定為 1
